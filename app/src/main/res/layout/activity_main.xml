@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    tools:context=".MainActivity">
+
+    <FrameLayout
+        android:id="@+id/frameLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="@color/transparent"
+        app:cardCornerRadius="0dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/logo"
+                android:layout_width="70dp"
+                android:layout_height="32dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
+                android:layout_marginStart="15dp"
+                android:layout_marginTop="15dp"
+                android:layout_marginEnd="15dp"
+                android:layout_marginBottom="15dp"
+                android:src="@drawable/logo" />
+
+
+            <LinearLayout
+                android:id="@+id/center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:layout_toStartOf="@id/settings"
+                android:layout_toEndOf="@id/logo">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/Accueil"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="12dp"
+                    android:focusableInTouchMode="true"
+                    android:focusable="true"
+                    android:nextFocusLeft="@id/Accueil"
+                    android:nextFocusRight="@id/Chaines"
+                    android:nextFocusDown="@id/childRC"
+                    android:foreground="@color/transparent"
+                    app:cardBackgroundColor="@color/focus"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Accueil"
+                            android:textColor="@color/white"
+                            android:textAllCaps="true"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1.5dp"
+                            android:background="@drawable/bg_gradient"
+                            android:backgroundTint="@color/white"
+                            android:id="@+id/indicatorAccueil" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/Chaines"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="12dp"
+                    android:focusableInTouchMode="true"
+                    android:focusable="true"
+                    android:nextFocusLeft="@id/Accueil"
+                    android:nextFocusRight="@id/Films"
+                    android:nextFocusDown="@id/channelsRC"
+                    android:layout_marginHorizontal="10dp"
+                    android:foreground="@color/transparent"
+                    app:cardBackgroundColor="@color/focus"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Chaines"
+                            android:textColor="@color/white"
+                            android:textAllCaps="true"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1.5dp"
+                            android:visibility="gone"
+                            android:background="@drawable/bg_gradient"
+                            android:backgroundTint="@color/white"
+                            android:id="@+id/indicatorChaines" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/Films"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="12dp"
+                    android:focusableInTouchMode="true"
+                    android:focusable="true"
+                    android:nextFocusLeft="@id/Chaines"
+                    android:nextFocusRight="@id/series"
+                    android:nextFocusDown="@id/filmChildRC"
+                    android:layout_marginHorizontal="10dp"
+                    android:foreground="@color/transparent"
+                    app:cardBackgroundColor="@color/focus"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Films"
+                            android:textColor="@color/white"
+                            android:textAllCaps="true"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1.5dp"
+                            android:visibility="gone"
+                            android:background="@drawable/bg_gradient"
+                            android:backgroundTint="@color/white"
+                            android:id="@+id/indicatorFilms" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/series"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="12dp"
+                    android:focusableInTouchMode="true"
+                    android:focusable="true"
+                    android:nextFocusLeft="@id/Films"
+                    android:nextFocusRight="@id/Recherche"
+                    android:nextFocusDown="@id/childRC"
+                    android:layout_marginHorizontal="10dp"
+                    android:foreground="@color/transparent"
+                    app:cardBackgroundColor="@color/focus"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Séries"
+                            android:textColor="@color/white"
+                            android:textAllCaps="true"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1.5dp"
+                            android:visibility="gone"
+                            android:background="@drawable/bg_gradient"
+                            android:backgroundTint="@color/white"
+                            android:id="@+id/indicatorSeries" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/Recherche"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="12dp"
+                    android:focusableInTouchMode="true"
+                    android:focusable="true"
+                    android:nextFocusLeft="@id/series"
+                    android:nextFocusRight="@id/profile"
+                    android:nextFocusDown="@id/searchET"
+                    android:layout_marginHorizontal="5dp"
+                    android:foreground="@color/transparent"
+                    app:cardBackgroundColor="@color/focus"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Recherche"
+                            android:textColor="@color/white"
+                            android:textAllCaps="true"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1.5dp"
+                            android:background="@drawable/bg_gradient"
+                            android:backgroundTint="@color/white"
+                            android:visibility="gone"
+                            android:id="@+id/indicatorRecherche" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/settings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerInParent="true"
+                android:layout_marginStart="15dp"
+                android:layout_marginTop="15dp"
+                android:layout_marginEnd="15dp"
+                android:layout_marginBottom="15dp"
+                android:gravity="center_vertical|end"
+                android:orientation="horizontal">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/profile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="@color/transparent"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/stroke"
+                    app:strokeWidth="2dp">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/profile" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <ImageView
+                    android:id="@+id/ancher"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:rotation="90"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
+                    android:src="@drawable/round_arrow_right_24"
+                    app:tint="@color/white" />
+
+                <ImageButton
+                    android:id="@+id/reload"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/sync"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:backgroundTint="@color/focus"
+                    android:layout_marginStart="5dp" />
+
+            </LinearLayout>
+
+        </RelativeLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</RelativeLayout>
