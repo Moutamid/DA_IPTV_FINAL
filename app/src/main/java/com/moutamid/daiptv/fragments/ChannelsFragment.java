@@ -35,6 +35,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -306,6 +307,7 @@ public class ChannelsFragment extends Fragment {
 
     private void showRecentChannels() {
         ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.RECENT_CHANNELS, ChannelsModel.class);
+        Collections.reverse(channelsList);
         adapter = new ChannelsAdapter(mContext, channelsList);
         binding.channelsRC.setAdapter(adapter);
     }

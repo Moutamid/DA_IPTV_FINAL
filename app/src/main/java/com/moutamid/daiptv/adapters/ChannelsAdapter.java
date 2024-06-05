@@ -18,15 +18,12 @@ import com.google.android.material.card.MaterialCardView;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.activities.VideoPlayerActivity;
 import com.moutamid.daiptv.models.ChannelsModel;
-import com.moutamid.daiptv.models.EPGModel;
 import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.utilis.AddFavoriteDialog;
 import com.moutamid.daiptv.utilis.Constants;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.ChannelVH> {
@@ -45,6 +42,7 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
     }
 
     private static final String TAG = "ChannelsAdapter";
+
     @Override
     public void onBindViewHolder(@NonNull ChannelVH holder, int position) {
         ChannelsModel model = list.get(holder.getAdapterPosition());
@@ -65,12 +63,21 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
 //        }
 
         holder.itemView.setOnClickListener(v -> {
-            UserModel userModel =(UserModel) Stash.getObject(Constants.USER, UserModel.class);
+            UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
             String link = userModel.url + userModel.username + "/" + userModel.password + "/" + model.stream_id;
             Log.d(TAG, "onBindViewHolder: " + link);
             ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.RECENT_CHANNELS, ChannelsModel.class);
-            channelsList.add(model);
-            Stash.put(Constants.RECENT_CHANNELS, channelsList);
+            boolean check = false;
+            for (ChannelsModel recent : channelsList) {
+                if (recent.stream_id == model.stream_id) {
+                    check = true;
+                    break;
+                }
+            }
+            if (!check) {
+                channelsList.add(model);
+                Stash.put(Constants.RECENT_CHANNELS, channelsList);
+            }
             context.startActivity(new Intent(context, VideoPlayerActivity.class).putExtra("url", link).putExtra("name", model.name));
         });
 
