@@ -77,7 +77,7 @@ public class SeriesFragment extends Fragment {
         super.onDetach();
         this.mContext = null;
     }
-
+    ArrayList<SeriesModel> topRated;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -85,10 +85,7 @@ public class SeriesFragment extends Fragment {
 
         requestQueue = VolleySingleton.getInstance(mContext).getRequestQueue();
 
-        listAll = new ArrayList<>();
-        ArrayList<SeriesModel> topRated = Stash.getArrayList(Constants.TOP_SERIES, SeriesModel.class);
-        listAll.add(new TVModel(Constants.topRated, "Top Series", topRated));
-
+        topRated = Stash.getArrayList(Constants.TOP_SERIES, SeriesModel.class);
         fetchID(topRated.get(new Random().nextInt(topRated.size())));
 
         binding.recycler.setLayoutManager(new LinearLayoutManager(mContext));
@@ -98,9 +95,15 @@ public class SeriesFragment extends Fragment {
         snapHelper.attachToRecyclerView(binding.recycler);
 
         initializeDialog();
-        ArrayList<SeriesModel> series = Stash.getArrayList(Constants.SERIES, SeriesModel.class);
-        if (series.isEmpty())
+        ArrayList<TVModel> series = Stash.getArrayList(Constants.SERIES, TVModel.class);
+        if (series.isEmpty()) {
+            listAll = new ArrayList<>();
+            listAll.add(new TVModel(Constants.topRated, "Top Series", topRated));
             getCategory();
+        } else {
+            parentAdapter = new SeriesParentAdapter(mContext, series, selectedFilm);
+            binding.recycler.setAdapter(parentAdapter);
+        }
 
         return binding.getRoot();
     }
@@ -179,6 +182,7 @@ public class SeriesFragment extends Fragment {
                             listAll.set(finalK, model);
                             if (finalK == listAll.size() - 1) {
                                 dialog.dismiss();
+                                Stash.put(Constants.SERIES, listAll);
                                 parentAdapter = new SeriesParentAdapter(mContext, listAll, selectedFilm);
                                 binding.recycler.setAdapter(parentAdapter);
                             }
@@ -417,6 +421,8 @@ public class SeriesFragment extends Fragment {
     }
 
     public void refreshList() {
-
+        listAll = new ArrayList<>();
+        listAll.add(new TVModel(Constants.topRated, "Top Series", topRated));
+        getCategory();
     }
 }

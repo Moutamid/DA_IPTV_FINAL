@@ -6,12 +6,11 @@
     android:layout_height="match_parent"
     tools:context=".activities.VideoPlayerActivity">
 
-    <com.android.iplayer.widget.VideoPlayer
-        android:id="@+id/video_player"
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/player_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/black"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:use_controller="true"/>
 
 </RelativeLayout>

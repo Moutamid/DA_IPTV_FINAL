@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +12,10 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.fxn.stash.Stash;
 import com.google.android.gms.security.ProviderInstaller;
 import com.google.android.material.button.MaterialButton;
@@ -23,9 +28,23 @@ import com.moutamid.daiptv.fragments.FilmFragment;
 import com.moutamid.daiptv.fragments.HomeFragment;
 import com.moutamid.daiptv.fragments.RechercheFragment;
 import com.moutamid.daiptv.fragments.SeriesFragment;
+import com.moutamid.daiptv.models.EPGModel;
 import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.utilis.Constants;
 import com.moutamid.daiptv.utilis.Features;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 public class MainActivity extends BaseActivity {
     ActivityMainBinding binding;
@@ -202,6 +221,77 @@ public class MainActivity extends BaseActivity {
             getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, new RechercheFragment()).commit();
         });
 
+        ArrayList<EPGModel> list = Stash.getArrayList(Constants.EPG, EPGModel.class);
+        if (list.isEmpty())
+            get();
+
+
+    }
+
+    private static final String TAG = "MainActivity";
+    private void get() {
+        ArrayList<EPGModel> list = Stash.getArrayList(Constants.EPG, EPGModel.class);
+        Toast.makeText(this, "loading...", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
+            String url = "http://vbn123.com:8080/xmltv.php?username=9tqadv9utC4B28qe&password=X8J6qeYDNcbzvWns";
+            StringRequest stringRequest = new StringRequest(Request.Method.GET, url, response -> {
+                Log.d("TAGGER", "onResponse/45: data loaded");
+                //  Log.d("TAGGER", "onResponse/45: data: : " + response);
+                Log.d("TAGGER", "onResponse/45: length: : " + response.length());
+
+                try {
+                    String xmlContent = response.toString();
+//                        Log.d(TAG, "XML : " + xmlContent);
+                    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                    DocumentBuilder builder = factory.newDocumentBuilder();
+                    Document document = builder.parse(new InputSource(new StringReader(xmlContent)));
+
+                    // Get the root element
+                    Element root = document.getDocumentElement();
+                    // Get a NodeList of programme elements
+                    NodeList programmeList = root.getElementsByTagName("programme");
+                    Log.d(TAG, "programmeList: " + programmeList.getLength());
+                    list.clear();
+                    for (int i = 0; i < programmeList.getLength(); i++) {
+                        Node programmeNode = programmeList.item(i);
+                        if (programmeNode.getNodeType() == Node.ELEMENT_NODE) {
+                            Element programmeElement = (Element) programmeNode;
+
+                            // Get attributes
+                            String start = programmeElement.getAttribute("start");
+                            String stop = programmeElement.getAttribute("stop");
+                            String channel = programmeElement.getAttribute("channel");
+
+                            // Get child elements
+                            String title = programmeElement.getElementsByTagName("title").item(0).getTextContent();
+                            String desc = programmeElement.getElementsByTagName("desc").item(0).getTextContent();
+
+                            EPGModel epgModel = new EPGModel();
+                            epgModel.start = start;
+                            epgModel.end = stop;
+                            epgModel.channel_id = channel;
+                            epgModel.title = title;
+
+                            list.add(epgModel);
+
+                            Log.d(TAG, "getEPG: Programme " + (i + 1));
+
+                            System.out.println("Start: " + start);
+                            System.out.println("Stop: " + stop);
+                            System.out.println("Channel: " + channel);
+                            System.out.println("Title: " + title);
+                            System.out.println("Description: " + desc);
+                            System.out.println();
+                        }
+                    }
+                    Stash.put(Constants.EPG, list);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }, error -> Log.d(TAG, "onErrorResponse: " + error.toString()));
+            queue.add(stringRequest);
+        }).start();
     }
 
     @Override

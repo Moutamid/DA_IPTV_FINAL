@@ -1,25 +1,21 @@
 package com.moutamid.daiptv.activities;
 
-import android.content.Intent;
+import static androidx.media3.ui.PlayerView.SHOW_BUFFERING_WHEN_PLAYING;
+
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.view.Window;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.Player;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
+import androidx.media3.ui.PlayerView;
 
-import com.android.iplayer.controller.VideoController;
-import com.android.iplayer.interfaces.IVideoController;
-import com.android.iplayer.listener.OnPlayerEventListener;
-import com.android.iplayer.model.PlayerState;
-import com.android.iplayer.widget.WidgetFactory;
-import com.android.iplayer.widget.controls.ControWindowView;
-import com.android.iplayer.widget.controls.ControlCompletionView;
-import com.android.iplayer.widget.controls.ControlFunctionBarView;
-import com.android.iplayer.widget.controls.ControlGestureView;
-import com.android.iplayer.widget.controls.ControlLoadingView;
-import com.android.iplayer.widget.controls.ControlStatusView;
-import com.android.iplayer.widget.controls.ControlToolBarView;
 import com.fxn.stash.Stash;
 import com.moutamid.daiptv.BaseActivity;
 import com.moutamid.daiptv.databinding.ActivityVideoPlayerBinding;
@@ -29,6 +25,11 @@ import com.moutamid.daiptv.utilis.Features;
 public class VideoPlayerActivity extends BaseActivity {
     ActivityVideoPlayerBinding binding;
     private static final String TAG = "VideoPlayerActivity";
+    ExoPlayer player;
+    String resume;
+    boolean isResumed = false;
+
+    @OptIn(markerClass = UnstableApi.class)
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,109 +38,93 @@ public class VideoPlayerActivity extends BaseActivity {
 
         String url = getIntent().getStringExtra("url");
         String name = getIntent().getStringExtra("name");
-        String resume = getIntent().getStringExtra("resume");
+        resume = getIntent().getStringExtra("resume");
 
-        Log.d("VideoURLPlayer", ""+url);
+        Log.d("VideoURLPlayer", "" + url);
+        Log.d("VideoURLPlayer", "resume   " + resume);
 
         Constants.checkFeature(VideoPlayerActivity.this, Features.VIDEO_PLAYER);
 
-        binding.videoPlayer.setAutoChangeOrientation(true);
+        player =
+                new ExoPlayer.Builder(this)
+                        .setMediaSourceFactory(
+                                new DefaultMediaSourceFactory(this).setLiveTargetOffsetMs(5000))
+                        .build();
 
-        VideoController controller = new VideoController(binding.videoPlayer.getContext());
-        binding.videoPlayer.setController(controller);
-        WidgetFactory.bindDefaultControls(controller);
-        controller.setTitle(name);
-        // binding.videoPlayer.createController();
+        MediaItem mediaItem =
+                new MediaItem.Builder()
+                        .setUri(url)
+                        .setLiveConfiguration(
+                                new MediaItem.LiveConfiguration.Builder().setMaxPlaybackSpeed(1.02f).build())
+                        .build();
+        player.setMediaItem(mediaItem);
+        player.setMediaItem(mediaItem);
+        player.prepare();
+        player.play();
 
-        ControlToolBarView toolBarView=new ControlToolBarView(this);
-        toolBarView.setTarget(IVideoController.TARGET_CONTROL_TOOL);
-        toolBarView.showBack(true);
+        PlayerView playerView = binding.playerView;
 
-        toolBarView.showMenus(true,false,false);
-        toolBarView.setOnToolBarActionListener(new ControlToolBarView.OnToolBarActionListener() {
+        playerView.setPlayer(player);
+
+        playerView.setShowBuffering(SHOW_BUFFERING_WHEN_PLAYING);
+        player.addListener(new Player.Listener() {
+
             @Override
-            public void onBack() {
-                //Logger.d(TAG,"onBack");
-                onBackPressed();
+            public void onPlaybackStateChanged(int playbackState) {
+                Player.Listener.super.onPlaybackStateChanged(playbackState);
+                Log.d(TAG, "onPlaybackStateChanged:  " + playbackState);
+                if (playbackState == Player.STATE_READY && !isResumed) {
+                    if (resume != null) {
+                        isResumed = true;
+                        Log.d(TAG, "onPlaybackStateChanged: RESUMED");
+                        player.seekTo(Stash.getLong(resume, 0));
+                    }
+                }
             }
 
             @Override
-            public void onTv() {
-                //Logger.d(TAG,"onTv");
-                startActivity(new Intent("android.settings.CAST_SETTINGS"));
-            }
-
-            @Override
-            public void onWindow() {
-                //Logger.d(TAG,"onWindow");
-                //startGoableWindow(null);
-            }
-
-            @Override
-            public void onMenu() {
-                //Logger.d(TAG,"onMenu");
-                //showMenuDialog();
-            }
-        });
-
-        ControlFunctionBarView functionBarView=new ControlFunctionBarView(this);
-        functionBarView.showSoundMute(false,false);
-        ControlGestureView gestureView=new ControlGestureView(this);
-        ControlCompletionView completionView=new ControlCompletionView(this);
-        ControlStatusView statusView=new ControlStatusView(this);
-        ControlLoadingView loadingView=new ControlLoadingView(this);
-        ControWindowView windowView=new ControWindowView(this);
-        controller.addControllerWidget(toolBarView,functionBarView,gestureView,completionView,statusView,loadingView,windowView);
-
-        if (url==null) url = "";
-
-        binding.videoPlayer.setDataSource(url.trim());
-//         binding.videoPlayer.setDataSource("https://upload.dongfeng-nissan.com.cn/nissan/video/202204/4cfde6f0-bf80-11ec-95c3-214c38efbbc8.mp4");
-        binding.videoPlayer.prepareAsync();
-        binding.videoPlayer.setOnPlayerActionListener(new OnPlayerEventListener() {
-            @Override
-            public void onProgress(long currentDurtion, long totalDurtion) {
-                super.onProgress(currentDurtion, totalDurtion);
-                Stash.put(resume, currentDurtion);
-            }
-
-            @Override
-            public void onPlayerState(PlayerState state, String message) {
-                super.onPlayerState(state, message);
-                Log.d(TAG, "onPlayerState: " + message);
-//                if (binding.videoPlayer.isPlaying()){
-//
-//                }
+            public void onPlayerError(PlaybackException error) {
+                Player.Listener.super.onPlayerError(error);
+                Toast.makeText(VideoPlayerActivity.this, error.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
         });
-        binding.videoPlayer.seekTo(Stash.getLong(resume, 0));
+
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        binding.videoPlayer.onResume();
+    protected void onStart() {
+        super.onStart();
+        player.setPlayWhenReady(true);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        binding.videoPlayer.onPause();
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        if (binding.videoPlayer.isBackPressed()) {
-            finish();
+        if (resume != null) {
+            long currentPosition = player.getCurrentPosition();
+            Stash.put(resume, currentPosition);
         }
-        finish();
+        player.setPlayWhenReady(false);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        binding.videoPlayer.onDestroy();
+        if (resume != null) {
+            long currentPosition = player.getCurrentPosition();
+            Stash.put(resume, currentPosition);
+        }
+        player.release();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        if (resume != null) {
+            long currentPosition = player.getCurrentPosition();
+            Stash.put(resume, currentPosition);
+        }
+        finish();
     }
 
 }

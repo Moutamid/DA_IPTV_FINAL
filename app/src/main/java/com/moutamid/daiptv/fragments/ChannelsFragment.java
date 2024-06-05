@@ -305,7 +305,7 @@ public class ChannelsFragment extends Fragment {
     }
 
     private void showRecentChannels() {
-        ArrayList<ChannelsModel> channelsList = new ArrayList<>();
+        ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.RECENT_CHANNELS, ChannelsModel.class);
         adapter = new ChannelsAdapter(mContext, channelsList);
         binding.channelsRC.setAdapter(adapter);
     }

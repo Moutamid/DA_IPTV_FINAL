@@ -23,8 +23,11 @@ import com.moutamid.daiptv.databinding.ActivityDetailSeriesBinding;
 import com.moutamid.daiptv.models.CastModel;
 import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.MovieModel;
+import com.moutamid.daiptv.models.SeriesInfoModel;
 import com.moutamid.daiptv.models.SeriesModel;
+import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.utilis.AddFavoriteDialog;
+import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
 import com.moutamid.daiptv.utilis.VolleySingleton;
 
@@ -47,6 +50,8 @@ public class DetailSeriesActivity extends BaseActivity {
     MovieModel movieModel;
     private static final String TAG = "DetailSeriesActivity";
     ArrayList<CastModel> cast;
+    SeriesInfoModel infoModel;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,17 +90,43 @@ public class DetailSeriesActivity extends BaseActivity {
         requestQueue = VolleySingleton.getInstance(DetailSeriesActivity.this).getRequestQueue();
 
         if (model != null) {
-            fetchID();
+            String url = ApiLinks.getSeriesInfoByID(String.valueOf(model.series_id));
+            Log.d(TAG, "fetchID: URL  " + url);
+            JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
+                    response -> {
+                        try {
+                            JSONObject episodes = response.getJSONObject("episodes");
+                            JSONArray array = episodes.getJSONArray("1");
+                            for (int i = 0; i < array.length(); i++) {
+                                JSONObject object = array.getJSONObject(i);
+                                int episode_num = object.getInt("episode_num");
+                                int season = object.getInt("season");
+                                if (season == 1 && episode_num == 1) {
+                                    infoModel = new SeriesInfoModel(object.getString("id"), object.getString("container_extension"));
+                                    break;
+                                }
+                            }
+                            fetchID();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            runOnUiThread(() -> {
+                                dialog.dismiss();
+                                Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+                            });
+                        }
+                    }, error -> {
+                error.printStackTrace();
+                runOnUiThread(() -> {
+                    dialog.dismiss();
+                });
+            });
+            requestQueue.add(objectRequest);
         } else {
             Toast.makeText(this, "Chaîne introuvable", Toast.LENGTH_SHORT).show();
             finish();
         }
 
         binding.episodes.setOnClickListener(v -> startActivity(new Intent(this, SeriesActivity.class)));
-    }
-
-    private FavoriteModel getChannelsModel() {
-        return null;
     }
 
     private void fetchID() {
@@ -290,8 +321,19 @@ public class DetailSeriesActivity extends BaseActivity {
             startActivity(intent);
         });
 
+        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+        SeriesInfoModel seriesInfoModel = (SeriesInfoModel) Stash.getObject(Constants.SERIES_LINK, SeriesInfoModel.class);
+        String link = seriesInfoModel == null ?
+                userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + infoModel.id + "." + infoModel.container_extension :
+                userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + seriesInfoModel.id + "." + seriesInfoModel.container_extension;
+
         binding.play.setOnClickListener(v -> {
-       //     startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("url", model.getChannelUrl()).putExtra("name", movieModel.original_title));
+            startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("url", link).putExtra("name", movieModel.original_title));
+        });
+
+        binding.resume.setOnClickListener(v -> {
+            String resume = seriesInfoModel == null ? infoModel.id : seriesInfoModel.id;
+            startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("resume", resume).putExtra("url", link).putExtra("name", movieModel.original_title));
         });
 
         binding.play.setOnFocusChangeListener((v, hasFocus) -> {
@@ -338,48 +380,6 @@ public class DetailSeriesActivity extends BaseActivity {
 
         CastsAdapter adapter = new CastsAdapter(this, cast);
         binding.castRC.setAdapter(adapter);
-//        try {
-//            TranslateAPI translateAPI = new TranslateAPI(
-//                    Language.AUTO_DETECT,   //Source Language
-//                    Language.FRENCH,         //Target Language
-//                    movieModel.overview);           //Query Text
-//
-//            translateAPI.setTranslateListener(new TranslateAPI.TranslateListener() {
-//                @Override
-//                public void onSuccess(String translatedText) {
-//                    Log.d(TAG, "onSuccess: " + translatedText);
-//                    binding.desc.setText(translatedText);
-//                }
-//
-//                @Override
-//                public void onFailure(String ErrorText) {
-//                    Log.d(TAG, "onFailure: " + ErrorText);
-//                }
-//            });
-//
-//
-//            if (!movieModel.isFrench) {
-//                TranslateAPI nameAPI = new TranslateAPI(
-//                        Language.AUTO_DETECT,   //Source Language
-//                        Language.FRENCH,         //Target Language
-//                        movieModel.original_title);           //Query Text
-//
-//                nameAPI.setTranslateListener(new TranslateAPI.TranslateListener() {
-//                    @Override
-//                    public void onSuccess(String translatedText) {
-//                        Log.d(TAG, "onSuccess: " + translatedText);
-//                        binding.name.setText(translatedText);
-//                    }
-//
-//                    @Override
-//                    public void onFailure(String ErrorText) {
-//                        Log.d(TAG, "onFailure: " + ErrorText);
-//                    }
-//                });
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
     }
 
     private void initializeDialog() {

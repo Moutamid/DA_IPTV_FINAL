@@ -51,6 +51,13 @@ public class SearchFilmsAdapter extends RecyclerView.Adapter<SearchFilmsAdapter.
                 Stash.put(Constants.PASS, model);
                 context.startActivity(new Intent(context, DetailActivity.class));
             });
+
+            holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus){
+                    Log.d(TAG, "onBindViewHolder: " + model.name);
+                }
+            });
+
         } catch (Exception e){
             Log.d(TAG, "onBindViewHolder: " + e.getLocalizedMessage());
             e.printStackTrace();

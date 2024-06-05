@@ -23,6 +23,7 @@ import com.moutamid.daiptv.databinding.ActivityDetailBinding;
 import com.moutamid.daiptv.models.CastModel;
 import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.MovieModel;
+import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.models.VodModel;
 import com.moutamid.daiptv.utilis.AddFavoriteDialog;
 import com.moutamid.daiptv.utilis.Constants;
@@ -76,6 +77,7 @@ public class DetailActivity extends BaseActivity {
             favoriteModel.name = model.name;
             favoriteModel.category_id = model.category_id;
             favoriteModel.type = model.stream_type;
+            favoriteModel.steam_id = String.valueOf(model.stream_id);
             new AddFavoriteDialog(this, favoriteModel).show();
         });
 
@@ -284,13 +286,15 @@ public class DetailActivity extends BaseActivity {
             startActivity(intent);
         });
 
+        UserModel userModel =(UserModel) Stash.getObject(Constants.USER, UserModel.class);
+        String link = userModel.url + "/movie/" + userModel.username + "/" + userModel.password + "/" + model.stream_id + "." + model.container_extension;
         binding.play.requestFocus();
         binding.play.setOnClickListener(v -> {
-            // Stash.clear(String.valueOf(model.getID()));
-           // startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("url", model.getChannelUrl()).putExtra("name", movieModel.original_title));
+             Stash.clear(String.valueOf(model.stream_id));
+            startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("url", link).putExtra("name", movieModel.original_title));
         });
         binding.resume.setOnClickListener(v -> {
-           // startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("resume", String.valueOf(model.getID())).putExtra("url", model.getChannelUrl()).putExtra("name", movieModel.original_title));
+            startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("resume", String.valueOf(model.stream_id)).putExtra("url", link).putExtra("name", movieModel.original_title));
         });
 
         binding.play.setOnFocusChangeListener((v, hasFocus) -> {

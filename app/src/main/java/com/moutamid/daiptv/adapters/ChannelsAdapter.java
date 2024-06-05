@@ -1,6 +1,8 @@
 package com.moutamid.daiptv.adapters;
 
 import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,11 +13,14 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.fxn.stash.Stash;
 import com.google.android.material.card.MaterialCardView;
 import com.moutamid.daiptv.R;
+import com.moutamid.daiptv.activities.VideoPlayerActivity;
 import com.moutamid.daiptv.models.ChannelsModel;
 import com.moutamid.daiptv.models.EPGModel;
 import com.moutamid.daiptv.models.FavoriteModel;
+import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.utilis.AddFavoriteDialog;
 import com.moutamid.daiptv.utilis.Constants;
 
@@ -39,6 +44,7 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
         return new ChannelVH(LayoutInflater.from(parent.getContext()).inflate(R.layout.channels_card, parent, false));
     }
 
+    private static final String TAG = "ChannelsAdapter";
     @Override
     public void onBindViewHolder(@NonNull ChannelVH holder, int position) {
         ChannelsModel model = list.get(holder.getAdapterPosition());
@@ -47,17 +53,26 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
                 .into(holder.image);
         holder.title.setText(model.name);
         holder.epg.setText(model.epg_channel_id);
-        if (model.epg != null) {
-            List<EPGModel> epgList = model.epg;
-            for (EPGModel e : epgList) {
-                Date startDate = Constants.parseDate(e.start);
-                Date endDate = Constants.parseDate(e.end);
-                if (Constants.isCurrentDateInBetween(startDate, endDate)) {
-                    holder.epg.setText(e.title);
-                    break;
-                }
-            }
-        }
+
+//        List<EPGModel> epgList = Stash.getArrayList(Constants.EPG, EPGModel.class);
+//        for (EPGModel e : epgList){
+//            Date startDate = Constants.parseDate(e.start);
+//            Date endDate = Constants.parseDate(e.end);
+//            if (Constants.isCurrentDateInBetween(startDate, endDate)) {
+//                holder.epg.setText(e.title);
+//                break;
+//            }
+//        }
+
+        holder.itemView.setOnClickListener(v -> {
+            UserModel userModel =(UserModel) Stash.getObject(Constants.USER, UserModel.class);
+            String link = userModel.url + userModel.username + "/" + userModel.password + "/" + model.stream_id;
+            Log.d(TAG, "onBindViewHolder: " + link);
+            ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.RECENT_CHANNELS, ChannelsModel.class);
+            channelsList.add(model);
+            Stash.put(Constants.RECENT_CHANNELS, channelsList);
+            context.startActivity(new Intent(context, VideoPlayerActivity.class).putExtra("url", link).putExtra("name", model.name));
+        });
 
         holder.itemView.setOnLongClickListener(v -> {
             FavoriteModel favoriteModel = new FavoriteModel();
@@ -66,6 +81,7 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
             favoriteModel.name = model.name;
             favoriteModel.category_id = model.category_id;
             favoriteModel.type = model.stream_type;
+            favoriteModel.steam_id = String.valueOf(model.stream_id);
             new AddFavoriteDialog(context, favoriteModel).show();
             return false;
         });

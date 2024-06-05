@@ -8,18 +8,16 @@ appcompat = "1.7.0"
 material = "1.12.0"
 activity = "1.9.0"
 constraintlayout = "2.1.4"
+media3Exoplayer = "1.3.1"
 okhttp3Integration = "4.15.1"
 playServicesAuth = "21.2.0"
 stash = "1.3.2"
 translateapi = "1.1"
 volley = "1.2.1"
-widget = "2.1.26.1"
 
 [libraries]
-cache = { module = "com.github.hty527.iPlayer:cache", version.ref = "widget" }
 compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glide" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
-iplayer = { module = "com.github.hty527.iPlayer:iplayer", version.ref = "widget" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -27,12 +25,14 @@ appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "a
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3Exoplayer" }
+media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3Exoplayer" }
+media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
 okhttp3-integration = { module = "com.github.bumptech.glide:okhttp3-integration", version.ref = "okhttp3Integration" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 translateapi = { module = "com.github.iammannan:TranslateAPI", version.ref = "translateapi" }
 volley = { module = "com.android.volley:volley", version.ref = "volley" }
 stash = { module = "com.fxn769:stash", version.ref = "stash" }
-widget = { module = "com.github.hty527.iPlayer:widget", version.ref = "widget" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

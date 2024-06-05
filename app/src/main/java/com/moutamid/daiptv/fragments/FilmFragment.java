@@ -78,19 +78,13 @@ public class FilmFragment extends Fragment {
         super.onResume();
         Stash.put(Constants.SELECTED_PAGE, "Film");
     }
-
+    ArrayList<VodModel> topRated;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentFilmBinding.inflate(getLayoutInflater(), container, false);
 
         requestQueue = VolleySingleton.getInstance(mContext).getRequestQueue();
-
-        listAll = new ArrayList<>();
-        ArrayList<VodModel> topRated = Stash.getArrayList(Constants.TOP_FILMS, VodModel.class);
-        listAll.add(new FilmsModel(Constants.topRated, "Top Films", topRated));
-
-        fetchID(topRated.get(new Random().nextInt(topRated.size())));
 
         binding.recycler.setLayoutManager(new LinearLayoutManager(mContext));
         binding.recycler.setHasFixedSize(false);
@@ -100,9 +94,18 @@ public class FilmFragment extends Fragment {
 
         initializeDialog();
 
-        ArrayList<VodModel> film = Stash.getArrayList(Constants.FILMS, VodModel.class);
-        if (film.isEmpty())
+        topRated = Stash.getArrayList(Constants.TOP_FILMS, VodModel.class);
+        fetchID(topRated.get(new Random().nextInt(topRated.size())));
+
+        ArrayList<FilmsModel> film = Stash.getArrayList(Constants.FILMS, FilmsModel.class);
+        if (film.isEmpty()) {
+            listAll = new ArrayList<>();
+            listAll.add(new FilmsModel(Constants.topRated, "Top Films", topRated));
             getCategory();
+        } else {
+            parentAdapter = new FilmParentAdapter(mContext, film, selectedFilm);
+            binding.recycler.setAdapter(parentAdapter);
+        }
 
         return binding.getRoot();
     }
@@ -395,6 +398,7 @@ public class FilmFragment extends Fragment {
                             FilmsModel model = new FilmsModel(items.category_id, items.category_name, list);
                             listAll.set(finalK, model);
                             if (finalK == listAll.size() - 1) {
+                                Stash.put(Constants.FILMS, listAll);
                                 dialog.dismiss();
                                 parentAdapter = new FilmParentAdapter(mContext, listAll, selectedFilm);
                                 binding.recycler.setAdapter(parentAdapter);
@@ -412,6 +416,8 @@ public class FilmFragment extends Fragment {
     }
 
     public void refreshList() {
-
+        listAll = new ArrayList<>();
+        listAll.add(new FilmsModel(Constants.topRated, "Top Films", topRated));
+        getCategory();
     }
 }

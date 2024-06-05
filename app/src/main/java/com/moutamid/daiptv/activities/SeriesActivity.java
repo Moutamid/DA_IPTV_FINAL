@@ -5,8 +5,8 @@ import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.view.Window;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -18,16 +18,12 @@ import com.fxn.stash.Stash;
 import com.moutamid.daiptv.BaseActivity;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.EpisodesAdapter;
-import com.moutamid.daiptv.adapters.HomeParentAdapter;
 import com.moutamid.daiptv.adapters.SeasonsAdapter;
 import com.moutamid.daiptv.databinding.ActivitySeriesBinding;
-import com.moutamid.daiptv.models.ChannelsModel;
 import com.moutamid.daiptv.models.EpisodesModel;
-import com.moutamid.daiptv.models.FavoriteModel;
-import com.moutamid.daiptv.models.MovieModel;
 import com.moutamid.daiptv.models.SeasonsItem;
+import com.moutamid.daiptv.models.SeriesInfoModel;
 import com.moutamid.daiptv.models.SeriesModel;
-import com.moutamid.daiptv.models.TopItems;
 import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
@@ -39,9 +35,8 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SeriesActivity extends BaseActivity {
     private static final String TAG = "SeriesActivity";
@@ -52,6 +47,7 @@ public class SeriesActivity extends BaseActivity {
     RequestQueue requestQueue;
     int id;
     String searchQuery;
+    SeriesInfoModel infoModel;
 
     private void initializeDialog() {
         dialog = new Dialog(this);
@@ -80,7 +76,7 @@ public class SeriesActivity extends BaseActivity {
 
         initializeDialog();
 
-        output = model.name;
+        output = Constants.regexName(model.name);
 
         getList();
 
@@ -139,12 +135,7 @@ public class SeriesActivity extends BaseActivity {
                         }
                         Log.d(TAG, "getDetails: " + episodesModelArrayList.size());
                         EpisodesAdapter episodesAdapter = new EpisodesAdapter(SeriesActivity.this, episodesModelArrayList, episodeModel -> {
-                            Log.d(TAG, "Episode Clicked: ");
-                            searchQuery = Constants.queryName(model.name);
-                            searchQuery += " " + episodeModel.se;
-                            Log.d(TAG, "searchQuery: " + searchQuery);
-
-                           // TODO startActivity(new Intent(SeriesActivity.this, VideoPlayerActivity.class).putExtra("url", channelsModel.getChannelUrl()).putExtra("name", channelsModel.getChannelName()));
+                            getLink(episodeModel.se);
                         });
                         binding.episodeRC.setAdapter(episodesAdapter);
                     } catch (JSONException e) {
@@ -155,6 +146,57 @@ public class SeriesActivity extends BaseActivity {
             Log.e(TAG, "error: " + error.getMessage());
             error.printStackTrace();
             dialog.dismiss();
+        });
+        requestQueue.add(objectRequest);
+    }
+
+    private void getLink(String se) {
+        dialog.show();
+        String regex = "S(\\d+) E(\\d+)";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(se);
+        if (matcher.find()) {
+            int season = Integer.parseInt(matcher.group(1));
+            int episodeNumber = Integer.parseInt(matcher.group(2));
+            Log.d(TAG, "Season: " + season + ", Episode: " + episodeNumber);
+            getInfo(season, episodeNumber);
+        }
+    }
+
+    private void getInfo(int season, int episode) {
+        String url = ApiLinks.getSeriesInfoByID(String.valueOf(model.series_id));
+        Log.d(TAG, "fetchID: URL  " + url);
+        JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
+                response -> {
+                    try {
+                        dialog.dismiss();
+                        JSONObject episodes = response.getJSONObject("episodes");
+                        JSONArray array = episodes.getJSONArray(String.valueOf(season));
+                        for (int i = 0; i < array.length(); i++) {
+                            JSONObject object = array.getJSONObject(i);
+                            int episode_num = object.getInt("episode_num");
+                            int season_num = object.getInt("season");
+                            if (season_num == season && episode_num == episode) {
+                                infoModel = new SeriesInfoModel(object.getString("id"), object.getString("container_extension"));
+                                break;
+                            }
+                        }
+                        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+                        String link = userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + infoModel.id + "." + infoModel.container_extension;
+                        Stash.put(Constants.SERIES_LINK, infoModel);
+                        startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("resume", infoModel.id).putExtra("url", link).putExtra("name", model.name));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        runOnUiThread(() -> {
+                            dialog.dismiss();
+                            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+                        });
+                    }
+                }, error -> {
+            error.printStackTrace();
+            runOnUiThread(() -> {
+                dialog.dismiss();
+            });
         });
         requestQueue.add(objectRequest);
     }

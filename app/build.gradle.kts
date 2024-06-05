@@ -41,9 +41,9 @@ dependencies {
     implementation(libs.okhttp3.integration)
     implementation(libs.translateapi)
 
-    implementation(libs.widget)
-    implementation(libs.iplayer)
-    implementation(libs.cache)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.exoplayer.dash)
+    implementation(libs.media3.ui)
 
     implementation(libs.play.services.auth)
 

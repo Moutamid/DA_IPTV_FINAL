@@ -22,7 +22,9 @@ import com.moutamid.daiptv.adapters.SearchFilmsAdapter;
 import com.moutamid.daiptv.adapters.SearchSeriesAdapter;
 import com.moutamid.daiptv.databinding.FragmentRechercheBinding;
 import com.moutamid.daiptv.models.ChannelsModel;
+import com.moutamid.daiptv.models.FilmsModel;
 import com.moutamid.daiptv.models.SeriesModel;
+import com.moutamid.daiptv.models.TVModel;
 import com.moutamid.daiptv.models.VodModel;
 import com.moutamid.daiptv.utilis.Constants;
 
@@ -34,6 +36,8 @@ public class RechercheFragment extends Fragment {
     private static final String TAG = "RechercheFragment";
     ArrayList<ChannelsModel> channels;
     ArrayList<VodModel> film;
+    ArrayList<FilmsModel> film_stash;
+    ArrayList<TVModel> series_stash;
     ArrayList<SeriesModel> series;
     SearchAdapter channelAdapter;
     SearchFilmsAdapter filmAdapter;
@@ -81,8 +85,18 @@ public class RechercheFragment extends Fragment {
         initializeDialog();
 
         channels = Stash.getArrayList(Constants.CHANNELS_ALL, ChannelsModel.class);
-        film = Stash.getArrayList(Constants.FILMS, VodModel.class);
-        series = Stash.getArrayList(Constants.SERIES, SeriesModel.class);
+        film_stash = Stash.getArrayList(Constants.FILMS, FilmsModel.class);
+        series_stash = Stash.getArrayList(Constants.SERIES, TVModel.class);
+
+        film = new ArrayList<>();
+        series = new ArrayList<>();
+
+        for (FilmsModel model : film_stash) {
+            film.addAll(model.list);
+        }
+        for (TVModel model : series_stash) {
+            series.addAll(model.list);
+        }
 
         channelAdapter = new SearchAdapter(mContext, new ArrayList<>());
         filmAdapter = new SearchFilmsAdapter(mContext, new ArrayList<>());
