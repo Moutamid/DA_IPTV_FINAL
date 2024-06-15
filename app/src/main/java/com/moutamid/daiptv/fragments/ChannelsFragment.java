@@ -47,7 +47,7 @@ public class ChannelsFragment extends Fragment {
     Dialog dialog;
     private RequestQueue requestQueue;
     private static final String TAG = "ChannelsFragment";
-
+    Map<String, String> channels;
     private Context mContext;
 
     @Override
@@ -77,13 +77,16 @@ public class ChannelsFragment extends Fragment {
         ArrayList<CategoryModel> list = Stash.getArrayList(Constants.CHANNELS, CategoryModel.class);
         Log.d(TAG, "onCreateView: " + list.size());
         if (list.isEmpty()) addButton();
-        else showButtons(list);
+        else {
+            showButtons(list);
+            switchGroup(channels.get("FRANCE FHD | TV"));
+        }
 
         return binding.getRoot();
     }
 
     private void showButtons(ArrayList<CategoryModel> list) {
-        Map<String, String> channels = new HashMap<>();
+        channels = new HashMap<>();
         for (CategoryModel model : list) {
             if (!model.category_name.isEmpty()) {
                 channels.put(model.category_name.trim(), model.category_id);
@@ -94,11 +97,10 @@ public class ChannelsFragment extends Fragment {
                 button.setCornerRadius(12);
                 button.setNextFocusUpId(R.id.Chaines);
                 button.setGravity(Gravity.START | Gravity.CENTER);
-                binding.sidePanel.addView(button);
                 button.setStrokeColorResource(R.color.transparent);
                 button.setStrokeWidth(2);
 
-                if (selectedButton == null && button.getText().toString().equals("All")) {
+                if (selectedButton == null && button.getText().toString().trim().equals("FRANCE FHD | TV")) {
                     button.setStrokeColorResource(R.color.red);
                     selectedButton = button;
                 }
@@ -127,6 +129,12 @@ public class ChannelsFragment extends Fragment {
                     button.setStrokeColorResource(R.color.red);
                     selectedButton = button;
                 });
+                binding.sidePanel.addView(button);
+//                if (button.getText().toString().equals("All")) {
+//                    View view = new View(requireContext());
+//                    view.setBackgroundColor(getResources().getColor(R.color.grey2));
+//                    binding.sidePanel.addView(view);
+//                }
             }
         }
 
@@ -156,7 +164,7 @@ public class ChannelsFragment extends Fragment {
                             model.parent_id = object.getInt("parent_id");
                             list.add(model);
                         }
-                        Map<String, String> channels = new HashMap<>();
+                        channels = new HashMap<>();
                         for (CategoryModel model : list) {
                             if (!model.category_name.isEmpty()) {
                                 channels.put(model.category_name.trim(), model.category_id);
@@ -171,7 +179,7 @@ public class ChannelsFragment extends Fragment {
                                 button.setStrokeColorResource(R.color.transparent);
                                 button.setStrokeWidth(2);
 
-                                if (selectedButton == null && button.getText().toString().equals("All")) {
+                                if (selectedButton == null && button.getText().toString().equals("FRANCE FHD | TV")) {
                                     button.setStrokeColorResource(R.color.red);
                                     selectedButton = button;
                                 }

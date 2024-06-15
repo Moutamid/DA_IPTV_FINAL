@@ -368,7 +368,7 @@ public class FilmFragment extends Fragment {
             e.printStackTrace();
         }
         Log.d(TAG, "setUI: " + Constants.getImageLink(movieModel.banner));
-        Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
+        Glide.with(requireContext()).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
     }
 
     private void getVod() {

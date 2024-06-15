@@ -86,9 +86,9 @@ public class DetailSeriesActivity extends BaseActivity {
             favoriteModel.type = model.stream_type;
             new AddFavoriteDialog(this, favoriteModel).show();
         });
-
         requestQueue = VolleySingleton.getInstance(DetailSeriesActivity.this).getRequestQueue();
 
+        fetchID();
         if (model != null) {
             String url = ApiLinks.getSeriesInfoByID(String.valueOf(model.series_id));
             Log.d(TAG, "fetchID: URL  " + url);
@@ -106,7 +106,6 @@ public class DetailSeriesActivity extends BaseActivity {
                                     break;
                                 }
                             }
-                            fetchID();
                         } catch (JSONException e) {
                             e.printStackTrace();
                             runOnUiThread(() -> {

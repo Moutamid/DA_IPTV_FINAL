@@ -89,6 +89,29 @@ public class HomeFragment extends Fragment {
         PagerSnapHelper snapHelper = new PagerSnapHelper();
         snapHelper.attachToRecyclerView(binding.recycler);
 
+        list = Stash.getArrayList(Constants.HOME, TopItems.class);
+        if (list.isEmpty()) getList();
+        else {
+            fetchID(list.get(0).list.get(0));
+            UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+            ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);
+            if (!fvrt.isEmpty()) {
+                ArrayList<MovieModel> fvrtList = new ArrayList<>();
+                for (FavoriteModel channelsModel : fvrt) {
+                    if (!channelsModel.type.equals("live")) {
+                        MovieModel model = new MovieModel();
+                        model.type = channelsModel.type;
+                        model.banner = channelsModel.image;
+                        model.original_title = channelsModel.name;
+                        fvrtList.add(model);
+                    }
+                }
+                list.add(new TopItems("Favoris", fvrtList));
+            }
+            adapter = new HomeParentAdapter(mContext, list, selected);
+            binding.recycler.setAdapter(adapter);
+        }
+
         return binding.getRoot();
     }
 
@@ -124,7 +147,7 @@ public class HomeFragment extends Fragment {
                             filmsChan.add(vodModel);
                             films.add(model);
                         }
-                        fetchID(films.get(new Random().nextInt(films.size())));
+                        fetchID(films.get(0));
                         Log.d(TAG, "getTopFilms: Films " + films.size());
                         list.add(new TopItems("Top Films", films));
                         Stash.put(Constants.TOP_FILMS, filmsChan);
@@ -424,28 +447,6 @@ public class HomeFragment extends Fragment {
     public void onResume() {
         super.onResume();
         Stash.put(Constants.SELECTED_PAGE, "Home");
-        list = Stash.getArrayList(Constants.HOME, TopItems.class);
-        if (list.isEmpty()) getList();
-        else {
-            fetchID(list.get(0).list.get(new Random().nextInt(list.get(0).list.size())));
-            UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-            ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);
-            if (!fvrt.isEmpty()) {
-                ArrayList<MovieModel> fvrtList = new ArrayList<>();
-                for (FavoriteModel channelsModel : fvrt) {
-                    if (!channelsModel.type.equals("live")) {
-                        MovieModel model = new MovieModel();
-                        model.type = channelsModel.type;
-                        model.banner = channelsModel.image;
-                        model.original_title = channelsModel.name;
-                        fvrtList.add(model);
-                    }
-                }
-                list.add(new TopItems("Favoris", fvrtList));
-            }
-            adapter = new HomeParentAdapter(mContext, list, selected);
-            binding.recycler.setAdapter(adapter);
-        }
     }
 
     private void initializeDialog() {
