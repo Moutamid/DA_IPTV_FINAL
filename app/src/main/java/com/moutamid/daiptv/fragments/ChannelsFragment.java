@@ -209,7 +209,7 @@ public class ChannelsFragment extends Fragment {
                             }
                         }
                         Stash.put(Constants.CHANNELS, list);
-                        showAllItems();
+                        switchGroup(channels.get("FRANCE FHD | TV"));
                     } catch (JSONException e) {
                         e.printStackTrace();
                         dialog.dismiss();

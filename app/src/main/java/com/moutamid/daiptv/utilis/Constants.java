@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
+import android.os.Build;
 import android.util.Log;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 
 import com.google.firebase.database.DatabaseReference;
@@ -22,6 +24,9 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -102,9 +107,20 @@ public class Constants {
         }
     }
 
-    public static boolean isCurrentDateInBetween(Date startDate, Date endDate) {
-        Date currentDate = new Date();
-        return currentDate.after(startDate) && currentDate.before(endDate);
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public static boolean isCurrentDateInBetween(String startDate, String endDate) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss ZZZZ");
+            ZonedDateTime startTime = ZonedDateTime.parse(startDate, formatter);
+            ZonedDateTime endTime = ZonedDateTime.parse(endDate, formatter);
+            ZonedDateTime currentTime = ZonedDateTime.now(ZoneId.of(startTime.getZone().getId()));
+            return currentTime.isAfter(startTime) && currentTime.isBefore(endTime);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+//        Date currentDate = new Date();
+//        return currentDate.after(startDate) && currentDate.before(endDate);
     }
 
     public static void checkApp(Activity activity) {

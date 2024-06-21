@@ -39,6 +39,7 @@
                 android:layout_margin="15dp"
                 app:cardBackgroundColor="@color/black_bg_trans"
                 app:cardCornerRadius="12dp"
+                android:visibility="invisible"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
 
@@ -168,24 +169,9 @@
                 android:orientation="horizontal">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/resume"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:backgroundTint="@color/black_bg_trans"
-                    android:padding="12dp"
-                    android:text="Reprendre la lecture"
-                    app:cornerRadius="12dp"
-                    app:icon="@drawable/play_2_focus"
-                    app:iconSize="26dp"
-                    android:textSize="13sp"
-                    app:strokeColor="@color/grey2"
-                    app:strokeWidth="1dp" />
-
-                <com.google.android.material.button.MaterialButton
                     android:id="@+id/episodes"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
                     android:backgroundTint="@color/black_bg_trans"
@@ -201,7 +187,7 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/trailer"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
                     android:textSize="13sp"
@@ -229,7 +215,7 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/add"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:backgroundTint="@color/black_bg_trans"
                     android:padding="12dp"
@@ -244,7 +230,7 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/reader"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
                     android:backgroundTint="@color/black_bg_trans"
@@ -259,11 +245,27 @@
 
             </LinearLayout>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/resume"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/black_bg_trans"
+                android:padding="12dp"
+                android:text="Reprendre la lecture"
+                app:cornerRadius="12dp"
+                android:layout_centerHorizontal="true"
+                android:layout_below="@id/banner2"
+                app:icon="@drawable/play_2_focus"
+                app:iconSize="26dp"
+                android:textSize="13sp"
+                app:strokeColor="@color/grey2"
+                app:strokeWidth="1dp" />
+
             <TextView
                 android:id="@+id/cast"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/banner2"
+                android:layout_below="@id/resume"
                 android:padding="15dp"
                 android:text="Acteurs"
                 android:textColor="@color/white"

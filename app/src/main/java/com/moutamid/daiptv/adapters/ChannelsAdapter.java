@@ -2,6 +2,7 @@ package com.moutamid.daiptv.adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,12 +19,15 @@ import com.google.android.material.card.MaterialCardView;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.activities.VideoPlayerActivity;
 import com.moutamid.daiptv.models.ChannelsModel;
+import com.moutamid.daiptv.models.EPGModel;
 import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.utilis.AddFavoriteDialog;
 import com.moutamid.daiptv.utilis.Constants;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.ChannelVH> {
@@ -53,14 +57,16 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
         holder.epg.setText(model.epg_channel_id);
 
 //        List<EPGModel> epgList = Stash.getArrayList(Constants.EPG, EPGModel.class);
-//        for (EPGModel e : epgList){
-//            Date startDate = Constants.parseDate(e.start);
-//            Date endDate = Constants.parseDate(e.end);
-//            if (Constants.isCurrentDateInBetween(startDate, endDate)) {
-//                holder.epg.setText(e.title);
-//                break;
-//            }
-//        }
+////        for (EPGModel e : epgList){
+////            Date startDate = Constants.parseDate(e.start);
+////            Date endDate = Constants.parseDate(e.end);
+////            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+////                if (Constants.isCurrentDateInBetween(e.start, e.end)) {
+////                    holder.epg.setText(e.title);
+////                    break;
+////                }
+////            }
+////        }
 
         holder.itemView.setOnClickListener(v -> {
             UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
