@@ -99,7 +99,7 @@ public class DetailActivity extends BaseActivity {
         Log.d(TAG, "fetchID: " + name);
         String url = Constants.getMovieData(name, Constants.extractYear(model.name), Constants.TYPE_MOVIE);
 
-        Log.d(TAG, "fetchID: URL  " + url);
+        Log.d(TAG, "fetchID: URL  " + model.added);
 
         JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 response -> {
@@ -290,8 +290,8 @@ public class DetailActivity extends BaseActivity {
         String link = userModel.url + "/movie/" + userModel.username + "/" + userModel.password + "/" + model.stream_id + "." + model.container_extension;
         binding.play.requestFocus();
         binding.play.setOnClickListener(v -> {
-             Stash.clear(String.valueOf(model.stream_id));
-            startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("url", link).putExtra("name", movieModel.original_title));
+            Stash.clear(String.valueOf(model.stream_id));
+            startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("resume", String.valueOf(model.stream_id)).putExtra("url", link).putExtra("name", movieModel.original_title));
         });
         binding.resume.setOnClickListener(v -> {
             startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("resume", String.valueOf(model.stream_id)).putExtra("url", link).putExtra("name", movieModel.original_title));

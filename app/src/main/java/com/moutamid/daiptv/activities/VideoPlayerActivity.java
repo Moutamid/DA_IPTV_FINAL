@@ -4,6 +4,8 @@ import static androidx.media3.ui.PlayerView.SHOW_BUFFERING_WHEN_PLAYING;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -11,6 +13,7 @@ import androidx.annotation.OptIn;
 import androidx.media3.common.AudioAttributes;
 import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.MediaMetadata;
 import androidx.media3.common.MimeTypes;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
@@ -25,6 +28,7 @@ import androidx.media3.ui.PlayerView;
 
 import com.fxn.stash.Stash;
 import com.moutamid.daiptv.BaseActivity;
+import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.databinding.ActivityVideoPlayerBinding;
 import com.moutamid.daiptv.utilis.Constants;
 import com.moutamid.daiptv.utilis.Features;
@@ -49,6 +53,7 @@ public class VideoPlayerActivity extends BaseActivity {
 
         Log.d("VideoURLPlayer", "" + url);
         Log.d("VideoURLPlayer", "resume   " + resume);
+        Log.d("VideoURLPlayer", "name   " + name);
 
         Constants.checkFeature(VideoPlayerActivity.this, Features.VIDEO_PLAYER);
         DefaultTrackSelector trackSelector = new DefaultTrackSelector(this);
@@ -59,8 +64,13 @@ public class VideoPlayerActivity extends BaseActivity {
                         .setTrackSelector(trackSelector)
                         .build();
 
+        MediaMetadata mediaMetadata = new MediaMetadata.Builder()
+                .setTitle(name).setDisplayTitle(name)
+                .build();
+
         MediaItem mediaItem =
                 new MediaItem.Builder()
+                        .setMediaMetadata(mediaMetadata)
                         .setUri(url)
                         .setLiveConfiguration(
                                 new MediaItem.LiveConfiguration.Builder().setMaxPlaybackSpeed(1.02f).build())
@@ -72,14 +82,19 @@ public class VideoPlayerActivity extends BaseActivity {
                 .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
                 .build();
         player.setAudioAttributes(audioAttributes, true);
-
         player.setMediaItem(mediaItem);
 
         PlayerView playerView = binding.playerView;
-
         playerView.setPlayer(player);
-
         playerView.setShowBuffering(SHOW_BUFFERING_WHEN_PLAYING);
+
+        try {
+            TextView ti = playerView.findViewById(R.id.channelTitle);
+            ti.setText(name);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         player.addListener(new Player.Listener() {
 
             @Override
@@ -116,7 +131,7 @@ public class VideoPlayerActivity extends BaseActivity {
             Log.d(TAG, "setAudioTrack: mappedTrackInfo.getRendererCount()  " + mappedTrackInfo.getRendererCount());
             for (int rendererIndex = 0; rendererIndex < mappedTrackInfo.getRendererCount(); rendererIndex++) {
                 TrackGroupArray trackGroups = mappedTrackInfo.getTrackGroups(rendererIndex);
-                Log.d(TAG, "trackGroups: " +trackGroups.length);
+                Log.d(TAG, "trackGroups: " + trackGroups.length);
                 for (int groupIndex = 0; groupIndex < trackGroups.length; groupIndex++) {
                     TrackGroup trackGroup = trackGroups.get(groupIndex);
                     for (int trackIndex = 0; trackIndex < trackGroup.length; trackIndex++) {

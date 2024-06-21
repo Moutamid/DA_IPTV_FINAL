@@ -10,6 +10,10 @@
         android:id="@+id/player_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:show_subtitle_button="true"
         app:use_controller="true"/>
+
+    <!--
+        app:controller_layout_id="@layout/player_controler_view"-->
 
 </RelativeLayout>

@@ -68,13 +68,21 @@ public class DetailSeriesActivity extends BaseActivity {
         initializeDialog();
 
         binding.reader.setOnClickListener(v -> {
-//            if (model.() != null) {
-//                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(model.getChannelUrl().trim()));
-//                intent.setType("video/*");
-//                startActivity(intent);
-//            } else {
-//                Toast.makeText(this, "Aucun lecteur externe trouvé", Toast.LENGTH_SHORT).show();
-//            }
+            UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+            try {
+                SeriesInfoModel seriesInfoModel = (SeriesInfoModel) Stash.getObject(Constants.SERIES_LINK, SeriesInfoModel.class);
+                String link = seriesInfoModel == null ?
+                        userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + infoModel.id + "." + infoModel.container_extension :
+                        userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + seriesInfoModel.id + "." + seriesInfoModel.container_extension;
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+                intent.setType("video/*");
+                startActivity(intent);
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Échec de la récupération du lien.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Aucun lecteur externe trouvé", Toast.LENGTH_SHORT).show();
+                });
+            }
         });
 
         binding.add.setOnClickListener(v -> {
@@ -147,6 +155,7 @@ public class DetailSeriesActivity extends BaseActivity {
                         runOnUiThread(() -> {
                             dialog.dismiss();
                             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+                            Toast.makeText(this, "Film introuvable dans l'API.", Toast.LENGTH_SHORT).show();
                         });
                     }
                 }, error -> {
@@ -321,18 +330,32 @@ public class DetailSeriesActivity extends BaseActivity {
         });
 
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        SeriesInfoModel seriesInfoModel = (SeriesInfoModel) Stash.getObject(Constants.SERIES_LINK, SeriesInfoModel.class);
-        String link = seriesInfoModel == null ?
-                userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + infoModel.id + "." + infoModel.container_extension :
-                userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + seriesInfoModel.id + "." + seriesInfoModel.container_extension;
 
         binding.play.setOnClickListener(v -> {
-            startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("url", link).putExtra("name", movieModel.original_title));
+            try {
+                String link = userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + infoModel.id + "." + infoModel.container_extension;
+                startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("url", link).putExtra("name", movieModel.original_title));
+            } catch (Exception e){
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Échec de la récupération du lien.", Toast.LENGTH_SHORT).show();
+                });
+            }
         });
 
         binding.resume.setOnClickListener(v -> {
-            String resume = seriesInfoModel == null ? infoModel.id : seriesInfoModel.id;
-            startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("resume", resume).putExtra("url", link).putExtra("name", movieModel.original_title));
+            try {
+                SeriesInfoModel seriesInfoModel = (SeriesInfoModel) Stash.getObject(Constants.SERIES_LINK, SeriesInfoModel.class);
+                String link = seriesInfoModel == null ?
+                        userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + infoModel.id + "." + infoModel.container_extension :
+                        userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + seriesInfoModel.id + "." + seriesInfoModel.container_extension;
+
+                String resume = seriesInfoModel == null ? infoModel.id : seriesInfoModel.id;
+                startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("resume", resume).putExtra("url", link).putExtra("name", movieModel.original_title));
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Échec de la récupération du lien.", Toast.LENGTH_SHORT).show();
+                });
+            }
         });
 
         binding.play.setOnFocusChangeListener((v, hasFocus) -> {

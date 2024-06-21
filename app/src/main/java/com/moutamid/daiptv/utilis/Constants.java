@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
+import android.util.Log;
 
 import androidx.appcompat.app.AlertDialog;
 
@@ -20,8 +21,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,8 +51,8 @@ public class Constants {
     public static final String TYPE_TV = "tv";
     public static final String lang_fr = "&language=fr";
     public static final String lang_en = "&language=en-US";
-    public static final String topTV = "https://api.themoviedb.org/3/tv/top_rated?api_key=26bedf3e3be75a2810a53f4a445e7b1f&language=fr&page=1";
-    public static final String topFILM = "https://api.themoviedb.org/3/movie/top_rated?api_key=26bedf3e3be75a2810a53f4a445e7b1f&language=fr&page=1";
+    public static final String topTV = "https://api.themoviedb.org/3/tv/popular?api_key=26bedf3e3be75a2810a53f4a445e7b1f&language=fr&page=1";
+    public static final String topFILM = "https://api.themoviedb.org/3/movie/popular?api_key=26bedf3e3be75a2810a53f4a445e7b1f&language=fr&page=1";
     public static final String imageLink = "https://image.tmdb.org/t/p/original";
     public static final String movieSearch = "https://api.themoviedb.org/3/search/";
     public static final String movieDetails = "https://api.themoviedb.org/3/";
@@ -267,6 +270,8 @@ public class Constants {
         name = name.replaceAll("\\(\\d{4}\\)", "");
         name = name.replaceAll("\\| \\d{4} \\|", "");
         name = name.replaceAll("\\|\\d{4}\\|", "");
+//        name = name.replaceAll("\\|\\|\\d+\\|", "");
+//        name = name.replaceAll("\\|", "");
         Pattern pattern = Pattern.compile("\\b\\d{4}\\b");
         Matcher matcher = pattern.matcher(name);
         name = matcher.replaceAll("");
@@ -294,21 +299,64 @@ public class Constants {
     }
 
     public static String extractYear(String name) {
-        Pattern pattern = Pattern.compile("\\((\\d{4})\\)|\\| (\\d{4}) \\||\\|(\\d{4})\\||\\b(\\d{4})\\b");
-        Matcher matcher = pattern.matcher(name);
         String year = null;
-        if (matcher.find()) {
-            // Extract the year without brackets or pipes
-            for (int i = 1; i <= matcher.groupCount(); i++) {
-                if (matcher.group(i) != null) {
-                    year = matcher.group(i);
-                    break;
+        try {
+            Pattern pattern = Pattern.compile("\\((\\d{4})\\)|\\| (\\d{4}) \\||\\|(\\d{4})\\||\\b(\\d{4})\\b");
+            Matcher matcher = pattern.matcher(name);
+            if (matcher.find()) {
+                // Extract the year without brackets or pipes
+                for (int i = 1; i <= matcher.groupCount(); i++) {
+                    if (matcher.group(i) != null) {
+                        year = matcher.group(i);
+                        break;
+                    }
+                }
+            } else {
+                try {
+                    long timestamp = Long.parseLong(name) * 1000L;
+                    Date date = new Date(timestamp);
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy", Locale.getDefault());
+                    sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                    year = sdf.format(date);
+                } catch (Exception ee) {
+                    Log.d(TAG, "extractYear: ERROR ERROR " + ee.getLocalizedMessage());
+                    try {
+                        LocalDate date = null;
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                            date = LocalDate.parse(name);
+                            year = String.valueOf(date.getYear());
+                        }
+                    } catch (Exception ex) {
+                        Log.d(TAG, "extractYear: " + ex.getLocalizedMessage());
+                    }
+                }
+            }
+        } catch (Exception e){
+            Log.d(TAG, "extractYear: ERROR " + e.getLocalizedMessage());
+            try {
+                long timestamp = Long.parseLong(name) * 1000L;
+                Date date = new Date(timestamp);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy", Locale.getDefault());
+                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                year = sdf.format(date);
+            } catch (Exception ee) {
+                Log.d(TAG, "extractYear: ERROR ERROR " + ee.getLocalizedMessage());
+                try {
+                    LocalDate date = null;
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        date = LocalDate.parse(name);
+                        year = String.valueOf(date.getYear());
+                    }
+                } catch (Exception ex) {
+                    Log.d(TAG, "extractYear: " + ex.getLocalizedMessage());
                 }
             }
         }
+        Log.d(TAG, "extractYear: " + year);
         return year;
     }
 
+    private static final String TAG = "Constants";
     public static String queryName(String channelName) {
         Pattern patternPattern = Pattern.compile("\\bS\\d{2} E\\d{2}\\b");
         Matcher patternMatcher = patternPattern.matcher(channelName);

@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Random;
+import java.util.TimeZone;
 
 public class HomeFragment extends Fragment {
     private static final String TAG = "HomeFragment";
@@ -88,7 +89,6 @@ public class HomeFragment extends Fragment {
 
         PagerSnapHelper snapHelper = new PagerSnapHelper();
         snapHelper.attachToRecyclerView(binding.recycler);
-
         list = Stash.getArrayList(Constants.HOME, TopItems.class);
         if (list.isEmpty()) getList();
         else {
@@ -143,6 +143,7 @@ public class HomeFragment extends Fragment {
                             model.original_title = object.getString("title") + " " + year;
                             model.banner = object.getString("poster_path");
                             model.type = Constants.TYPE_MOVIE;
+                            model.release_date = object.getString("release_date");
 
                             filmsChan.add(vodModel);
                             films.add(model);
@@ -167,7 +168,7 @@ public class HomeFragment extends Fragment {
 
     private void getSeries() {
         Log.d(TAG, "getSeries: ");
-        String url = Constants.topTV;
+        String url = Constants. topTV;
         JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 response -> {
                     try {
@@ -185,6 +186,7 @@ public class HomeFragment extends Fragment {
                             model.original_title = object.getString("name") + " " + year;
                             model.banner = object.getString("poster_path");
                             model.type = Constants.TYPE_SERIES;
+                            model.release_date = object.getString("first_air_date");
                             series.add(model);
 
                             SeriesModel channel = new SeriesModel();

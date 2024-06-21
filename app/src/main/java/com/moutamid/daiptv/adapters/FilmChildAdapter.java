@@ -70,7 +70,7 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
 
         holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                Log.d(TAG, "onBindViewHolder: " + model.stream_icon);
+                Log.d("Constants", "onBindViewHolder: " + model.added);
                 itemSelected.selected(model);
             }
         });

@@ -2,6 +2,7 @@ package com.moutamid.daiptv.adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -83,6 +84,8 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
+                    Log.d(TAG, "onFocusChange: YEAR " + model.release_date);
+                    Log.d(TAG, "onFocusChange: NAME " + model.original_title);
                     itemSelected.selected(model);
                 }
             }
