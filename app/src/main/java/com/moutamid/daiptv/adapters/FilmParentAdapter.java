@@ -15,6 +15,7 @@ import com.android.volley.RequestQueue;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.listener.ItemSelectedFilm;
 import com.moutamid.daiptv.models.FilmsModel;
+import com.moutamid.daiptv.utilis.Constants;
 
 import java.util.ArrayList;
 
@@ -42,7 +43,8 @@ public class FilmParentAdapter extends RecyclerView.Adapter<FilmParentAdapter.Pa
         LinearLayoutManager lm = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
         holder.childRC.setLayoutManager(lm);
         holder.childRC.setHasFixedSize(false);
-        FilmChildAdapter adapter = new FilmChildAdapter(context, model.list, itemSelected);
+        boolean isTopRated = model.category_id.equals(Constants.topRated);
+        FilmChildAdapter adapter = new FilmChildAdapter(context, model.list, itemSelected, isTopRated);
         holder.childRC.setAdapter(adapter);
     }
 

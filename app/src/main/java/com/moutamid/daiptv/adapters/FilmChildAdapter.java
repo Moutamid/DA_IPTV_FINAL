@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,22 +30,29 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
     Context context;
     ArrayList<VodModel> list;
     ItemSelectedFilm itemSelected;
-
-    public FilmChildAdapter(Context context, ArrayList<VodModel> list, ItemSelectedFilm itemSelected) {
+    boolean isTopRated;
+    public FilmChildAdapter(Context context, ArrayList<VodModel> list, ItemSelectedFilm itemSelected, boolean isTopRated) {
         this.context = context;
         this.list = list;
         this.itemSelected = itemSelected;
+        this.isTopRated = isTopRated;
     }
 
     @NonNull
     @Override
     public ChildVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (isTopRated) return new ChildVH(LayoutInflater.from(context).inflate(R.layout.top_items, parent, false));
         return new ChildVH(LayoutInflater.from(context).inflate(R.layout.film_child_item, parent, false));
     }
 
     @Override
     public void onBindViewHolder(@NonNull ChildVH holder, int position) {
         VodModel model = list.get(holder.getAdapterPosition());
+
+        if (isTopRated){
+            holder.count.setText(String.valueOf(holder.getAdapterPosition()+1));
+        }
+
         try {
             String link = model.stream_icon.startsWith("/") ? Constants.getImageLink(model.stream_icon) : model.stream_icon.trim();
             Glide.with(context).load(link).placeholder(R.color.transparent).into(holder.image);
@@ -83,10 +91,12 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
     }
 
     public class ChildVH extends RecyclerView.ViewHolder {
+        TextView count;
         ImageView image;
 
         public ChildVH(@NonNull View itemView) {
             super(itemView);
+            count = itemView.findViewById(R.id.count);
             image = itemView.findViewById(R.id.image);
         }
     }

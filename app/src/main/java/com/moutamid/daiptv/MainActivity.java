@@ -230,6 +230,7 @@ public class MainActivity extends BaseActivity {
 
     private static final String TAG = "MainActivity";
     private void get() {
+        Stash.clear(Constants.EPG); // TODO
         ArrayList<EPGModel> list = Stash.getArrayList(Constants.EPG, EPGModel.class);
         Toast.makeText(this, "loading...", Toast.LENGTH_SHORT).show();
         new Thread(() -> {
@@ -285,7 +286,7 @@ public class MainActivity extends BaseActivity {
                             System.out.println();
                         }
                     }
-                    Stash.put(Constants.EPG, list);
+                  // TODO  Stash.put(Constants.EPG, list);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
