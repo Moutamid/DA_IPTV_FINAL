@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,6 +23,7 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.bumptech.glide.Glide;
 import com.fxn.stash.Stash;
+import com.google.android.material.snackbar.Snackbar;
 import com.mannan.translateapi.Language;
 import com.mannan.translateapi.TranslateAPI;
 import com.moutamid.daiptv.R;
@@ -350,25 +352,33 @@ public class FilmFragment extends Fragment {
     }
 
     private void setUI() {
-        binding.name.setText(movieModel.original_title);
-        binding.desc.setText(movieModel.tagline);
-        double d = Double.parseDouble(movieModel.vote_average);
-        binding.tmdbRating.setText(String.format("%.1f", d));
-        binding.filmType.setText(movieModel.genres);
-
-        SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        SimpleDateFormat outputFormat = new SimpleDateFormat("MMMM yyyy", Locale.FRANCE);
-
         try {
-            Date date = inputFormat.parse(movieModel.release_date);
-            String formattedDate = outputFormat.format(date);
-            String capitalized = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1);
-            binding.date.setText(capitalized);
-        } catch (ParseException e) {
+            binding.name.setText(movieModel.original_title);
+            binding.desc.setText(movieModel.tagline);
+            double d = Double.parseDouble(movieModel.vote_average);
+            binding.tmdbRating.setText(String.format("%.1f", d));
+            binding.filmType.setText(movieModel.genres);
+
+            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            SimpleDateFormat outputFormat = new SimpleDateFormat("MMMM yyyy", Locale.FRANCE);
+
+            try {
+                Date date = inputFormat.parse(movieModel.release_date);
+                String formattedDate = outputFormat.format(date);
+                String capitalized = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1);
+                binding.date.setText(capitalized);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            Log.d(TAG, "setUI: " + Constants.getImageLink(movieModel.banner));
+           try {
+               Glide.with(requireContext()).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
+           } catch (Exception e){
+               e.printStackTrace();
+           }
+        } catch (Exception e){
             e.printStackTrace();
         }
-        Log.d(TAG, "setUI: " + Constants.getImageLink(movieModel.banner));
-        Glide.with(requireContext()).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
     }
 
     private void getVod() {
@@ -398,6 +408,11 @@ public class FilmFragment extends Fragment {
                             FilmsModel model = new FilmsModel(items.category_id, items.category_name, list);
                             listAll.set(finalK, model);
                             if (finalK == listAll.size() - 1) {
+                                if (snackbar != null){
+                                    snackbar.dismiss();
+                                    snackbar = null;
+                                    Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                                }
                                 Stash.put(Constants.FILMS, listAll);
                                 dialog.dismiss();
                                 parentAdapter = new FilmParentAdapter(mContext, listAll, selectedFilm);
@@ -405,19 +420,28 @@ public class FilmFragment extends Fragment {
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
-                            dialog.dismiss();
+                            dialog.dismiss();if (snackbar != null){
+                                snackbar.dismiss();
+                                Toast.makeText(mContext, e.getLocalizedMessage()+"", Toast.LENGTH_SHORT).show();
+                            }
                         }
                     }, error -> {
                 error.printStackTrace();
                 dialog.dismiss();
+                if (snackbar != null){
+                    snackbar.dismiss();
+                    Toast.makeText(mContext, error.getLocalizedMessage()+"", Toast.LENGTH_SHORT).show();
+                }
             });
             requestQueue.add(objectRequest);
         }
     }
-
+    Snackbar snackbar;
     public void refreshList() {
         listAll = new ArrayList<>();
         listAll.add(new FilmsModel(Constants.topRated, "Top Films", topRated));
+        snackbar = Snackbar.make(binding.getRoot(), "la playlist est rafraîchissante", Snackbar.LENGTH_INDEFINITE);
+        snackbar.show();
         getCategory();
     }
 }

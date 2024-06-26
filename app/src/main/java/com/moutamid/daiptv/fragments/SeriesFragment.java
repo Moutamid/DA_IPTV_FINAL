@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,6 +23,7 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.bumptech.glide.Glide;
 import com.fxn.stash.Stash;
+import com.google.android.material.snackbar.Snackbar;
 import com.mannan.translateapi.Language;
 import com.mannan.translateapi.TranslateAPI;
 import com.moutamid.daiptv.R;
@@ -77,7 +79,9 @@ public class SeriesFragment extends Fragment {
         super.onDetach();
         this.mContext = null;
     }
+
     ArrayList<SeriesModel> topRated;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -182,16 +186,29 @@ public class SeriesFragment extends Fragment {
                             listAll.set(finalK, model);
                             if (finalK == listAll.size() - 1) {
                                 dialog.dismiss();
+                                if (snackbar != null){
+                                    snackbar.dismiss();
+                                    snackbar = null;
+                                    Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                                }
                                 Stash.put(Constants.SERIES, listAll);
                                 parentAdapter = new SeriesParentAdapter(mContext, listAll, selectedFilm);
                                 binding.recycler.setAdapter(parentAdapter);
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
+                            if (snackbar != null){
+                                snackbar.dismiss();
+                                Toast.makeText(mContext, e.getLocalizedMessage()+"", Toast.LENGTH_SHORT).show();
+                            }
                             dialog.dismiss();
                         }
                     }, error -> {
                 error.printStackTrace();
+                if (snackbar != null){
+                    snackbar.dismiss();
+                    Toast.makeText(mContext, error.getLocalizedMessage()+"", Toast.LENGTH_SHORT).show();
+                }
                 dialog.dismiss();
             });
             requestQueue.add(objectRequest);
@@ -385,7 +402,11 @@ public class SeriesFragment extends Fragment {
                                 banner = images.getJSONObject(index).getString("file_path");
                             }
                             movieModel.banner = banner;
-                            Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
+                            try {
+                                Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -399,30 +420,36 @@ public class SeriesFragment extends Fragment {
     }
 
     private void setUI() {
-        binding.name.setText(movieModel.original_title);
-        binding.desc.setText(movieModel.tagline);
-        double d = Double.parseDouble(movieModel.vote_average);
-        binding.tmdbRating.setText(String.format("%.1f", d));
-        binding.filmType.setText(movieModel.genres);
-
-        SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        SimpleDateFormat outputFormat = new SimpleDateFormat("MMMM yyyy", Locale.FRANCE);
-
         try {
-            Date date = inputFormat.parse(movieModel.release_date);
-            String formattedDate = outputFormat.format(date);
-            String capitalized = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1);
-            binding.date.setText(capitalized);
-        } catch (ParseException e) {
+            binding.name.setText(movieModel.original_title);
+            binding.desc.setText(movieModel.tagline);
+            double d = Double.parseDouble(movieModel.vote_average);
+            binding.tmdbRating.setText(String.format("%.1f", d));
+            binding.filmType.setText(movieModel.genres);
+
+            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            SimpleDateFormat outputFormat = new SimpleDateFormat("MMMM yyyy", Locale.FRANCE);
+
+            try {
+                Date date = inputFormat.parse(movieModel.release_date);
+                String formattedDate = outputFormat.format(date);
+                String capitalized = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1);
+                binding.date.setText(capitalized);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            Log.d(TAG, "setUI: " + Constants.getImageLink(movieModel.banner));
+            Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        Log.d(TAG, "setUI: " + Constants.getImageLink(movieModel.banner));
-        Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
     }
-
+    Snackbar snackbar;
     public void refreshList() {
         listAll = new ArrayList<>();
         listAll.add(new TVModel(Constants.topRated, "Top Series", topRated));
+        snackbar = Snackbar.make(binding.getRoot(), "la playlist est rafraîchissante", Snackbar.LENGTH_INDEFINITE);
+        snackbar.show();
         getCategory();
     }
 }

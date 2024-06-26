@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.fxn.stash.Stash;
+import com.google.android.material.card.MaterialCardView;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.activities.DetailActivity;
 import com.moutamid.daiptv.listener.ItemSelectedFilm;
@@ -60,7 +61,12 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
             e.printStackTrace();
         }
 
-        holder.itemView.setOnClickListener(v -> {
+//        holder.itemView.setOnClickListener(v -> {
+//            Stash.put(Constants.PASS, model);
+//            context.startActivity(new Intent(context, DetailActivity.class));
+//        });
+
+        holder.bannerFilms.setOnClickListener(v -> {
             Stash.put(Constants.PASS, model);
             context.startActivity(new Intent(context, DetailActivity.class));
         });
@@ -78,6 +84,7 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
 
         holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
+                holder.bannerFilms.requestFocus();
                 Log.d("Constants", "onBindViewHolder: " + model.added);
                 itemSelected.selected(model);
             }
@@ -93,11 +100,12 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
     public class ChildVH extends RecyclerView.ViewHolder {
         TextView count;
         ImageView image;
-
+        MaterialCardView bannerFilms;
         public ChildVH(@NonNull View itemView) {
             super(itemView);
             count = itemView.findViewById(R.id.count);
             image = itemView.findViewById(R.id.image);
+            bannerFilms = itemView.findViewById(R.id.bannerFilms);
         }
     }
 

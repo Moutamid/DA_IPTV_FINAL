@@ -20,7 +20,7 @@
         android:id="@+id/count"/>
 
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/bannerSeries"
+        android:id="@+id/bannerFilms"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="true"

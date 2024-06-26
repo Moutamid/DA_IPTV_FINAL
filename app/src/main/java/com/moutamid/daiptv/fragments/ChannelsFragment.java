@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,6 +21,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.fxn.stash.Stash;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.ChannelsAdapter;
 import com.moutamid.daiptv.databinding.FragmentChannelsBinding;
@@ -213,10 +215,18 @@ public class ChannelsFragment extends Fragment {
                     } catch (JSONException e) {
                         e.printStackTrace();
                         dialog.dismiss();
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }, error -> {
             error.printStackTrace();
             dialog.dismiss();
+            if (snackbar != null) {
+                snackbar.dismiss();
+                Toast.makeText(mContext, error.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+            }
         });
         requestQueue.add(objectRequest);
     }
@@ -249,10 +259,18 @@ public class ChannelsFragment extends Fragment {
                     } catch (JSONException e) {
                         e.printStackTrace();
                         dialog.dismiss();
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }, error -> {
             error.printStackTrace();
             dialog.dismiss();
+            if (snackbar != null) {
+                snackbar.dismiss();
+                Toast.makeText(mContext, error.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+            }
         });
         requestQueue.add(objectRequest);
     }
@@ -279,16 +297,28 @@ public class ChannelsFragment extends Fragment {
                             model.stream_link = "";
                             list.add(model);
                         }
-
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            snackbar = null;
+                            Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                        }
                         adapter = new ChannelsAdapter(mContext, list);
                         binding.channelsRC.setAdapter(adapter);
                     } catch (JSONException e) {
                         e.printStackTrace();
                         dialog.dismiss();
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }, error -> {
             error.printStackTrace();
             dialog.dismiss();
+            if (snackbar != null) {
+                snackbar.dismiss();
+                Toast.makeText(mContext, error.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+            }
         });
         requestQueue.add(objectRequest);
     }
@@ -334,7 +364,11 @@ public class ChannelsFragment extends Fragment {
         dialog.setCancelable(false);
     }
 
+    Snackbar snackbar;
+
     public void refreshList() {
+        snackbar = Snackbar.make(binding.getRoot(), "la playlist est rafraîchissante", Snackbar.LENGTH_INDEFINITE);
+        snackbar.show();
         addButton();
     }
 }

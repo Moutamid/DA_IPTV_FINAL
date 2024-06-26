@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -20,6 +21,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.bumptech.glide.Glide;
 import com.fxn.stash.Stash;
+import com.google.android.material.snackbar.Snackbar;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.HomeParentAdapter;
 import com.moutamid.daiptv.databinding.FragmentHomeBinding;
@@ -42,8 +44,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Random;
-import java.util.TimeZone;
 
 public class HomeFragment extends Fragment {
     private static final String TAG = "HomeFragment";
@@ -158,17 +158,25 @@ public class HomeFragment extends Fragment {
                     } catch (JSONException e) {
                         e.printStackTrace();
                         dialog.dismiss();
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }, error -> {
             error.printStackTrace();
             dialog.dismiss();
+            if (snackbar != null) {
+                snackbar.dismiss();
+                Toast.makeText(mContext, error.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+            }
         });
         requestQueue.add(objectRequest);
     }
 
     private void getSeries() {
         Log.d(TAG, "getSeries: ");
-        String url = Constants. topTV;
+        String url = Constants.topTV;
         JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 response -> {
                     try {
@@ -214,15 +222,28 @@ public class HomeFragment extends Fragment {
                             }
                             list.add(new TopItems("Favoris", fvrtList));
                         }
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            snackbar = null;
+                            Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                        }
                         adapter = new HomeParentAdapter(mContext, list, selected);
                         binding.recycler.setAdapter(adapter);
                     } catch (JSONException e) {
                         e.printStackTrace();
                         dialog.dismiss();
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }, error -> {
             error.printStackTrace();
             dialog.dismiss();
+            if (snackbar != null) {
+                snackbar.dismiss();
+                Toast.makeText(mContext, error.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+            }
         });
         requestQueue.add(objectRequest);
     }
@@ -459,8 +480,12 @@ public class HomeFragment extends Fragment {
         dialog.setCancelable(false);
     }
 
+    Snackbar snackbar;
+
     public void refreshList() {
         list.clear();
+        snackbar = Snackbar.make(binding.getRoot(), "la playlist est rafraîchissante", Snackbar.LENGTH_INDEFINITE);
+        snackbar.show();
         getList();
     }
 }

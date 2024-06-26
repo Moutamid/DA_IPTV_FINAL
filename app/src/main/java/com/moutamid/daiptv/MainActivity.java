@@ -104,7 +104,7 @@ public class MainActivity extends BaseActivity {
             } else if (Stash.getString(Constants.SELECTED_PAGE, "Home").equals("Series")) {
                 seriesFragment.refreshList();
             }
-            Toast.makeText(this, "la playlist est rafraîchissante", Toast.LENGTH_SHORT).show();
+          //  Toast.makeText(this, "la playlist est rafraîchissante", Toast.LENGTH_SHORT).show();
         });
 
         binding.Chaines.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -221,16 +221,14 @@ public class MainActivity extends BaseActivity {
             getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, new RechercheFragment()).commit();
         });
 
-        ArrayList<EPGModel> list = Stash.getArrayList(Constants.EPG, EPGModel.class);
-        if (list.isEmpty())
-            get();
-
-
+//        ArrayList<EPGModel> list = Stash.getArrayList(Constants.EPG, EPGModel.class);
+//        if (list.isEmpty())
+//            get();
     }
 
     private static final String TAG = "MainActivity";
     private void get() {
-        Stash.clear(Constants.EPG); // TODO
+        Stash.clear(Constants.EPG);
         ArrayList<EPGModel> list = Stash.getArrayList(Constants.EPG, EPGModel.class);
         Toast.makeText(this, "loading...", Toast.LENGTH_SHORT).show();
         new Thread(() -> {
@@ -286,7 +284,7 @@ public class MainActivity extends BaseActivity {
                             System.out.println();
                         }
                     }
-                  // TODO  Stash.put(Constants.EPG, list);
+                   Stash.put(Constants.EPG, list);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
