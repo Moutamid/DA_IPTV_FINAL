@@ -97,7 +97,8 @@ public class FilmFragment extends Fragment {
         initializeDialog();
 
         topRated = Stash.getArrayList(Constants.TOP_FILMS, VodModel.class);
-        fetchID(topRated.get(new Random().nextInt(topRated.size())));
+        fetchID(topRated.get(0));
+//        fetchID(topRated.get(new Random().nextInt(topRated.size())));
 
         ArrayList<FilmsModel> film = Stash.getArrayList(Constants.FILMS, FilmsModel.class);
         if (film.isEmpty()) {
@@ -175,20 +176,15 @@ public class FilmFragment extends Fragment {
     };
 
     private void fetchID(VodModel model) {
-        String name = Constants.regexName(model.name);
-        String url;
-        url = Constants.getMovieData(name, Constants.extractYear(model.name), Constants.TYPE_MOVIE);
+//        String url = Constants.getMovieData(name, Constants.extractYear(model.name), Constants.TYPE_MOVIE);
+        String url = ApiLinks.getVodInfoByID(String.valueOf(model.stream_id));
         Log.d("TRANSJSILS", "fetchID: URL  " + url);
         JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 response -> {
                     try {
-                        JSONArray array = response.getJSONArray("results");
-                        if (array.length() >= 1) {
-                            int id = 0;
-                            JSONObject object = array.getJSONObject(0);
-                            id = object.getInt("id");
-                            getDetails(id, Constants.lang_fr, model);
-                        }
+                        JSONObject info = response.getJSONObject("info");
+                        int tmdb_id = info.getInt("tmdb_id");
+                        getDetails(tmdb_id, Constants.lang_fr, model);
                     } catch (JSONException e) {
                         e.printStackTrace();
                         dialog.dismiss();
@@ -229,7 +225,9 @@ public class FilmFragment extends Fragment {
                         movieModel.isFrench = !movieModel.overview.isEmpty();
                         movieModel.tagline = response.getString("tagline");
                         movieModel.vote_average = String.valueOf(response.getDouble("vote_average"));
-                        movieModel.genres = response.getJSONArray("genres").getJSONObject(0).getString("name");
+                        if (response.getJSONArray("genres").length() > 0)
+                            movieModel.genres = response.getJSONArray("genres").getJSONObject(0).getString("name");
+                        else movieModel.genres = "N/A";
 
                         JSONArray videos = response.getJSONObject("videos").getJSONArray("results");
                         JSONArray images = response.getJSONObject("images").getJSONArray("backdrops");

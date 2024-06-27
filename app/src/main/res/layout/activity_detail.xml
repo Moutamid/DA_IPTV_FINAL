@@ -41,6 +41,7 @@
                 app:cardBackgroundColor="@color/black_bg_trans"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
+                android:visibility="invisible"
                 app:strokeWidth="0dp">
 
                 <ImageView
@@ -107,21 +108,19 @@
 
                     <TextView
                         android:id="@+id/date"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         tools:text="January 16"
                         android:background="@drawable/text_bg"
                         android:padding="12dp"
-                        android:layout_weight="1"
                         android:gravity="center"
                         android:textColor="@color/white"
                         android:textSize="14sp" />
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/tmdb_rating"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="10dp"
-                        android:layout_weight="1"
                         android:backgroundTint="@color/black_bg_trans"
                         android:gravity="center"
                         android:padding="12dp"
@@ -139,11 +138,10 @@
                         tools:text="8.1" />
                     <TextView
                         android:id="@+id/filmType"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         tools:text="Duree Film"
                         android:gravity="center"
-                        android:layout_weight="1"
                         android:background="@drawable/text_bg"
                         android:padding="12dp"
                         android:textColor="@color/white"

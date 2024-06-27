@@ -39,7 +39,7 @@
                 <ImageView
                     android:id="@+id/logo"
                     android:layout_width="match_parent"
-                    android:layout_height="70dp"
+                    android:layout_height="50dp"
                     android:layout_marginBottom="8dp" />
 
                 <com.google.android.material.card.MaterialCardView
@@ -63,15 +63,16 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             tools:text="Synopsis"
+                            android:maxLines="1"
                             android:textColor="@color/white"
-                            android:textSize="22sp" />
+                            android:textSize="16sp" />
 
                         <TextView
                             android:id="@+id/desc"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:textColor="@color/white2"
-                            android:textSize="18sp"
+                            android:textSize="11sp"
                             android:scrollHorizontally="true"
                             android:ellipsize="end"
                             android:maxLines="1"
@@ -96,7 +97,7 @@
                         android:gravity="center"
                         android:padding="12dp"
                         android:textColor="@color/white"
-                        android:textSize="16sp"
+                        android:textSize="12sp"
                         tools:text="January 16" />
 
                     <com.google.android.material.button.MaterialButton
@@ -108,13 +109,13 @@
                         android:gravity="center"
                         android:padding="12dp"
                         android:textColor="@color/white"
-                        android:textSize="16sp"
+                        android:textSize="12sp"
                         android:focusable="false"
                         android:enabled="false"
                         android:focusableInTouchMode="false"
                         app:cornerRadius="8dp"
                         app:icon="@drawable/tmdb_logo"
-                        app:iconSize="20dp"
+                        app:iconSize="16dp"
                         app:iconTint="@null"
                         app:strokeColor="@color/grey2"
                         app:strokeWidth="1dp"
@@ -128,7 +129,7 @@
                         android:gravity="center"
                         android:padding="12dp"
                         android:textColor="@color/white"
-                        android:textSize="16sp"
+                        android:textSize="12sp"
                         tools:text="Duree Film" />
 
                 </LinearLayout>

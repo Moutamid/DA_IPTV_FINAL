@@ -188,7 +188,9 @@ public class DetailSeriesActivity extends BaseActivity {
                         }
                         movieModel.overview = response.getString("overview");
                         movieModel.vote_average = String.valueOf(response.getDouble("vote_average"));
-                        movieModel.genres = response.getJSONArray("genres").getJSONObject(0).getString("name");
+                        if (response.getJSONArray("genres").length() > 0)
+                            movieModel.genres = response.getJSONArray("genres").getJSONObject(0).getString("name");
+                        else movieModel.genres = "N/A";
 
                         if (movieModel.overview.isEmpty())
                             getDetails(id, "");

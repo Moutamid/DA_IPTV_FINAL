@@ -109,9 +109,8 @@
 
                     <TextView
                         android:id="@+id/date"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:background="@drawable/text_bg"
                         android:gravity="center"
                         android:padding="12dp"
@@ -121,10 +120,9 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/tmdb_rating"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="10dp"
-                        android:layout_weight="1"
                         android:backgroundTint="@color/black_bg_trans"
                         android:enabled="false"
                         android:focusable="false"
@@ -143,9 +141,8 @@
 
                     <TextView
                         android:id="@+id/filmType"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:background="@drawable/text_bg"
                         android:gravity="center"
                         android:padding="12dp"
@@ -256,7 +253,7 @@
                 app:cornerRadius="12dp"
                 android:layout_centerHorizontal="true"
                 android:layout_below="@id/linearLayout"
-                app:icon="@drawable/play_2_focus"
+                app:icon="@drawable/resume"
                 app:iconSize="26dp"
                 android:textSize="13sp"
                 app:strokeColor="@color/grey2"

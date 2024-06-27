@@ -38,6 +38,7 @@
                 android:layout_margin="7dp"
                 android:clickable="true"
                 android:focusable="true"
+                android:visibility="gone"
                 android:focusableInTouchMode="true"
                 app:cardBackgroundColor="@color/dark_trans"
                 app:cardCornerRadius="100dp"

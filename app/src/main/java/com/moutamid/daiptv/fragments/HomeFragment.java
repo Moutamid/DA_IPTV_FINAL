@@ -316,8 +316,9 @@ public class HomeFragment extends Fragment {
                         movieModel.isFrench = !movieModel.overview.isEmpty();
                         movieModel.tagline = response.getString("tagline");
                         movieModel.vote_average = String.valueOf(response.getDouble("vote_average"));
-                        movieModel.genres = response.getJSONArray("genres").getJSONObject(0).getString("name");
-
+                        if (response.getJSONArray("genres").length() > 0)
+                            movieModel.genres = response.getJSONArray("genres").getJSONObject(0).getString("name");
+                        else movieModel.genres = "N/A";
                         JSONArray videos = response.getJSONObject("videos").getJSONArray("results");
                         JSONArray images = response.getJSONObject("images").getJSONArray("backdrops");
 

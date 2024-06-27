@@ -26,6 +26,7 @@ import com.moutamid.daiptv.models.MovieModel;
 import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.models.VodModel;
 import com.moutamid.daiptv.utilis.AddFavoriteDialog;
+import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
 import com.moutamid.daiptv.utilis.VolleySingleton;
 
@@ -95,33 +96,54 @@ public class DetailActivity extends BaseActivity {
     }
 
     private void fetchID() {
-        String name = Constants.regexName(model.name);
-        Log.d(TAG, "fetchID: " + name);
-        String url = Constants.getMovieData(name, Constants.extractYear(model.name), Constants.TYPE_MOVIE);
-
-        Log.d(TAG, "fetchID: URL  " + model.added);
-
-        JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    try {
-                        JSONArray array = response.getJSONArray("results");
-                        JSONObject object = array.getJSONObject(0);
-                        int id = object.getInt("id");
-                        getDetails(id, Constants.lang_fr);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        runOnUiThread(() -> {
+        if (model.stream_id != 0){
+            String url = ApiLinks.getVodInfoByID(String.valueOf(model.stream_id));
+            Log.d("TRANSJSILS", "fetchID: URL  " + url);
+            JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
+                    response -> {
+                        try {
+                            JSONObject info = response.getJSONObject("info");
+                            int tmdb_id = info.getInt("tmdb_id");
+                            getDetails(tmdb_id, Constants.lang_fr);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                             dialog.dismiss();
-                            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-                        });
-                    }
-                }, error -> {
-            error.printStackTrace();
-            runOnUiThread(() -> {
+                        }
+                    }, error -> {
+                Log.d("TRANSJSILS", "ERROR: " + error.getLocalizedMessage());
+                error.printStackTrace();
                 dialog.dismiss();
             });
-        });
-        requestQueue.add(objectRequest);
+            requestQueue.add(objectRequest);
+        } else {
+            String name = Constants.regexName(model.name);
+            Log.d(TAG, "fetchID: " + name);
+            String url = Constants.getMovieData(name, Constants.extractYear(model.name), Constants.TYPE_MOVIE);
+
+            Log.d(TAG, "fetchID: URL  " + model.added);
+
+            JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
+                    response -> {
+                        try {
+                            JSONArray array = response.getJSONArray("results");
+                            JSONObject object = array.getJSONObject(0);
+                            int id = object.getInt("id");
+                            getDetails(id, Constants.lang_fr);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            runOnUiThread(() -> {
+                                dialog.dismiss();
+                                Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+                            });
+                        }
+                    }, error -> {
+                error.printStackTrace();
+                runOnUiThread(() -> {
+                    dialog.dismiss();
+                });
+            });
+            requestQueue.add(objectRequest);
+        }
     }
 
     private void getDetails(int id, String language) {
