@@ -89,6 +89,8 @@ public class DetailSeriesActivity extends BaseActivity {
             FavoriteModel favoriteModel = new FavoriteModel();
             favoriteModel.id = UUID.randomUUID().toString();
             favoriteModel.image = model.cover;
+            favoriteModel.steam_id = Integer.parseInt(infoModel.id);
+            favoriteModel.extension = infoModel.container_extension;
             favoriteModel.name = model.name;
             favoriteModel.category_id = model.category_id;
             favoriteModel.type = model.stream_type;
@@ -336,7 +338,15 @@ public class DetailSeriesActivity extends BaseActivity {
         binding.play.setOnClickListener(v -> {
             try {
                 String link = userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + infoModel.id + "." + infoModel.container_extension;
-                startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("url", link).putExtra("name", movieModel.original_title));
+                String resume = infoModel.id;
+                model.extension = infoModel.container_extension;
+                Stash.put(Constants.TYPE_SERIES, model);
+                startActivity(new Intent(this, VideoPlayerActivity.class)
+                        .putExtra("url", link)
+                        .putExtra("resume", resume)
+                        .putExtra("banner", movieModel.banner)
+                        .putExtra("type", Constants.TYPE_SERIES)
+                        .putExtra("name", movieModel.original_title));
             } catch (Exception e){
                 runOnUiThread(() -> {
                     Toast.makeText(this, "Échec de la récupération du lien.", Toast.LENGTH_SHORT).show();
@@ -346,13 +356,19 @@ public class DetailSeriesActivity extends BaseActivity {
 
         binding.resume.setOnClickListener(v -> {
             try {
-                SeriesInfoModel seriesInfoModel = (SeriesInfoModel) Stash.getObject(Constants.SERIES_LINK, SeriesInfoModel.class);
+                SeriesInfoModel seriesInfoModel = (SeriesInfoModel) Stash.getObject(Constants.SERIES_LINK  + infoModel.id, SeriesInfoModel.class);
                 String link = seriesInfoModel == null ?
                         userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + infoModel.id + "." + infoModel.container_extension :
                         userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + seriesInfoModel.id + "." + seriesInfoModel.container_extension;
-
                 String resume = seriesInfoModel == null ? infoModel.id : seriesInfoModel.id;
-                startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("resume", resume).putExtra("url", link).putExtra("name", movieModel.original_title));
+                model.extension = seriesInfoModel == null ? infoModel.container_extension : seriesInfoModel.container_extension;
+                Stash.put(Constants.TYPE_SERIES, model);
+                startActivity(new Intent(this, VideoPlayerActivity.class)
+                        .putExtra("resume", resume)
+                        .putExtra("url", link)
+                        .putExtra("banner", movieModel.banner)
+                        .putExtra("type", Constants.TYPE_SERIES)
+                        .putExtra("name", movieModel.original_title));
             } catch (Exception e) {
                 runOnUiThread(() -> {
                     Toast.makeText(this, "Échec de la récupération du lien.", Toast.LENGTH_SHORT).show();

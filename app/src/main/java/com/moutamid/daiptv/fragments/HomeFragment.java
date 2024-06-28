@@ -42,22 +42,23 @@ import org.json.JSONObject;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 
 public class HomeFragment extends Fragment {
     private static final String TAG = "HomeFragment";
-    FragmentHomeBinding binding;
-    Dialog dialog;
-    MovieModel movieModel;
-    HomeParentAdapter adapter;
-    private RequestQueue requestQueue;
+    static FragmentHomeBinding binding;
+    static Dialog dialog;
+    static MovieModel movieModel;
+    static HomeParentAdapter adapter;
+    private static RequestQueue requestQueue;
     ArrayList<MovieModel> films = new ArrayList<>(), series = new ArrayList<>();
     static ArrayList<VodModel> filmsChan = new ArrayList<>();
     static ArrayList<SeriesModel> seriesChan = new ArrayList<>();
-    ArrayList<TopItems> list = new ArrayList<>();
+    static ArrayList<TopItems> list = new ArrayList<>();
 
-    private Context mContext;
+    private static Context mContext;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -75,7 +76,6 @@ public class HomeFragment extends Fragment {
         // Required empty public constructor
     }
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(getLayoutInflater(), container, false);
@@ -90,8 +90,9 @@ public class HomeFragment extends Fragment {
         PagerSnapHelper snapHelper = new PagerSnapHelper();
         snapHelper.attachToRecyclerView(binding.recycler);
         list = Stash.getArrayList(Constants.HOME, TopItems.class);
-        if (list.isEmpty()) getList();
-        else {
+        if (list.isEmpty()) {
+            getList();
+        } else {
             fetchID(list.get(0).list.get(0));
             UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
             ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);
@@ -102,11 +103,28 @@ public class HomeFragment extends Fragment {
                         MovieModel model = new MovieModel();
                         model.type = channelsModel.type;
                         model.banner = channelsModel.image;
+                        model.extension = channelsModel.extension;
                         model.original_title = channelsModel.name;
+                        model.streamID = channelsModel.steam_id;
                         fvrtList.add(model);
                     }
                 }
                 list.add(new TopItems("Favoris", fvrtList));
+            }
+            ArrayList<FavoriteModel> films = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
+            ArrayList<MovieModel> fvrtList = new ArrayList<>();
+            for (FavoriteModel channelsModel : films) {
+                MovieModel model = new MovieModel();
+                model.type = channelsModel.type;
+                model.banner = channelsModel.image;
+                model.original_title = channelsModel.name;
+                model.extension = channelsModel.extension;
+                model.streamID = channelsModel.steam_id;
+                fvrtList.add(model);
+            }
+            if (!fvrtList.isEmpty()) {
+                Collections.reverse(fvrtList);
+                list.add(0, new TopItems("Reprendre la lecture", fvrtList));
             }
             adapter = new HomeParentAdapter(mContext, list, selected);
             binding.recycler.setAdapter(adapter);
@@ -216,6 +234,7 @@ public class HomeFragment extends Fragment {
                                     MovieModel model = new MovieModel();
                                     model.type = channelsModel.type;
                                     model.banner = channelsModel.image;
+                                    model.extension = channelsModel.extension;
                                     model.original_title = channelsModel.name;
                                     fvrtList.add(model);
                                 }
@@ -226,6 +245,21 @@ public class HomeFragment extends Fragment {
                             snackbar.dismiss();
                             snackbar = null;
                             Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                        }
+
+                        ArrayList<FavoriteModel> films = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
+                        ArrayList<MovieModel> fvrtList = new ArrayList<>();
+                        for (FavoriteModel channelsModel : films) {
+                            MovieModel model = new MovieModel();
+                            model.type = channelsModel.type;
+                            model.banner = channelsModel.image;
+                            model.original_title = channelsModel.name;
+                            model.streamID = channelsModel.steam_id;
+                            fvrtList.add(model);
+                        }
+                        if (!fvrtList.isEmpty()) {
+                            Collections.reverse(fvrtList);
+                            list.add(0, new TopItems("Reprendre la lecture", fvrtList));
                         }
                         adapter = new HomeParentAdapter(mContext, list, selected);
                         binding.recycler.setAdapter(adapter);
@@ -248,14 +282,14 @@ public class HomeFragment extends Fragment {
         requestQueue.add(objectRequest);
     }
 
-    ItemSelectedHome selected = new ItemSelectedHome() {
+    static ItemSelectedHome selected = new ItemSelectedHome() {
         @Override
         public void selected(MovieModel model) {
             fetchID(model);
         }
     };
 
-    private void fetchID(MovieModel model) {
+    private static void fetchID(MovieModel model) {
         String name = Constants.regexName(model.original_title);
         String url;
         if (model.type.equals(Constants.TYPE_SERIES)) {
@@ -285,7 +319,7 @@ public class HomeFragment extends Fragment {
         requestQueue.add(objectRequest);
     }
 
-    private void getDetails(int id, String language, MovieModel model) {
+    private static void getDetails(int id, String language, MovieModel model) {
         String url;
         if (model.type.equals(Constants.TYPE_SERIES)) {
             url = Constants.getMovieDetails(id, Constants.TYPE_TV, language);
@@ -396,7 +430,7 @@ public class HomeFragment extends Fragment {
         requestQueue.add(objectRequest);
     }
 
-    private void getBackdrop(int id, String language, MovieModel model) {
+    private static void getBackdrop(int id, String language, MovieModel model) {
         Log.d(TAG, "getBackdrop: ");
         String url;
         if (model.type.equals(Constants.TYPE_SERIES)) {
@@ -444,7 +478,7 @@ public class HomeFragment extends Fragment {
         requestQueue.add(objectRequest);
     }
 
-    private void setUI() {
+    private static void setUI() {
         dialog.dismiss();
         binding.name.setText(movieModel.original_title);
         binding.desc.setText(movieModel.tagline);
@@ -489,4 +523,26 @@ public class HomeFragment extends Fragment {
         snackbar.show();
         getList();
     }
+
+    public static void refreshFavoris() {
+        list.remove(list.size() - 1);
+        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+        ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);
+        if (!fvrt.isEmpty()) {
+            ArrayList<MovieModel> fvrtList = new ArrayList<>();
+            for (FavoriteModel channelsModel : fvrt) {
+                if (!channelsModel.type.equals("live")) {
+                    MovieModel model = new MovieModel();
+                    model.type = channelsModel.type;
+                    model.banner = channelsModel.image;
+                    model.extension = channelsModel.extension;
+                    model.original_title = channelsModel.name;
+                    fvrtList.add(model);
+                }
+            }
+            list.add(new TopItems("Favoris", fvrtList));
+        }
+        adapter.notifyItemChanged(list.size() - 1);
+    }
+
 }

@@ -94,7 +94,7 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
             favoriteModel.name = model.name;
             favoriteModel.category_id = model.category_id;
             favoriteModel.type = model.stream_type;
-            favoriteModel.steam_id = String.valueOf(model.stream_id);
+            favoriteModel.steam_id = model.stream_id;
             new AddFavoriteDialog(context, favoriteModel).show();
             return false;
         });

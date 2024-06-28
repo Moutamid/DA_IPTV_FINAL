@@ -45,15 +45,18 @@ public class Constants {
     public static final String EPG = "EPG";
     public static final String SELECTED_PAGE = "SELECTED_PAGE";
     public static final String TOP_FILMS = "TOP_FILMS";
+    public static final String RESUME = "RESUME";
     public static final String topRated = "topRated";
     public static final String TOP_SERIES = "TOP_SERIES";
     public static final String PASS_SERIES = "PASS_SERIES";
     public static final String TYPE_CHANNEL = "channel";
     public static final String TYPE_MOVIE = "movie";
     public static final String TYPE_SERIES = "series";
+    public static final String SERIES_INFO = "SERIES_INFO";
     public static final String PASS = "PASS";
     public static final String SERIES_LINK = "SERIES_LINK";
     public static final String TYPE_TV = "tv";
+    public static final String TYPE_FILM = "film";
     public static final String lang_fr = "&language=fr";
     public static final String lang_en = "&language=en-US";
     public static final String topTV = "https://api.themoviedb.org/3/tv/popular?api_key=26bedf3e3be75a2810a53f4a445e7b1f&language=fr&page=1";

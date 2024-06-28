@@ -40,7 +40,7 @@ public class HomeParentAdapter extends RecyclerView.Adapter<HomeParentAdapter.It
         holder.name.setText(model.name);
         holder.childRC.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false));
         holder.childRC.setHasFixedSize(false);
-        HomeChildAdapter adapter = new HomeChildAdapter(context, model.list, itemSelected);
+        HomeChildAdapter adapter = new HomeChildAdapter(context, model.list, itemSelected, model.name.equals("Favoris"), model.name.equals("Reprendre la lecture"));
         holder.childRC.setAdapter(adapter);
     }
 

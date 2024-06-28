@@ -7,6 +7,7 @@ public class SeriesModel {
     public String name;
     public int series_id;
     public String cover;
+    public String extension;
     public String stream_type;
     public String plot;
     public String cast;

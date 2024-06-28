@@ -49,6 +49,7 @@ public class DetailActivity extends BaseActivity {
     private RequestQueue requestQueue;
     MovieModel movieModel;
     ArrayList<CastModel> cast;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,13 +63,11 @@ public class DetailActivity extends BaseActivity {
         binding.back.setOnClickListener(v -> onBackPressed());
 
         binding.reader.setOnClickListener(v -> {
-//            if (model.getChannelUrl() != null) {
-//                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(model.getChannelUrl().trim()));
-//                intent.setType("video/*");
-//                startActivity(intent);
-//            } else {
-//                Toast.makeText(this, "Aucun lecteur externe trouvé", Toast.LENGTH_SHORT).show();
-//            }
+            UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+            String link = userModel.url + "/movie/" + userModel.username + "/" + userModel.password + "/" + model.stream_id + "." + model.container_extension;
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link.trim()));
+            intent.setType("video/*");
+            startActivity(intent);
         });
 
         binding.add.setOnClickListener(v -> {
@@ -76,9 +75,10 @@ public class DetailActivity extends BaseActivity {
             favoriteModel.id = UUID.randomUUID().toString();
             favoriteModel.image = model.stream_icon;
             favoriteModel.name = model.name;
+            favoriteModel.extension = model.container_extension;
             favoriteModel.category_id = model.category_id;
             favoriteModel.type = model.stream_type;
-            favoriteModel.steam_id = String.valueOf(model.stream_id);
+            favoriteModel.steam_id = model.stream_id;
             new AddFavoriteDialog(this, favoriteModel).show();
         });
 
@@ -96,7 +96,7 @@ public class DetailActivity extends BaseActivity {
     }
 
     private void fetchID() {
-        if (model.stream_id != 0){
+        if (model.stream_id != 0) {
             String url = ApiLinks.getVodInfoByID(String.valueOf(model.stream_id));
             Log.d("TRANSJSILS", "fetchID: URL  " + url);
             JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
@@ -308,15 +308,27 @@ public class DetailActivity extends BaseActivity {
             startActivity(intent);
         });
 
-        UserModel userModel =(UserModel) Stash.getObject(Constants.USER, UserModel.class);
+        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
         String link = userModel.url + "/movie/" + userModel.username + "/" + userModel.password + "/" + model.stream_id + "." + model.container_extension;
         binding.play.requestFocus();
         binding.play.setOnClickListener(v -> {
             Stash.clear(String.valueOf(model.stream_id));
-            startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("resume", String.valueOf(model.stream_id)).putExtra("url", link).putExtra("name", movieModel.original_title));
+            Stash.put(Constants.TYPE_MOVIE, model);
+            startActivity(new Intent(this, VideoPlayerActivity.class)
+                    .putExtra("url", link)
+                    .putExtra("banner", movieModel.banner)
+                    .putExtra("resume", String.valueOf(model.stream_id))
+                    .putExtra("type", Constants.TYPE_MOVIE)
+                    .putExtra("name", movieModel.original_title));
         });
         binding.resume.setOnClickListener(v -> {
-            startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("resume", String.valueOf(model.stream_id)).putExtra("url", link).putExtra("name", movieModel.original_title));
+            Stash.put(Constants.TYPE_MOVIE, model);
+            startActivity(new Intent(this, VideoPlayerActivity.class)
+                    .putExtra("resume", String.valueOf(model.stream_id))
+                    .putExtra("url", link)
+                    .putExtra("banner", movieModel.banner)
+                    .putExtra("type", Constants.TYPE_MOVIE)
+                    .putExtra("name", movieModel.original_title));
         });
 
         binding.play.setOnFocusChangeListener((v, hasFocus) -> {

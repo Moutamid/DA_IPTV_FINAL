@@ -65,6 +65,7 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
             favoriteModel.name = model.name;
             favoriteModel.category_id = model.category_id;
             favoriteModel.type = model.stream_type;
+            favoriteModel.steam_id = model.series_id;
             new AddFavoriteDialog(context, favoriteModel).show();
             return true;
         });

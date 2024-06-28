@@ -4,7 +4,6 @@ import static androidx.media3.ui.PlayerView.SHOW_BUFFERING_WHEN_PLAYING;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,8 +29,15 @@ import com.fxn.stash.Stash;
 import com.moutamid.daiptv.BaseActivity;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.databinding.ActivityVideoPlayerBinding;
+import com.moutamid.daiptv.models.FavoriteModel;
+import com.moutamid.daiptv.models.SeriesInfoModel;
+import com.moutamid.daiptv.models.SeriesModel;
+import com.moutamid.daiptv.models.VodModel;
 import com.moutamid.daiptv.utilis.Constants;
 import com.moutamid.daiptv.utilis.Features;
+
+import java.util.ArrayList;
+import java.util.UUID;
 
 public class VideoPlayerActivity extends BaseActivity {
     ActivityVideoPlayerBinding binding;
@@ -39,6 +45,10 @@ public class VideoPlayerActivity extends BaseActivity {
     ExoPlayer player;
     String resume;
     boolean isResumed = false;
+    String type;
+    VodModel vodModel;
+    SeriesModel seriesModel;
+    String banner;
 
     @OptIn(markerClass = UnstableApi.class)
     @Override
@@ -49,7 +59,15 @@ public class VideoPlayerActivity extends BaseActivity {
 
         String url = getIntent().getStringExtra("url");
         String name = getIntent().getStringExtra("name");
+        banner = getIntent().getStringExtra("banner");
         resume = getIntent().getStringExtra("resume");
+        type = getIntent().getStringExtra("type");
+
+        if (type.equals(Constants.TYPE_MOVIE)) {
+            vodModel = (VodModel) Stash.getObject(Constants.TYPE_MOVIE, VodModel.class);
+        } else {
+            seriesModel = (SeriesModel) Stash.getObject(Constants.TYPE_SERIES, SeriesModel.class);
+        }
 
         Log.d("VideoURLPlayer", "" + url);
         Log.d("VideoURLPlayer", "resume   " + resume);
@@ -96,7 +114,6 @@ public class VideoPlayerActivity extends BaseActivity {
         }
 
         player.addListener(new Player.Listener() {
-
             @Override
             public void onPlaybackStateChanged(int playbackState) {
                 Player.Listener.super.onPlaybackStateChanged(playbackState);
@@ -161,6 +178,39 @@ public class VideoPlayerActivity extends BaseActivity {
         if (resume != null) {
             long currentPosition = player.getCurrentPosition();
             Stash.put(resume, currentPosition);
+//            long duration = player.getDuration();
+//            if (duration <= 0) {
+//                System.out.println("Error: Media duration is invalid.");
+//                return;
+//            }
+//            boolean isPastTenMinutes = currentPosition > (10 * 60 * 1000);
+//            if (isPastTenMinutes) {
+//                if (!type.equals(Constants.TYPE_CHANNEL)) {
+//                    ArrayList<FavoriteModel> list = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
+//                    if (type.equals(Constants.TYPE_MOVIE)) {
+//                        FavoriteModel favoriteModel = new FavoriteModel();
+//                        favoriteModel.id = UUID.randomUUID().toString();
+//                        favoriteModel.image = vodModel.stream_icon;
+//                        favoriteModel.name = vodModel.name;
+//                        favoriteModel.extension = vodModel.container_extension;
+//                        favoriteModel.category_id = String.valueOf(vodModel.category_id);
+//                        favoriteModel.type = Constants.RESUME;
+//                        favoriteModel.steam_id = vodModel.stream_id;
+//                        list.add(favoriteModel);
+//                    } else {
+//                        FavoriteModel favoriteModel = new FavoriteModel();
+//                        favoriteModel.id = UUID.randomUUID().toString();
+//                        favoriteModel.image = seriesModel.cover;
+//                        favoriteModel.name = seriesModel.name;
+//                        favoriteModel.category_id = seriesModel.category_id;
+//                        favoriteModel.type = Constants.RESUME;
+//                        favoriteModel.extension = seriesInfoModel.container_extension;
+//                        favoriteModel.steam_id = Integer.parseInt(resume);
+//                        list.add(favoriteModel);
+//                    }
+//                    Stash.put(Constants.RESUME, list);
+//                }
+//            }
         }
         player.setPlayWhenReady(false);
     }
@@ -171,6 +221,45 @@ public class VideoPlayerActivity extends BaseActivity {
         if (resume != null) {
             long currentPosition = player.getCurrentPosition();
             Stash.put(resume, currentPosition);
+            long duration = player.getDuration();
+            if (duration <= 0) {
+                System.out.println("Error: Media duration is invalid.");
+                return;
+            }
+            boolean isPastTenMinutes = currentPosition > (10 * 60 * 1000);
+            if (isPastTenMinutes) {
+                if (!type.equals(Constants.TYPE_CHANNEL)) {
+                    ArrayList<FavoriteModel> list = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
+                    if (type.equals(Constants.TYPE_MOVIE)) {
+                        boolean check = list.stream().anyMatch(favoriteModel -> favoriteModel.steam_id == vodModel.stream_id);
+                        if (!check) {
+                            FavoriteModel favoriteModel = new FavoriteModel();
+                            favoriteModel.id = UUID.randomUUID().toString();
+                            favoriteModel.image = banner;
+                            favoriteModel.name = vodModel.name;
+                            favoriteModel.extension = vodModel.container_extension;
+                            favoriteModel.category_id = String.valueOf(vodModel.category_id);
+                            favoriteModel.type = Constants.TYPE_MOVIE;
+                            favoriteModel.steam_id = vodModel.stream_id;
+                            list.add(favoriteModel);
+                        }
+                    } else {
+                        boolean check = list.stream().anyMatch(favoriteModel -> favoriteModel.steam_id == Integer.parseInt(resume));
+                        if (!check){
+                            FavoriteModel favoriteModel = new FavoriteModel();
+                            favoriteModel.id = UUID.randomUUID().toString();
+                            favoriteModel.image = banner;
+                            favoriteModel.name = seriesModel.name;
+                            favoriteModel.category_id = seriesModel.category_id;
+                            favoriteModel.type = Constants.TYPE_SERIES;
+                            favoriteModel.extension = seriesModel.extension;
+                            favoriteModel.steam_id = Integer.parseInt(resume);
+                            list.add(favoriteModel);
+                        }
+                    }
+                    Stash.put(Constants.RESUME, list);
+                }
+            }
         }
         player.release();
     }
@@ -181,6 +270,39 @@ public class VideoPlayerActivity extends BaseActivity {
         if (resume != null) {
             long currentPosition = player.getCurrentPosition();
             Stash.put(resume, currentPosition);
+//            long duration = player.getDuration();
+//            if (duration <= 0) {
+//                System.out.println("Error: Media duration is invalid.");
+//                return;
+//            }
+//            boolean isPastTenMinutes = currentPosition > (10 * 60 * 1000);
+//            if (isPastTenMinutes) {
+//                if (!type.equals(Constants.TYPE_CHANNEL)) {
+//                    ArrayList<FavoriteModel> list = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
+//                    if (type.equals(Constants.TYPE_MOVIE)) {
+//                        FavoriteModel favoriteModel = new FavoriteModel();
+//                        favoriteModel.id = UUID.randomUUID().toString();
+//                        favoriteModel.image = vodModel.stream_icon;
+//                        favoriteModel.name = vodModel.name;
+//                        favoriteModel.extension = vodModel.container_extension;
+//                        favoriteModel.category_id = String.valueOf(vodModel.category_id);
+//                        favoriteModel.type = Constants.RESUME;
+//                        favoriteModel.steam_id = vodModel.stream_id;
+//                        list.add(favoriteModel);
+//                    } else {
+//                        FavoriteModel favoriteModel = new FavoriteModel();
+//                        favoriteModel.id = UUID.randomUUID().toString();
+//                        favoriteModel.image = seriesModel.cover;
+//                        favoriteModel.name = seriesModel.name;
+//                        favoriteModel.category_id = seriesModel.category_id;
+//                        favoriteModel.type = Constants.RESUME;
+//                        favoriteModel.extension = seriesInfoModel.container_extension;
+//                        favoriteModel.steam_id = Integer.parseInt(resume);
+//                        list.add(favoriteModel);
+//                    }
+//                    Stash.put(Constants.RESUME, list);
+//                }
+//            }
         }
         finish();
     }

@@ -7,19 +7,23 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.fxn.stash.Stash;
+import com.google.android.material.card.MaterialCardView;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.activities.DetailActivity;
 import com.moutamid.daiptv.activities.DetailSeriesActivity;
+import com.moutamid.daiptv.activities.VideoPlayerActivity;
 import com.moutamid.daiptv.listener.ItemSelectedHome;
 import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.MovieModel;
 import com.moutamid.daiptv.models.SeriesModel;
+import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.models.VodModel;
 import com.moutamid.daiptv.utilis.AddFavoriteDialog;
 import com.moutamid.daiptv.utilis.Constants;
@@ -32,23 +36,38 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
     Context context;
     ArrayList<MovieModel> list;
     ItemSelectedHome itemSelected;
+    boolean favoris;
+    boolean reprendreLaLecture;
 
-    public HomeChildAdapter(Context context, ArrayList<MovieModel> list, ItemSelectedHome itemSelected) {
+    public HomeChildAdapter(Context context, ArrayList<MovieModel> list, ItemSelectedHome itemSelected, boolean favoris, boolean reprendreLaLecture) {
         this.context = context;
         this.list = list;
+        this.reprendreLaLecture = reprendreLaLecture;
+        this.favoris = favoris;
         this.itemSelected = itemSelected;
     }
 
     @NonNull
     @Override
     public MovieVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (reprendreLaLecture) {
+            return new MovieVH(LayoutInflater.from(context).inflate(R.layout.resume_home, parent, false));
+        }
         return new MovieVH(LayoutInflater.from(context).inflate(R.layout.child_item, parent, false));
     }
 
     @Override
     public void onBindViewHolder(@NonNull MovieVH holder, int position) {
         MovieModel model = list.get(holder.getAdapterPosition());
-        Glide.with(context).load(Constants.getImageLink(model.banner)).placeholder(R.color.grey2).into(holder.image);
+        String link;
+        if (reprendreLaLecture) {
+            holder.name.setText(model.original_title);
+            link = Constants.getImageLink(model.banner);
+            Log.d(TAG, "onBindViewHolder: " + link);
+        } else {
+            link = model.type.equals(Constants.TYPE_SERIES) && favoris ? model.banner : Constants.getImageLink(model.banner);
+        }
+        Glide.with(context).load(link).placeholder(R.color.grey2).into(holder.image);
         holder.itemView.setOnLongClickListener(v -> {
             FavoriteModel favoriteModel = new FavoriteModel();
             favoriteModel.id = UUID.randomUUID().toString();
@@ -56,8 +75,40 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
             favoriteModel.name = model.original_title;
             favoriteModel.category_id = String.valueOf(model.id);
             favoriteModel.type = model.type;
-            new AddFavoriteDialog(context, favoriteModel).show();
+            favoriteModel.steam_id = model.streamID;
+            new AddFavoriteDialog(context, favoriteModel, true).show();
             return true;
+        });
+
+        holder.banner.setOnClickListener(v -> {
+            if (reprendreLaLecture) {
+                UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+                String url;
+                if (model.type.equals(Constants.TYPE_MOVIE)) {
+                    url = userModel.url + "/movie/" + userModel.username + "/" + userModel.password + "/" + model.streamID + "." + model.extension;
+                    VodModel vodModel = new VodModel();
+                    vodModel.name = model.original_title;
+                    vodModel.stream_type = model.type;
+                    vodModel.container_extension = model.extension;
+                    vodModel.category_id = String.valueOf(model.id);
+                    vodModel.stream_id = model.streamID;
+                    Stash.put(Constants.TYPE_MOVIE, vodModel);
+                } else {
+                    url = userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + model.streamID + "." + model.extension;
+                    SeriesModel seriesModel = new SeriesModel();
+                    seriesModel.name = model.original_title;
+                    seriesModel.stream_type = model.type;
+                    seriesModel.extension = model.extension;
+                    seriesModel.category_id = String.valueOf(model.id);
+                    Stash.put(Constants.TYPE_SERIES, seriesModel);
+                }
+                context.startActivity(new Intent(context, VideoPlayerActivity.class)
+                        .putExtra("resume", String.valueOf(model.streamID))
+                        .putExtra("url", url)
+                        .putExtra("banner", model.banner)
+                        .putExtra("type", model.type)
+                        .putExtra("name", model.original_title));
+            }
         });
 
         holder.itemView.setOnClickListener(v -> {
@@ -73,6 +124,8 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                 VodModel vodModel = new VodModel();
                 vodModel.name = model.original_title;
                 vodModel.stream_icon = model.banner;
+                vodModel.stream_id = model.streamID;
+                vodModel.container_extension = model.extension;
                 vodModel.added = model.release_date;
                 vodModel.stream_type = Constants.topRated;
                 Stash.put(Constants.PASS, vodModel);
@@ -84,9 +137,13 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
-                    Log.d(TAG, "onFocusChange: YEAR " + model.release_date);
+                    Log.d(TAG, "onFocusChange: Image " + model.banner);
+                    Log.d(TAG, "onFocusChange: TYPE " + model.type);
                     Log.d(TAG, "onFocusChange: NAME " + model.original_title);
                     itemSelected.selected(model);
+                    if (reprendreLaLecture) {
+                        holder.banner.requestFocus();
+                    }
                 }
             }
         });
@@ -97,11 +154,16 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
         return list.size();
     }
 
-    public class MovieVH extends RecyclerView.ViewHolder{
+    public class MovieVH extends RecyclerView.ViewHolder {
         ImageView image;
+        TextView name;
+        MaterialCardView banner;
+
         public MovieVH(@NonNull View itemView) {
             super(itemView);
             image = itemView.findViewById(R.id.image);
+            name = itemView.findViewById(R.id.name);
+            banner = itemView.findViewById(R.id.banner);
         }
     }
 

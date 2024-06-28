@@ -183,8 +183,13 @@ public class SeriesActivity extends BaseActivity {
                         }
                         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
                         String link = userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + infoModel.id + "." + infoModel.container_extension;
-                        Stash.put(Constants.SERIES_LINK, infoModel);
-                        startActivity(new Intent(this, VideoPlayerActivity.class).putExtra("resume", infoModel.id).putExtra("url", link).putExtra("name", model.name));
+                        Stash.put(Constants.SERIES_LINK + infoModel.id, infoModel);
+                        startActivity(new Intent(this, VideoPlayerActivity.class)
+                                .putExtra("resume", infoModel.id)
+                                .putExtra("url", link)
+                                .putExtra("banner", "")
+                                .putExtra("type", Constants.TYPE_SERIES)
+                                .putExtra("name", model.name));
                     } catch (JSONException e) {
                         e.printStackTrace();
                         runOnUiThread(() -> {
