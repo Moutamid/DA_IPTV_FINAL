@@ -114,7 +114,7 @@ public class RechercheFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (!s.toString().isEmpty() && s.toString().length() >= 4) {
+                if (!s.toString().isEmpty() && s.toString().length() >= 3) {
                     dialog.show();
                     if (thread != null) {
                         if (thread.isAlive()) {

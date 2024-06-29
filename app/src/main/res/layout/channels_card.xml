@@ -26,7 +26,7 @@
 
             <ImageView
                 android:layout_width="match_parent"
-                android:layout_height="70dp"
+                android:layout_height="50dp"
                 android:src="@drawable/img"
                 android:id="@+id/image" />
 
@@ -57,7 +57,7 @@
             android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textColor="@color/white2"
             android:text="@string/app_name"
             android:padding="12dp"
@@ -67,7 +67,7 @@
             android:id="@+id/epg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:textColor="@color/grey2"
             android:text="No information found"
             android:paddingHorizontal="12dp"

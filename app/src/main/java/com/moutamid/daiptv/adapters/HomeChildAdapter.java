@@ -52,6 +52,8 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
     public MovieVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         if (reprendreLaLecture) {
             return new MovieVH(LayoutInflater.from(context).inflate(R.layout.resume_home, parent, false));
+        } else if (!favoris) {
+            return new MovieVH(LayoutInflater.from(context).inflate(R.layout.top_items_home, parent, false));
         }
         return new MovieVH(LayoutInflater.from(context).inflate(R.layout.child_item, parent, false));
     }
@@ -59,6 +61,11 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
     @Override
     public void onBindViewHolder(@NonNull MovieVH holder, int position) {
         MovieModel model = list.get(holder.getAdapterPosition());
+
+        if (!favoris && !reprendreLaLecture){
+            holder.count.setText(String.valueOf(holder.getAdapterPosition()+1));
+        }
+
         String link;
         if (reprendreLaLecture) {
             holder.name.setText(model.original_title);
@@ -68,7 +75,8 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
             link = model.type.equals(Constants.TYPE_SERIES) && favoris ? model.banner : Constants.getImageLink(model.banner);
         }
         Glide.with(context).load(link).placeholder(R.color.grey2).into(holder.image);
-        holder.itemView.setOnLongClickListener(v -> {
+
+        holder.banner.setOnLongClickListener(v -> {
             FavoriteModel favoriteModel = new FavoriteModel();
             favoriteModel.id = UUID.randomUUID().toString();
             favoriteModel.image = model.banner;
@@ -80,8 +88,8 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
             return true;
         });
 
-        holder.banner.setOnClickListener(v -> {
-            if (reprendreLaLecture) {
+        if (reprendreLaLecture){
+            holder.banner.setOnClickListener(v -> {
                 UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
                 String url;
                 if (model.type.equals(Constants.TYPE_MOVIE)) {
@@ -108,10 +116,10 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                         .putExtra("banner", model.banner)
                         .putExtra("type", model.type)
                         .putExtra("name", model.original_title));
-            }
-        });
+            });
+        }
 
-        holder.itemView.setOnClickListener(v -> {
+        holder.banner.setOnClickListener(v -> {
             if (model.type.equals(Constants.TYPE_SERIES)) {
                 SeriesModel seriesModel = new SeriesModel();
                 seriesModel.name = model.original_title;
@@ -133,7 +141,7 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
             }
         });
 
-        holder.itemView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+        holder.banner.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
@@ -161,8 +169,6 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                 }
             });
         }
-
-
     }
 
     @Override
@@ -174,12 +180,14 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
         ImageView image;
         TextView name;
         MaterialCardView banner;
+        TextView count;
 
         public MovieVH(@NonNull View itemView) {
             super(itemView);
             image = itemView.findViewById(R.id.image);
             name = itemView.findViewById(R.id.name);
             banner = itemView.findViewById(R.id.banner);
+            count = itemView.findViewById(R.id.count);
         }
     }
 

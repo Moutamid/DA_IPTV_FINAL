@@ -15,6 +15,7 @@ import com.moutamid.daiptv.listener.ItemSelectedFilm;
 import com.moutamid.daiptv.listener.ItemSelectedSeries;
 import com.moutamid.daiptv.models.FilmsModel;
 import com.moutamid.daiptv.models.TVModel;
+import com.moutamid.daiptv.utilis.Constants;
 
 import java.util.ArrayList;
 
@@ -42,7 +43,8 @@ public class SeriesParentAdapter extends RecyclerView.Adapter<SeriesParentAdapte
         LinearLayoutManager lm = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
         holder.childRC.setLayoutManager(lm);
         holder.childRC.setHasFixedSize(false);
-        SeriesChildAdapter adapter = new SeriesChildAdapter(context, model.list, itemSelected);
+        boolean isTopRated = model.category_id.equals(Constants.topRated);
+        SeriesChildAdapter adapter = new SeriesChildAdapter(context, model.list, itemSelected, isTopRated);
         holder.childRC.setAdapter(adapter);
     }
 

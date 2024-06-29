@@ -7,12 +7,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.fxn.stash.Stash;
+import com.google.android.material.card.MaterialCardView;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.activities.DetailSeriesActivity;
 import com.moutamid.daiptv.listener.ItemSelectedSeries;
@@ -29,16 +31,20 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
     Context context;
     ArrayList<SeriesModel> list;
     ItemSelectedSeries itemSelected;
+    boolean isTopRated;
 
-    public SeriesChildAdapter(Context context, ArrayList<SeriesModel> list, ItemSelectedSeries itemSelected) {
+    public SeriesChildAdapter(Context context, ArrayList<SeriesModel> list, ItemSelectedSeries itemSelected, boolean isTopRated) {
         this.context = context;
         this.list = list;
         this.itemSelected = itemSelected;
+        this.isTopRated = isTopRated;
     }
 
     @NonNull
     @Override
     public ChildVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (isTopRated)
+            return new ChildVH(LayoutInflater.from(context).inflate(R.layout.top_items_series, parent, false));
         return new ChildVH(LayoutInflater.from(context).inflate(R.layout.series_child_item, parent, false));
     }
 
@@ -51,14 +57,23 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        if (isTopRated){
+            holder.count.setText(String.valueOf(holder.getAdapterPosition()+1));
+        }
+
         holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                Log.d(TAG, "onBindViewHolder: " + model.cover);
-                itemSelected.selected(model);
+                holder.bannerSeries.requestFocus();
             }
         });
 
-        holder.itemView.setOnLongClickListener(v -> {
+        holder.bannerSeries.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus)
+                itemSelected.selected(model);
+        });
+
+        holder.bannerSeries.setOnLongClickListener(v -> {
             FavoriteModel favoriteModel = new FavoriteModel();
             favoriteModel.id = UUID.randomUUID().toString();
             favoriteModel.image = model.cover;
@@ -70,7 +85,7 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
             return true;
         });
 
-        holder.itemView.setOnClickListener(v -> {
+        holder.bannerSeries.setOnClickListener(v -> {
             Stash.put(Constants.PASS_SERIES, model);
             context.startActivity(new Intent(context, DetailSeriesActivity.class));
         });
@@ -78,6 +93,7 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
     }
 
     private static final String TAG = "FilmChildAdapter";
+
     @Override
     public int getItemCount() {
         return list.size();
@@ -85,10 +101,14 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
 
     public class ChildVH extends RecyclerView.ViewHolder {
         ImageView image;
+        TextView count;
+        MaterialCardView bannerSeries;
 
         public ChildVH(@NonNull View itemView) {
             super(itemView);
             image = itemView.findViewById(R.id.image);
+            count = itemView.findViewById(R.id.count);
+            bannerSeries = itemView.findViewById(R.id.bannerSeries);
         }
     }
 

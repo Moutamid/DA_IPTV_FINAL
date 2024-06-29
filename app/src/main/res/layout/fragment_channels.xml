@@ -48,7 +48,7 @@
                 android:layout_above="@id/progressBar"
                 tools:listitem="@layout/channels_card"
                 app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-                app:spanCount="3" />
+                app:spanCount="5" />
 
             <ProgressBar
                 android:id="@+id/progressBar"

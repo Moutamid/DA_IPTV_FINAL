@@ -71,7 +71,7 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
             context.startActivity(new Intent(context, DetailActivity.class));
         });
 
-        holder.itemView.setOnLongClickListener(v -> {
+        holder.bannerFilms.setOnLongClickListener(v -> {
             FavoriteModel favoriteModel = new FavoriteModel();
             favoriteModel.id = UUID.randomUUID().toString();
             favoriteModel.image = model.stream_icon;
