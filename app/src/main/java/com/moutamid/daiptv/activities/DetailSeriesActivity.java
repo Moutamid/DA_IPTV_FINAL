@@ -378,42 +378,36 @@ public class DetailSeriesActivity extends BaseActivity {
 
         binding.play.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                if (binding.nestedScroll != null)
-                    binding.nestedScroll.smoothScrollTo(0, -200);
+                binding.nestedScroll.smoothScrollTo(0, -200);
             }
         });
 
         binding.add.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                if (binding.nestedScroll != null)
-                    binding.nestedScroll.smoothScrollTo(0, -200);
+                binding.nestedScroll.smoothScrollTo(0, -200);
             }
         });
 
         binding.resume.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                if (binding.nestedScroll != null)
-                    binding.nestedScroll.smoothScrollTo(0, -200);
+                binding.nestedScroll.smoothScrollTo(0, -200);
             }
         });
 
         binding.trailer.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                if (binding.nestedScroll != null)
-                    binding.nestedScroll.smoothScrollTo(0, -200);
+                binding.nestedScroll.smoothScrollTo(0, -200);
             }
         });
         binding.reader.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                if (binding.nestedScroll != null)
-                    binding.nestedScroll.smoothScrollTo(0, -200);
+                binding.nestedScroll.smoothScrollTo(0, -200);
             }
         });
 
         binding.episodes.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                if (binding.nestedScroll != null)
-                    binding.nestedScroll.smoothScrollTo(0, -200);
+                binding.nestedScroll.smoothScrollTo(0, -200);
             }
         });
 

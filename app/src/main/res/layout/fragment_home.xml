@@ -44,7 +44,7 @@
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/synopsis"
-                    android:layout_width="500dp"
+                    android:layout_width="350dp"
                     android:layout_height="wrap_content"
                     app:cardBackgroundColor="@color/black_bg_trans"
                     app:cardCornerRadius="8dp"

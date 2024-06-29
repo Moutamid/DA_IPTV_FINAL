@@ -56,6 +56,36 @@ public class DetailActivity extends BaseActivity {
         binding = ActivityDetailBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        binding.play.setOnFocusChangeListener((v, hasFocus) -> {
+            Log.d(TAG, "setUI: hasFocus  " + hasFocus);
+            if (hasFocus) {
+                binding.nestedScroll.smoothScrollTo(0, -200);
+            }
+        });
+
+        binding.add.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                binding.nestedScroll.smoothScrollTo(0, -200);
+            }
+        });
+
+        binding.resume.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                binding.nestedScroll.smoothScrollTo(0, -200);
+            }
+        });
+
+        binding.trailer.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                binding.nestedScroll.smoothScrollTo(0, -200);
+            }
+        });
+        binding.reader.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                binding.nestedScroll.smoothScrollTo(0, -200);
+            }
+        });
+
         model = (VodModel) Stash.getObject(Constants.PASS, VodModel.class);
 
         cast = new ArrayList<>();
@@ -331,39 +361,7 @@ public class DetailActivity extends BaseActivity {
                     .putExtra("name", movieModel.original_title));
         });
 
-        binding.play.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                if (binding.nestedScroll != null)
-                    binding.nestedScroll.smoothScrollTo(0, -200);
-            }
-        });
 
-        binding.add.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                if (binding.nestedScroll != null)
-                    binding.nestedScroll.smoothScrollTo(0, -200);
-            }
-        });
-
-        binding.resume.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                if (binding.nestedScroll != null)
-                    binding.nestedScroll.smoothScrollTo(0, -200);
-            }
-        });
-
-        binding.trailer.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                if (binding.nestedScroll != null)
-                    binding.nestedScroll.smoothScrollTo(0, -200);
-            }
-        });
-        binding.reader.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                if (binding.nestedScroll != null)
-                    binding.nestedScroll.smoothScrollTo(0, -200);
-            }
-        });
 
         CastsAdapter adapter = new CastsAdapter(this, cast);
         binding.castRC.setAdapter(adapter);

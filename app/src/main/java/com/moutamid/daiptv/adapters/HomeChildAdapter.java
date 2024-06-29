@@ -147,6 +147,22 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                 }
             }
         });
+
+        if (reprendreLaLecture) {
+            holder.banner.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if (hasFocus) {
+                        Log.d(TAG, "onFocusChange: Image " + model.banner);
+                        Log.d(TAG, "onFocusChange: TYPE " + model.type);
+                        Log.d(TAG, "onFocusChange: NAME " + model.original_title);
+                        itemSelected.selected(model);
+                    }
+                }
+            });
+        }
+
+
     }
 
     @Override
