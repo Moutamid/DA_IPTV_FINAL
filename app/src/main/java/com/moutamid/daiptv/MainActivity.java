@@ -1,7 +1,12 @@
 package com.moutamid.daiptv;
 
+import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.pm.ShortcutInfo;
+import android.content.pm.ShortcutManager;
+import android.graphics.drawable.Icon;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
@@ -62,6 +67,27 @@ public class MainActivity extends BaseActivity {
         Constants.checkApp(this);
 
         updateAndroidSecurityProvider();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
+
+            if (shortcutManager.isRequestPinShortcutSupported()) {
+                ShortcutInfo pinShortcutInfo =
+                        new ShortcutInfo.Builder(this, "my-shortcut")
+                                .setShortLabel("Shortcut Name")
+                                .setLongLabel("Shortcut Long Name")
+                                .setIcon(Icon.createWithResource(this, R.mipmap.ic_launcher))
+                                .setIntent(new Intent(Intent.ACTION_MAIN, Uri.EMPTY, this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK))
+                                .build();
+
+                Intent pinnedShortcutCallbackIntent = shortcutManager.createShortcutResultIntent(pinShortcutInfo);
+
+                PendingIntent successCallback = PendingIntent.getBroadcast(this, /* request code */ 0,
+                        pinnedShortcutCallbackIntent, /* flags */ PendingIntent.FLAG_IMMUTABLE);
+
+                shortcutManager.requestPinShortcut(pinShortcutInfo, successCallback.getIntentSender());
+            }
+        }
 
 
         binding.profile.setOnClickListener(this::showMenu);
@@ -220,10 +246,10 @@ public class MainActivity extends BaseActivity {
             binding.indicatorRecherche.setVisibility(View.VISIBLE);
             getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, new RechercheFragment()).commit();
         });
-
-//        ArrayList<EPGModel> list = Stash.getArrayList(Constants.EPG, EPGModel.class);
-//        if (list.isEmpty())
-//            get();
+        Stash.clear(Constants.EPG);
+        ArrayList<EPGModel> list = Stash.getArrayList(Constants.EPG, EPGModel.class);
+        if (list.isEmpty())
+            get();
     }
 
     private static final String TAG = "MainActivity";
@@ -231,9 +257,11 @@ public class MainActivity extends BaseActivity {
         Stash.clear(Constants.EPG);
         ArrayList<EPGModel> list = Stash.getArrayList(Constants.EPG, EPGModel.class);
         Toast.makeText(this, "loading...", Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "get: LOADING");
+        String url = "http://vbn123.com:8080/xmltv.php?username=9tqadv9utC4B28qe&password=X8J6qeYDNcbzvWns";
         new Thread(() -> {
             RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-            String url = "http://vbn123.com:8080/xmltv.php?username=9tqadv9utC4B28qe&password=X8J6qeYDNcbzvWns";
+            Log.d(TAG, "get: " + url);
             StringRequest stringRequest = new StringRequest(Request.Method.GET, url, response -> {
                 Log.d("TAGGER", "onResponse/45: data loaded");
                 //  Log.d("TAGGER", "onResponse/45: data: : " + response);
@@ -287,6 +315,7 @@ public class MainActivity extends BaseActivity {
                    Stash.put(Constants.EPG, list);
                 } catch (Exception e) {
                     e.printStackTrace();
+                    Log.d(TAG, "get: ERROR " + e.getLocalizedMessage());
                 }
             }, error -> Log.d(TAG, "onErrorResponse: " + error.toString()));
             queue.add(stringRequest);

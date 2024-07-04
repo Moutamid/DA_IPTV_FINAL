@@ -2,6 +2,7 @@ package com.moutamid.daiptv.adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,9 +11,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.fxn.stash.Stash;
 import com.google.android.material.card.MaterialCardView;
 import com.moutamid.daiptv.R;
@@ -49,14 +55,26 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
     @Override
     public void onBindViewHolder(@NonNull ChildVH holder, int position) {
         VodModel model = list.get(holder.getAdapterPosition());
-
         if (isTopRated){
             holder.count.setText(String.valueOf(holder.getAdapterPosition()+1));
         }
 
         try {
             String link = model.stream_icon.startsWith("/") ? Constants.getImageLink(model.stream_icon) : model.stream_icon.trim();
-            Glide.with(context).load(link).placeholder(R.color.transparent).into(holder.image);
+            Glide.with(context).load(link).listener(new RequestListener<Drawable>() {
+                @Override
+                public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object object, @NonNull Target<Drawable> target, boolean isFirstResource) {
+                    holder.name.setVisibility(View.VISIBLE);
+                    holder.image.setVisibility(View.GONE);
+                    holder.name.setText(model.name);
+                    return false;
+                }
+
+                @Override
+                public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                    return false;
+                }
+            }).placeholder(R.color.transparent).into(holder.image);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -100,12 +118,13 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
     }
 
     public class ChildVH extends RecyclerView.ViewHolder {
-        TextView count;
+        TextView count, name;
         ImageView image;
         MaterialCardView bannerFilms;
         public ChildVH(@NonNull View itemView) {
             super(itemView);
             count = itemView.findViewById(R.id.count);
+            name = itemView.findViewById(R.id.name);
             image = itemView.findViewById(R.id.image);
             bannerFilms = itemView.findViewById(R.id.bannerFilms);
         }

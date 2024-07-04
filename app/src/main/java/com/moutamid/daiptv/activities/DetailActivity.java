@@ -87,13 +87,27 @@ public class DetailActivity extends BaseActivity {
         });
 
         model = (VodModel) Stash.getObject(Constants.PASS, VodModel.class);
+        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+        ArrayList<FavoriteModel> films = Stash.getArrayList(userModel.id, FavoriteModel.class);
+        boolean check = false;
+        for (FavoriteModel favoriteModel : films) {
+            if (model.stream_id == favoriteModel.steam_id) {
+                check = true;
+                break;
+            }
+        }
+
+        if (check) {
+            binding.add.setText("Retirer des favoris");
+        } else {
+            binding.add.setText("Ajouter aux favoris");
+        }
 
         cast = new ArrayList<>();
 
         binding.back.setOnClickListener(v -> onBackPressed());
 
         binding.reader.setOnClickListener(v -> {
-            UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
             String link = userModel.url + "/movie/" + userModel.username + "/" + userModel.password + "/" + model.stream_id + "." + model.container_extension;
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link.trim()));
             intent.setType("video/*");

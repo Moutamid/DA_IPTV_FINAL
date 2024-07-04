@@ -2,6 +2,7 @@ package com.moutamid.daiptv.adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,9 +11,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.fxn.stash.Stash;
 import com.google.android.material.card.MaterialCardView;
 import com.moutamid.daiptv.R;
@@ -74,7 +80,20 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
         } else {
             link = model.type.equals(Constants.TYPE_SERIES) && favoris ? model.banner : Constants.getImageLink(model.banner);
         }
-        Glide.with(context).load(link).placeholder(R.color.grey2).into(holder.image);
+        Glide.with(context).load(link).listener(new RequestListener<Drawable>() {
+            @Override
+            public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object object, @NonNull Target<Drawable> target, boolean isFirstResource) {
+                holder.name.setVisibility(View.VISIBLE);
+                holder.image.setVisibility(View.GONE);
+                holder.name.setText(model.original_title);
+                return false;
+            }
+
+            @Override
+            public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                return false;
+            }
+        }).placeholder(R.color.grey2).into(holder.image);
 
         holder.banner.setOnLongClickListener(v -> {
             FavoriteModel favoriteModel = new FavoriteModel();

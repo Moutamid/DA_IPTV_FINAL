@@ -62,6 +62,12 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
+                <ImageView
+                    android:id="@+id/logo"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginBottom="8dp" />
+
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/synopsis"
                     android:layout_width="400dp"
@@ -91,7 +97,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ellipsize="end"
-                            android:maxLines="5"
+                            android:maxLines="1"
                             android:textColor="@color/white2"
                             android:textSize="18sp"
                             tools:text="@string/lorem50" />
@@ -183,6 +189,22 @@
                     app:strokeWidth="1dp" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/resume"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/black_bg_trans"
+                    android:padding="12dp"
+                    android:text="Reprendre la lecture"
+                    app:cornerRadius="12dp"
+                    android:layout_centerHorizontal="true"
+                    android:layout_below="@id/linearLayout"
+                    app:icon="@drawable/resume"
+                    app:iconSize="26dp"
+                    android:textSize="13sp"
+                    app:strokeColor="@color/grey2"
+                    app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/trailer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -243,31 +265,16 @@
 
             </LinearLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/resume"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:backgroundTint="@color/black_bg_trans"
-                android:padding="12dp"
-                android:text="Reprendre la lecture"
-                app:cornerRadius="12dp"
-                android:layout_centerHorizontal="true"
-                android:layout_below="@id/linearLayout"
-                app:icon="@drawable/resume"
-                app:iconSize="26dp"
-                android:textSize="13sp"
-                app:strokeColor="@color/grey2"
-                app:strokeWidth="1dp" />
-
             <TextView
                 android:id="@+id/cast"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/resume"
+                android:layout_below="@id/linearLayout"
                 android:padding="15dp"
                 android:text="Acteurs"
                 android:textColor="@color/white"
                 android:textSize="18sp" />
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/castRC"
                 android:layout_width="match_parent"

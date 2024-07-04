@@ -6,6 +6,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.view.Window;
 import android.widget.Toast;
 
@@ -202,8 +203,38 @@ public class DetailSeriesActivity extends BaseActivity {
                         JSONArray videos = response.getJSONObject("videos").getJSONArray("results");
                         JSONArray images = response.getJSONObject("images").getJSONArray("backdrops");
                         JSONArray credits = response.getJSONObject("credits").getJSONArray("cast");
+                        JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
 
-                        int index = -1;
+                        int index = -1, logoIndex = 0;
+
+                        if (logos.length() > 1) {
+                            binding.name.setVisibility(View.GONE);
+                            for (int i = 0; i < logos.length(); i++) {
+                                JSONObject object = logos.getJSONObject(i);
+                                String lang = object.getString("iso_639_1");
+                                if (lang.equals("fr") || (logoIndex == 0 && lang.isEmpty())) {
+                                    logoIndex = i;
+                                    break;
+                                } else if (logoIndex == 0 && lang.equals("en")) {
+                                    logoIndex = i;
+                                }
+                            }
+                            String path = logos.getJSONObject(logoIndex).getString("file_path");
+                            Log.d(TAG, "getlogo: " + path);
+                            try {
+                                Glide.with(DetailSeriesActivity.this).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            binding.name.setVisibility(View.VISIBLE);
+                            try {
+                                Glide.with(DetailSeriesActivity.this).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+
                         if (images.length() > 1) {
                             String[] preferredLanguages = {"null", "fr", "en"};
                             for (String lang : preferredLanguages) {

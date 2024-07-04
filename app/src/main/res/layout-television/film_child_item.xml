@@ -26,6 +26,15 @@
             android:layout_height="200dp"
             android:scaleType="fitXY" />
 
+        <TextView
+            android:layout_width="110dp"
+            android:layout_height="200dp"
+            android:text="@string/lorem"
+            android:gravity="center"
+            android:padding="5dp"
+            android:visibility="gone"
+            android:id="@+id/name" />
+
     </RelativeLayout>
 
 </com.google.android.material.card.MaterialCardView>
