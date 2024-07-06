@@ -50,6 +50,9 @@ dependencies {
     implementation(libs.stash)
     implementation(libs.volley)
 
+    implementation(libs.room.runtime)
+    annotationProcessor(libs.room.compiler)
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

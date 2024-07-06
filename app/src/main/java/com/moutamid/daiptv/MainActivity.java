@@ -1,9 +1,11 @@
 package com.moutamid.daiptv;
 
+import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
@@ -13,6 +15,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,9 +27,11 @@ import com.android.volley.toolbox.Volley;
 import com.fxn.stash.Stash;
 import com.google.android.gms.security.ProviderInstaller;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.moutamid.daiptv.activities.EditProfileActivity;
 import com.moutamid.daiptv.activities.ManageProfileActivity;
 import com.moutamid.daiptv.activities.MyListActivity;
+import com.moutamid.daiptv.database.AppDatabase;
 import com.moutamid.daiptv.databinding.ActivityMainBinding;
 import com.moutamid.daiptv.fragments.ChannelsFragment;
 import com.moutamid.daiptv.fragments.FilmFragment;
@@ -58,13 +63,15 @@ public class MainActivity extends BaseActivity {
     ChannelsFragment channelsFragment;
     FilmFragment filmFragment;
     SeriesFragment seriesFragment;
-
+    AppDatabase database;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         Constants.checkApp(this);
+
+
 
         updateAndroidSecurityProvider();
 
@@ -246,17 +253,25 @@ public class MainActivity extends BaseActivity {
             binding.indicatorRecherche.setVisibility(View.VISIBLE);
             getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, new RechercheFragment()).commit();
         });
-        Stash.clear(Constants.EPG);
-        ArrayList<EPGModel> list = Stash.getArrayList(Constants.EPG, EPGModel.class);
+
+        database = AppDatabase.getInstance(this);
+        database.epgDAO().Delete();
+        List<EPGModel> list = database.epgDAO().getEPG();
         if (list.isEmpty())
             get();
     }
 
     private static final String TAG = "MainActivity";
     private void get() {
-        Stash.clear(Constants.EPG);
-        ArrayList<EPGModel> list = Stash.getArrayList(Constants.EPG, EPGModel.class);
-        Toast.makeText(this, "loading...", Toast.LENGTH_SHORT).show();
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.progress_layout);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        dialog.setCancelable(false);
+        dialog.show();
+
+        Snackbar snackbar = Snackbar.make(this, binding.getRoot(), "Loading EPG ....", Snackbar.LENGTH_INDEFINITE);
+        snackbar.show();
         Log.d(TAG, "get: LOADING");
         String url = "http://vbn123.com:8080/xmltv.php?username=9tqadv9utC4B28qe&password=X8J6qeYDNcbzvWns";
         new Thread(() -> {
@@ -279,7 +294,6 @@ public class MainActivity extends BaseActivity {
                     // Get a NodeList of programme elements
                     NodeList programmeList = root.getElementsByTagName("programme");
                     Log.d(TAG, "programmeList: " + programmeList.getLength());
-                    list.clear();
                     for (int i = 0; i < programmeList.getLength(); i++) {
                         Node programmeNode = programmeList.item(i);
                         if (programmeNode.getNodeType() == Node.ELEMENT_NODE) {
@@ -292,32 +306,26 @@ public class MainActivity extends BaseActivity {
 
                             // Get child elements
                             String title = programmeElement.getElementsByTagName("title").item(0).getTextContent();
-                            String desc = programmeElement.getElementsByTagName("desc").item(0).getTextContent();
 
-                            EPGModel epgModel = new EPGModel();
-                            epgModel.start = start;
-                            epgModel.end = stop;
-                            epgModel.channel_id = channel;
-                            epgModel.title = title;
-
-                            list.add(epgModel);
-
-                            Log.d(TAG, "getEPG: Programme " + (i + 1));
-
-                            System.out.println("Start: " + start);
-                            System.out.println("Stop: " + stop);
-                            System.out.println("Channel: " + channel);
-                            System.out.println("Title: " + title);
-                            System.out.println("Description: " + desc);
-                            System.out.println();
+                            EPGModel epgModel = new EPGModel(start, stop, channel, title);
+                            database.epgDAO().insert(epgModel);
+                        }
+                        if (i == programmeList.getLength()-1) {
+                            dialog.dismiss();
+                            snackbar.dismiss();
                         }
                     }
-                   Stash.put(Constants.EPG, list);
                 } catch (Exception e) {
+                    dialog.dismiss();
+                    snackbar.dismiss();
                     e.printStackTrace();
                     Log.d(TAG, "get: ERROR " + e.getLocalizedMessage());
                 }
-            }, error -> Log.d(TAG, "onErrorResponse: " + error.toString()));
+            }, error -> {
+                dialog.dismiss();
+                snackbar.dismiss();
+                Log.d(TAG, "onErrorResponse: " + error.toString());
+            });
             queue.add(stringRequest);
         }).start();
     }

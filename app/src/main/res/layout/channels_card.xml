@@ -67,9 +67,9 @@
             android:id="@+id/epg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="11sp"
+            android:textSize="10sp"
             android:textColor="@color/grey2"
-            android:text="No information found"
+            android:text="Aucune information trouvée"
             android:paddingHorizontal="12dp"
             android:paddingBottom="12dp" />
 

@@ -333,7 +333,7 @@ public class ChannelsFragment extends Fragment {
                 model.name = favoriteModel.name;
                 model.stream_type = favoriteModel.type;
                 model.stream_icon = favoriteModel.image;
-                model.epg_channel_id = favoriteModel.category_id;
+                model.epg_channel_id = favoriteModel.epg_id;
                 model.category_id = favoriteModel.category_id;
                 model.stream_link = favoriteModel.stream_link;
                 channelsList.add(model);

@@ -101,8 +101,9 @@ public class Constants {
 
     public static Date parseDate(String dateString) {
         try {
+            Log.d(TAG, "parseDate: " + dateString);
             // 2024-05-30 11:35:00
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault());
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss Z", Locale.getDefault());
             return dateFormat.parse(dateString);
         } catch (ParseException e) {
             e.printStackTrace();
@@ -110,20 +111,9 @@ public class Constants {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    public static boolean isCurrentDateInBetween(String startDate, String endDate) {
-        try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss ZZZZ");
-            ZonedDateTime startTime = ZonedDateTime.parse(startDate, formatter);
-            ZonedDateTime endTime = ZonedDateTime.parse(endDate, formatter);
-            ZonedDateTime currentTime = ZonedDateTime.now(ZoneId.of(startTime.getZone().getId()));
-            return currentTime.isAfter(startTime) && currentTime.isBefore(endTime);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-//        Date currentDate = new Date();
-//        return currentDate.after(startDate) && currentDate.before(endDate);
+    public static boolean isCurrentDateInBetween(Date startDate, Date endDate) {
+        Date currentDate = new Date();
+        return currentDate.after(startDate) && currentDate.before(endDate);
     }
 
     public static void checkApp(Activity activity) {

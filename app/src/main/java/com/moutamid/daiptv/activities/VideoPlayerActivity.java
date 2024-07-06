@@ -63,10 +63,12 @@ public class VideoPlayerActivity extends BaseActivity {
         resume = getIntent().getStringExtra("resume");
         type = getIntent().getStringExtra("type");
 
-        if (type.equals(Constants.TYPE_MOVIE)) {
-            vodModel = (VodModel) Stash.getObject(Constants.TYPE_MOVIE, VodModel.class);
-        } else {
-            seriesModel = (SeriesModel) Stash.getObject(Constants.TYPE_SERIES, SeriesModel.class);
+        if (type != null) {
+            if (type.equals(Constants.TYPE_MOVIE)) {
+                vodModel = (VodModel) Stash.getObject(Constants.TYPE_MOVIE, VodModel.class);
+            } else if (type.equals(Constants.TYPE_SERIES)) {
+                seriesModel = (SeriesModel) Stash.getObject(Constants.TYPE_SERIES, SeriesModel.class);
+            }
         }
 
         Log.d("VideoURLPlayer", "" + url);
