@@ -32,8 +32,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"
                 android:layout_marginStart="15dp"
-                android:layout_marginTop="50dp"
-                android:gravity="center"
+                android:layout_marginTop="55dp"
                 android:orientation="vertical">
 
                 <ImageView
@@ -44,12 +43,12 @@
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/synopsis"
-                    android:layout_width="500dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:cardBackgroundColor="@color/black_bg_trans"
+                    app:cardBackgroundColor="@color/transparent"
                     app:cardCornerRadius="8dp"
                     app:cardElevation="0dp"
-                    app:strokeColor="@color/grey2"
+                    app:strokeColor="@color/transparent"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -64,6 +63,7 @@
                             android:layout_height="wrap_content"
                             tools:text="Synopsis"
                             android:maxLines="1"
+                            android:layout_marginVertical="3dp"
                             android:textColor="@color/white"
                             android:textSize="22sp" />
 
@@ -71,11 +71,11 @@
                             android:id="@+id/desc"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:ellipsize="end"
-                            android:maxLines="1"
-                            android:scrollHorizontally="true"
                             android:textColor="@color/white2"
                             android:textSize="18sp"
+                            android:scrollHorizontally="true"
+                            android:ellipsize="end"
+                            android:maxLines="2"
                             tools:text="@string/lorem" />
 
                     </LinearLayout>
@@ -84,9 +84,10 @@
 
                 <LinearLayout
                     android:id="@+id/others"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
+                    android:layout_marginStart="15dp"
                     android:orientation="horizontal">
 
                     <TextView
@@ -97,7 +98,7 @@
                         android:gravity="center"
                         android:padding="12dp"
                         android:textColor="@color/white"
-                        android:textSize="16sp"
+                        android:textSize="14sp"
                         tools:text="January 16" />
 
                     <com.google.android.material.button.MaterialButton
@@ -106,20 +107,20 @@
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="10dp"
                         android:backgroundTint="@color/black_bg_trans"
-                        android:enabled="false"
-                        android:focusable="false"
-                        android:focusableInTouchMode="false"
                         android:gravity="center"
                         android:padding="12dp"
+                        android:focusable="false"
+                        android:enabled="false"
+                        android:focusableInTouchMode="false"
                         android:textColor="@color/white"
-                        android:textSize="16sp"
+                        android:textSize="14sp"
                         app:cornerRadius="8dp"
                         app:icon="@drawable/tmdb_logo"
                         app:iconSize="20dp"
                         app:iconTint="@null"
                         app:strokeColor="@color/grey2"
                         app:strokeWidth="1dp"
-                        tools:text="8.0" />
+                        tools:text="8.1" />
 
                     <TextView
                         android:id="@+id/filmType"
@@ -129,8 +130,8 @@
                         android:gravity="center"
                         android:padding="12dp"
                         android:textColor="@color/white"
-                        android:textSize="16sp"
-                        tools:text="Science-fiction et fantastique" />
+                        android:textSize="14sp"
+                        tools:text="Duree Film" />
 
                 </LinearLayout>
 
@@ -142,7 +143,6 @@
                 android:layout_height="match_parent"
                 android:layout_below="@id/details"
                 android:nextFocusUp="@id/series"
-                android:layout_marginTop="15dp"
                 tools:listitem="@layout/parent_item" />
 
         </RelativeLayout>
