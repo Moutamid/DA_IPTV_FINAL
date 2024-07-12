@@ -529,10 +529,10 @@ public class HomeFragment extends Fragment {
     }
 
     public static void refreshFavoris() {
-        list.remove(list.size() - 1);
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
         ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);
         if (!fvrt.isEmpty()) {
+            list.remove(list.size() - 1);
             ArrayList<MovieModel> fvrtList = new ArrayList<>();
             for (FavoriteModel channelsModel : fvrt) {
                 if (!channelsModel.type.equals("live")) {
@@ -546,8 +546,8 @@ public class HomeFragment extends Fragment {
                 }
             }
             list.add(new TopItems("Favoris", fvrtList));
+            adapter.notifyItemChanged(list.size() - 1);
         }
-        adapter.notifyItemChanged(list.size() - 1);
     }
 
     @Override

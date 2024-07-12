@@ -97,7 +97,7 @@
                     android:focusable="true"
                     android:nextFocusLeft="@id/Accueil"
                     android:nextFocusRight="@id/Films"
-                    android:nextFocusDown="@id/channelsRC"
+                    android:nextFocusDown="@id/sidePanel"
                     android:layout_marginHorizontal="20dp"
                     android:foreground="@color/transparent"
                     app:cardBackgroundColor="@color/focus"

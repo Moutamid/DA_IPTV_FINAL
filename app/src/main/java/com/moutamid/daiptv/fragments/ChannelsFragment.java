@@ -81,7 +81,7 @@ public class ChannelsFragment extends Fragment {
         if (list.isEmpty()) addButton();
         else {
             showButtons(list);
-            switchGroup(channels.get("FRANCE FHD | TV"));
+            switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
         }
 
         return binding.getRoot();
@@ -105,6 +105,7 @@ public class ChannelsFragment extends Fragment {
                 if (selectedButton == null && button.getText().toString().trim().equals("FRANCE FHD | TV")) {
                     button.setStrokeColorResource(R.color.red);
                     selectedButton = button;
+                    selectedButton.requestFocus();
                 }
                 button.setOnClickListener(v -> {
                     isAll = false;
@@ -114,6 +115,7 @@ public class ChannelsFragment extends Fragment {
                             ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.CHANNELS_ALL, ChannelsModel.class);
                             adapter = new ChannelsAdapter(mContext, channelsList);
                             binding.channelsRC.setAdapter(adapter);
+                            selectedButton.setText("All - " + channelsList.size());
                             break;
                         case "Chaînes récentes":
                             showRecentChannels();
@@ -122,7 +124,7 @@ public class ChannelsFragment extends Fragment {
                             showFavoriteChannels();
                             break;
                         default:
-                            switchGroup(channels.get(selectedGroup));
+                            switchGroup(channels.get(selectedGroup), selectedGroup);
                             break;
                     }
                     if (selectedButton != null) {
@@ -184,6 +186,7 @@ public class ChannelsFragment extends Fragment {
                                 if (selectedButton == null && button.getText().toString().equals("FRANCE FHD | TV")) {
                                     button.setStrokeColorResource(R.color.red);
                                     selectedButton = button;
+                                    selectedButton.requestFocus();
                                 }
                                 button.setOnClickListener(v -> {
                                     isAll = false;
@@ -199,7 +202,7 @@ public class ChannelsFragment extends Fragment {
                                             showFavoriteChannels();
                                             break;
                                         default:
-                                            switchGroup(channels.get(selectedGroup));
+                                            switchGroup(channels.get(selectedGroup), selectedGroup);
                                             break;
                                     }
                                     if (selectedButton != null) {
@@ -211,7 +214,7 @@ public class ChannelsFragment extends Fragment {
                             }
                         }
                         Stash.put(Constants.CHANNELS, list);
-                        switchGroup(channels.get("FRANCE FHD | TV"));
+                        switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
                     } catch (JSONException e) {
                         e.printStackTrace();
                         dialog.dismiss();
@@ -275,7 +278,7 @@ public class ChannelsFragment extends Fragment {
         requestQueue.add(objectRequest);
     }
 
-    private void switchGroup(String id) {
+    private void switchGroup(String id, String name) {
         dialog.show();
         ArrayList<ChannelsModel> list = new ArrayList<>();
         String url = ApiLinks.getLiveStreamsByID(id);
@@ -304,6 +307,7 @@ public class ChannelsFragment extends Fragment {
                         }
                         adapter = new ChannelsAdapter(mContext, list);
                         binding.channelsRC.setAdapter(adapter);
+                        selectedButton.setText(name + " - " + list.size());
                     } catch (JSONException e) {
                         e.printStackTrace();
                         dialog.dismiss();
@@ -341,6 +345,7 @@ public class ChannelsFragment extends Fragment {
         }
         adapter = new ChannelsAdapter(mContext, channelsList);
         binding.channelsRC.setAdapter(adapter);
+        selectedButton.setText("Favoris - " + channelsList.size());
     }
 
     private void showRecentChannels() {
@@ -348,6 +353,7 @@ public class ChannelsFragment extends Fragment {
         Collections.reverse(channelsList);
         adapter = new ChannelsAdapter(mContext, channelsList);
         binding.channelsRC.setAdapter(adapter);
+        selectedButton.setText("Chaînes récentes - " + channelsList.size());
     }
 
     @Override
