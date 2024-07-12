@@ -4,6 +4,8 @@ import static androidx.media3.ui.PlayerView.SHOW_BUFFERING_WHEN_PLAYING;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -70,6 +72,8 @@ public class VideoPlayerActivity extends BaseActivity {
             }
         }
 
+        binding.title.setText(name);
+
         Log.d("VideoURLPlayer", "" + url);
         Log.d("VideoURLPlayer", "resume   " + resume);
         Log.d("VideoURLPlayer", "name   " + name);
@@ -107,14 +111,12 @@ public class VideoPlayerActivity extends BaseActivity {
         playerView.setPlayer(player);
         playerView.setShowBuffering(SHOW_BUFFERING_WHEN_PLAYING);
 
-        try {
-            TextView ti = playerView.findViewById(R.id.channelTitle);
-            ti.setText(name);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        playerView.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) visibility -> {
+            binding.title.setVisibility(visibility);
+        });
 
         player.addListener(new Player.Listener() {
+
             @Override
             public void onPlaybackStateChanged(int playbackState) {
                 Player.Listener.super.onPlaybackStateChanged(playbackState);

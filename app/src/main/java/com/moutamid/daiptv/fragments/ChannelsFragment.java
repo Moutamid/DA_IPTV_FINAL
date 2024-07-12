@@ -168,6 +168,7 @@ public class ChannelsFragment extends Fragment {
                             model.parent_id = object.getInt("parent_id");
                             list.add(model);
                         }
+
                         channels = new HashMap<>();
                         for (CategoryModel model : list) {
                             if (!model.category_name.isEmpty()) {

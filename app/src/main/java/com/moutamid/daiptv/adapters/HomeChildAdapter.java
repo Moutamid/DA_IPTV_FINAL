@@ -108,7 +108,30 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
             return true;
         });
 
-        if (reprendreLaLecture){
+        holder.banner.setOnClickListener(v -> {
+            if (model.type.equals(Constants.TYPE_SERIES)) {
+                SeriesModel seriesModel = new SeriesModel();
+                seriesModel.name = model.original_title;
+                seriesModel.cover = model.banner;
+                seriesModel.series_id = model.series_id;
+                seriesModel.releaseDate = model.release_date;
+                seriesModel.stream_type = Constants.topRated;
+                Stash.put(Constants.PASS_SERIES, seriesModel);
+                context.startActivity(new Intent(context, DetailSeriesActivity.class));
+            } else {
+                VodModel vodModel = new VodModel();
+                vodModel.name = model.original_title;
+                vodModel.stream_icon = model.banner;
+                vodModel.stream_id = model.streamID;
+                vodModel.container_extension = model.extension;
+                vodModel.added = model.release_date;
+                vodModel.stream_type = Constants.topRated;
+                Stash.put(Constants.PASS, vodModel);
+                context.startActivity(new Intent(context, DetailActivity.class));
+            }
+        });
+
+        if (reprendreLaLecture) {
             holder.banner.setOnClickListener(v -> {
                 UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
                 String url;
@@ -139,29 +162,6 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                         .putExtra("name", model.original_title));
             });
         }
-
-        holder.banner.setOnClickListener(v -> {
-            if (model.type.equals(Constants.TYPE_SERIES)) {
-                SeriesModel seriesModel = new SeriesModel();
-                seriesModel.name = model.original_title;
-                seriesModel.cover = model.banner;
-                seriesModel.series_id = model.series_id;
-                seriesModel.releaseDate = model.release_date;
-                seriesModel.stream_type = Constants.topRated;
-                Stash.put(Constants.PASS_SERIES, seriesModel);
-                context.startActivity(new Intent(context, DetailSeriesActivity.class));
-            } else {
-                VodModel vodModel = new VodModel();
-                vodModel.name = model.original_title;
-                vodModel.stream_icon = model.banner;
-                vodModel.stream_id = model.streamID;
-                vodModel.container_extension = model.extension;
-                vodModel.added = model.release_date;
-                vodModel.stream_type = Constants.topRated;
-                Stash.put(Constants.PASS, vodModel);
-                context.startActivity(new Intent(context, DetailActivity.class));
-            }
-        });
 
         holder.banner.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
