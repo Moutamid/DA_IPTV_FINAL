@@ -49,6 +49,10 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import java.io.StringReader;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -73,22 +77,37 @@ public class MainActivity extends BaseActivity {
         updateAndroidSecurityProvider();
 
         new Thread(() -> {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
-                if (shortcutManager.isRequestPinShortcutSupported()) {
-                    ShortcutInfo pinShortcutInfo =
-                            new ShortcutInfo.Builder(this, "my-shortcut")
-                                    .setShortLabel("Da IPTV")
-                                    .setLongLabel("Da IPTV")
-                                    .setIcon(Icon.createWithResource(this, R.mipmap.ic_launcher))
-                                    .setIntent(new Intent(Intent.ACTION_MAIN, Uri.EMPTY, this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK))
-                                    .build();
 
-                    Intent pinnedShortcutCallbackIntent = shortcutManager.createShortcutResultIntent(pinShortcutInfo);
-                    PendingIntent successCallback = PendingIntent.getBroadcast(this, 0, pinnedShortcutCallbackIntent, PendingIntent.FLAG_IMMUTABLE);
-                    shortcutManager.requestPinShortcut(pinShortcutInfo, successCallback.getIntentSender());
-                }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+                ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
+                Intent intent = new Intent(this, SplashActivity.class);
+                intent.setAction(Intent.ACTION_VIEW);
+                ShortcutInfo shortcut = new ShortcutInfo.Builder(this, "shortcut_id")
+                        .setShortLabel(getString(R.string.app_name))
+                        .setLongLabel(getString(R.string.app_name))
+                        .setIcon(Icon.createWithResource(this, R.mipmap.ic_launcher))
+                        .setIntent(intent)
+                        .build();
+                shortcutManager.setDynamicShortcuts(Collections.singletonList(shortcut));
             }
+
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//                ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
+//                if (shortcutManager.isRequestPinShortcutSupported()) {
+//                    ShortcutInfo pinShortcutInfo =
+//                            new ShortcutInfo.Builder(this, "shortcut_id")
+//                                    .setShortLabel("Da IPTV")
+//                                    .setLongLabel("Da IPTV")
+//                                    .setIcon(Icon.createWithResource(this, R.mipmap.ic_launcher))
+//                                    .setIntent(new Intent(Intent.ACTION_MAIN, Uri.EMPTY, this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK))
+//                                    .build();
+//
+//                    Intent pinnedShortcutCallbackIntent = shortcutManager.createShortcutResultIntent(pinShortcutInfo);
+//                    PendingIntent successCallback = PendingIntent.getBroadcast(this, 0, pinnedShortcutCallbackIntent, PendingIntent.FLAG_IMMUTABLE);
+//                    shortcutManager.requestPinShortcut(pinShortcutInfo, successCallback.getIntentSender());
+//                }
+//            }
         }).start();
 
         binding.profile.setOnClickListener(this::showMenu);
@@ -151,7 +170,23 @@ public class MainActivity extends BaseActivity {
         });
 
         database = AppDatabase.getInstance(this);
-//        database.epgDAO().Delete();
+        long time = Stash.getLong(Constants.IS_TODAY, 0);
+        LocalDate date;
+        if (time != 0) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                date = Instant.ofEpochMilli(time)
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate();
+                LocalDate today = LocalDate.now();
+                boolean isToday = date.equals(today);
+                Log.d(TAG, "onCreate: ISTODAY " + isToday);
+                if (!isToday) {
+                    database.epgDAO().Delete();
+                }
+            }
+        } else {
+            database.epgDAO().Delete();
+        }
         List<EPGModel> list = database.epgDAO().getEPG();
         if (list.isEmpty())
             get();
@@ -210,6 +245,7 @@ public class MainActivity extends BaseActivity {
                         if (i == programmeList.getLength() - 1) {
                             dialog.dismiss();
                             snackbar.dismiss();
+                            Stash.put(Constants.IS_TODAY, System.currentTimeMillis());
                         }
                     }
                 } catch (Exception e) {

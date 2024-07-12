@@ -90,19 +90,31 @@ public class DetailSeriesActivity extends BaseActivity {
             FavoriteModel favoriteModel = new FavoriteModel();
             favoriteModel.id = UUID.randomUUID().toString();
             favoriteModel.image = model.cover;
-            favoriteModel.steam_id = Integer.parseInt(infoModel.id);
+            favoriteModel.stream_id = Integer.parseInt(infoModel.id);
             favoriteModel.extension = infoModel.container_extension;
             favoriteModel.name = model.name;
+            favoriteModel.series_id = model.series_id;
             favoriteModel.category_id = model.category_id;
             favoriteModel.type = model.stream_type;
-            new AddFavoriteDialog(this, favoriteModel).show();
+            new AddFavoriteDialog(this, favoriteModel, check -> {
+                if (check) {
+                    UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+                    ArrayList<FavoriteModel> filmsList = Stash.getArrayList(userModel.id, FavoriteModel.class);
+                    boolean b = filmsList.stream().anyMatch(favorite -> favorite.stream_id == Integer.parseInt(infoModel.id));
+                    if (b) {
+                        binding.add.setText("Retirer des favoris");
+                    } else {
+                        binding.add.setText("Ajouter aux favoris");
+                    }
+                }
+            }).show();
         });
         requestQueue = VolleySingleton.getInstance(DetailSeriesActivity.this).getRequestQueue();
 
         fetchID();
         if (model != null) {
             String url = ApiLinks.getSeriesInfoByID(String.valueOf(model.series_id));
-            Log.d(TAG, "fetchID: URL  " + url);
+            Log.d(TAG, "fetchID: URL  VOG  " + url);
             JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                     response -> {
                         try {
@@ -114,10 +126,19 @@ public class DetailSeriesActivity extends BaseActivity {
                                 int season = object.getInt("season");
                                 if (season == 1 && episode_num == 1) {
                                     infoModel = new SeriesInfoModel(object.getString("id"), object.getString("container_extension"));
+                                    UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+                                    ArrayList<FavoriteModel> films = Stash.getArrayList(userModel.id, FavoriteModel.class);
+                                    boolean check = films.stream().anyMatch(favoriteModel -> favoriteModel.stream_id == Integer.parseInt(infoModel.id));
+                                    if (check) {
+                                        binding.add.setText("Retirer des favoris");
+                                    } else {
+                                        binding.add.setText("Ajouter aux favoris");
+                                    }
                                     break;
                                 }
                             }
                         } catch (JSONException e) {
+                            Log.d(TAG, "onCreate: VOG " + e.getLocalizedMessage());
                             e.printStackTrace();
                             runOnUiThread(() -> {
                                 dialog.dismiss();
@@ -125,6 +146,7 @@ public class DetailSeriesActivity extends BaseActivity {
                             });
                         }
                     }, error -> {
+                Log.d(TAG, "onCreate: VOG " + error.getLocalizedMessage());
                 error.printStackTrace();
                 runOnUiThread(() -> {
                     dialog.dismiss();

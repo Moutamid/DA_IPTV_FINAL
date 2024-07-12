@@ -89,13 +89,7 @@ public class DetailActivity extends BaseActivity {
         model = (VodModel) Stash.getObject(Constants.PASS, VodModel.class);
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
         ArrayList<FavoriteModel> films = Stash.getArrayList(userModel.id, FavoriteModel.class);
-        boolean check = false;
-        for (FavoriteModel favoriteModel : films) {
-            if (model.stream_id == favoriteModel.steam_id) {
-                check = true;
-                break;
-            }
-        }
+        boolean check = films.stream().anyMatch(favoriteModel -> favoriteModel.stream_id == model.stream_id);
 
         if (check) {
             binding.add.setText("Retirer des favoris");
@@ -122,8 +116,19 @@ public class DetailActivity extends BaseActivity {
             favoriteModel.extension = model.container_extension;
             favoriteModel.category_id = model.category_id;
             favoriteModel.type = model.stream_type;
-            favoriteModel.steam_id = model.stream_id;
-            new AddFavoriteDialog(this, favoriteModel).show();
+            favoriteModel.stream_id = model.stream_id;
+            new AddFavoriteDialog(this, favoriteModel, check1 -> {
+                if (check1) {
+                    ArrayList<FavoriteModel> filmsList = Stash.getArrayList(userModel.id, FavoriteModel.class);
+                    boolean b = filmsList.stream().anyMatch(favorite -> favorite.stream_id == model.stream_id);
+                    if (b) {
+                        binding.add.setText("Retirer des favoris");
+                    } else {
+                        binding.add.setText("Ajouter aux favoris");
+                    }
+                }
+            }).show();
+
         });
 
         initializeDialog();

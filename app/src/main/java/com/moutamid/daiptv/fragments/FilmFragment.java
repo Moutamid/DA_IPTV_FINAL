@@ -45,6 +45,8 @@ import org.json.JSONObject;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Random;
@@ -260,6 +262,7 @@ public class FilmFragment extends Fragment {
 
                         JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
                         if (logos.length() > 1) {
+                            binding.name.setVisibility(View.GONE);
                             for (int i = 0; i < logos.length(); i++) {
                                 JSONObject object = logos.getJSONObject(i);
                                 String lang = object.getString("iso_639_1");
@@ -278,6 +281,7 @@ public class FilmFragment extends Fragment {
                                 e.printStackTrace();
                             }
                         } else {
+                            binding.name.setVisibility(View.VISIBLE);
                             try {
                                 Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
                             } catch (Exception e) {
@@ -403,6 +407,7 @@ public class FilmFragment extends Fragment {
 //                                model.rating_5based = object.getDouble("rating_5based");
                                 list.add(model);
                             }
+                            list.sort(Comparator.comparing(vodModel -> vodModel.name));
                             FilmsModel model = new FilmsModel(items.category_id, items.category_name, list);
                             listAll.set(finalK, model);
                             if (finalK == listAll.size() - 1) {
@@ -441,5 +446,11 @@ public class FilmFragment extends Fragment {
         snackbar = Snackbar.make(binding.getRoot(), "la playlist est rafraîchissante", Snackbar.LENGTH_INDEFINITE);
         snackbar.show();
         getCategory();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        requestQueue.stop();
     }
 }

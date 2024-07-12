@@ -30,7 +30,6 @@ import com.moutamid.daiptv.BaseActivity;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.databinding.ActivityVideoPlayerBinding;
 import com.moutamid.daiptv.models.FavoriteModel;
-import com.moutamid.daiptv.models.SeriesInfoModel;
 import com.moutamid.daiptv.models.SeriesModel;
 import com.moutamid.daiptv.models.VodModel;
 import com.moutamid.daiptv.utilis.Constants;
@@ -233,7 +232,7 @@ public class VideoPlayerActivity extends BaseActivity {
                 if (!type.equals(Constants.TYPE_CHANNEL)) {
                     ArrayList<FavoriteModel> list = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
                     if (type.equals(Constants.TYPE_MOVIE)) {
-                        boolean check = list.stream().anyMatch(favoriteModel -> favoriteModel.steam_id == vodModel.stream_id);
+                        boolean check = list.stream().anyMatch(favoriteModel -> favoriteModel.stream_id == vodModel.stream_id);
                         if (!check) {
                             FavoriteModel favoriteModel = new FavoriteModel();
                             favoriteModel.id = UUID.randomUUID().toString();
@@ -242,11 +241,11 @@ public class VideoPlayerActivity extends BaseActivity {
                             favoriteModel.extension = vodModel.container_extension;
                             favoriteModel.category_id = String.valueOf(vodModel.category_id);
                             favoriteModel.type = Constants.TYPE_MOVIE;
-                            favoriteModel.steam_id = vodModel.stream_id;
+                            favoriteModel.stream_id = vodModel.stream_id;
                             list.add(favoriteModel);
                         }
                     } else {
-                        boolean check = list.stream().anyMatch(favoriteModel -> favoriteModel.steam_id == Integer.parseInt(resume));
+                        boolean check = list.stream().anyMatch(favoriteModel -> favoriteModel.stream_id == Integer.parseInt(resume));
                         if (!check){
                             FavoriteModel favoriteModel = new FavoriteModel();
                             favoriteModel.id = UUID.randomUUID().toString();
@@ -255,7 +254,7 @@ public class VideoPlayerActivity extends BaseActivity {
                             favoriteModel.category_id = seriesModel.category_id;
                             favoriteModel.type = Constants.TYPE_SERIES;
                             favoriteModel.extension = seriesModel.extension;
-                            favoriteModel.steam_id = Integer.parseInt(resume);
+                            favoriteModel.stream_id = Integer.parseInt(resume);
                             list.add(favoriteModel);
                         }
                     }

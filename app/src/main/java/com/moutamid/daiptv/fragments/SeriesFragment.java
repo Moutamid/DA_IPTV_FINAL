@@ -328,6 +328,7 @@ public class SeriesFragment extends Fragment {
 
                         JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
                         if (logos.length() > 1) {
+                            binding.name.setVisibility(View.GONE);
                             for (int i = 0; i < logos.length(); i++) {
                                 JSONObject object = logos.getJSONObject(i);
                                 String lang = object.getString("iso_639_1");
@@ -346,6 +347,7 @@ public class SeriesFragment extends Fragment {
                                 e.printStackTrace();
                             }
                         } else {
+                            binding.name.setVisibility(View.VISIBLE);
                             try {
                                 Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
                             } catch (Exception e) {
@@ -454,4 +456,11 @@ public class SeriesFragment extends Fragment {
         snackbar.show();
         getCategory();
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        requestQueue.stop();
+    }
+
 }

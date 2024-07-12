@@ -3,8 +3,6 @@ package com.moutamid.daiptv.adapters;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,8 +16,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.fxn.stash.Stash;
 import com.google.android.material.card.MaterialCardView;
-import com.mannan.translateapi.Language;
-import com.mannan.translateapi.TranslateAPI;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.activities.VideoPlayerActivity;
 import com.moutamid.daiptv.database.AppDatabase;
@@ -34,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.ChannelVH> {
     Context context;
@@ -63,8 +58,7 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
         holder.title.setText(model.name);
 
         List<EPGModel> epgList = AppDatabase.getInstance(context).epgDAO().getTitle(model.epg_channel_id.trim());
-        Log.d(TAG, "onBindViewHolder: " + epgList.size());
-        for (EPGModel e : epgList){
+        for (EPGModel e : epgList) {
             Date startDate = Constants.parseDate(e.getStart());
             Date endDate = Constants.parseDate(e.getStop());
             if (Constants.isCurrentDateInBetween(startDate, endDate)) {
@@ -100,8 +94,8 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
             favoriteModel.category_id = model.category_id;
             favoriteModel.type = model.stream_type;
             favoriteModel.epg_id = model.epg_channel_id;
-            favoriteModel.steam_id = model.stream_id;
-            new AddFavoriteDialog(context, favoriteModel).show();
+            favoriteModel.stream_id = model.stream_id;
+            new AddFavoriteDialog(context, favoriteModel, null).show();
             return false;
         });
 
@@ -113,8 +107,8 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
             favoriteModel.category_id = model.category_id;
             favoriteModel.type = model.stream_type;
             favoriteModel.epg_id = model.epg_channel_id;
-            favoriteModel.steam_id = model.stream_id;
-            new AddFavoriteDialog(context, favoriteModel).show();
+            favoriteModel.stream_id = model.stream_id;
+            new AddFavoriteDialog(context, favoriteModel, null).show();
         });
     }
 

@@ -3,7 +3,6 @@ package com.moutamid.daiptv.adapters;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -99,8 +98,8 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
             favoriteModel.name = model.name;
             favoriteModel.category_id = model.category_id;
             favoriteModel.type = model.stream_type;
-            favoriteModel.steam_id = model.series_id;
-            new AddFavoriteDialog(context, favoriteModel).show();
+            favoriteModel.stream_id = model.series_id;
+            new AddFavoriteDialog(context, favoriteModel, null).show();
             return true;
         });
 

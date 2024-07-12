@@ -97,8 +97,8 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
             favoriteModel.category_id = model.category_id;
             favoriteModel.extension = model.container_extension;
             favoriteModel.type = model.stream_type;
-            favoriteModel.steam_id = model.stream_id;
-            new AddFavoriteDialog(context, favoriteModel).show();
+            favoriteModel.stream_id = model.stream_id;
+            new AddFavoriteDialog(context, favoriteModel, null).show();
             return true;
         });
 

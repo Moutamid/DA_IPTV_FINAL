@@ -102,8 +102,9 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
             favoriteModel.name = model.original_title;
             favoriteModel.category_id = String.valueOf(model.id);
             favoriteModel.type = model.type;
-            favoriteModel.steam_id = model.streamID;
-            new AddFavoriteDialog(context, favoriteModel, true).show();
+            favoriteModel.stream_id = model.streamID;
+            favoriteModel.series_id = model.series_id;
+            new AddFavoriteDialog(context, favoriteModel, true, null).show();
             return true;
         });
 
@@ -125,6 +126,7 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                     SeriesModel seriesModel = new SeriesModel();
                     seriesModel.name = model.original_title;
                     seriesModel.stream_type = model.type;
+                    seriesModel.series_id = model.series_id;
                     seriesModel.extension = model.extension;
                     seriesModel.category_id = String.valueOf(model.id);
                     Stash.put(Constants.TYPE_SERIES, seriesModel);
@@ -143,6 +145,7 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                 SeriesModel seriesModel = new SeriesModel();
                 seriesModel.name = model.original_title;
                 seriesModel.cover = model.banner;
+                seriesModel.series_id = model.series_id;
                 seriesModel.releaseDate = model.release_date;
                 seriesModel.stream_type = Constants.topRated;
                 Stash.put(Constants.PASS_SERIES, seriesModel);

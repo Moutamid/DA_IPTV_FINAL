@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 public class Constants {
     public static final String FILMS = "FILMS";
     public static final String SERIES = "SERIES";
+    public static final String IS_TODAY = "IS_TODAY";
     public static final String HOME = "HOME";
     public static final String CHANNELS = "CHANNELS";
     public static final String CHANNELS_ALL = "CHANNELS_ALL";

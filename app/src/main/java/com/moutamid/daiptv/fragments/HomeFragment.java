@@ -105,7 +105,7 @@ public class HomeFragment extends Fragment {
                         model.banner = channelsModel.image;
                         model.extension = channelsModel.extension;
                         model.original_title = channelsModel.name;
-                        model.streamID = channelsModel.steam_id;
+                        model.streamID = channelsModel.stream_id;
                         fvrtList.add(model);
                     }
                 }
@@ -119,7 +119,7 @@ public class HomeFragment extends Fragment {
                 model.banner = channelsModel.image;
                 model.original_title = channelsModel.name;
                 model.extension = channelsModel.extension;
-                model.streamID = channelsModel.steam_id;
+                model.streamID = channelsModel.stream_id;
                 fvrtList.add(model);
             }
             if (!fvrtList.isEmpty()) {
@@ -234,6 +234,7 @@ public class HomeFragment extends Fragment {
                                     MovieModel model = new MovieModel();
                                     model.type = channelsModel.type;
                                     model.banner = channelsModel.image;
+                                    model.series_id = channelsModel.series_id;
                                     model.extension = channelsModel.extension;
                                     model.original_title = channelsModel.name;
                                     fvrtList.add(model);
@@ -254,7 +255,7 @@ public class HomeFragment extends Fragment {
                             model.type = channelsModel.type;
                             model.banner = channelsModel.image;
                             model.original_title = channelsModel.name;
-                            model.streamID = channelsModel.steam_id;
+                            model.streamID = channelsModel.stream_id;
                             fvrtList.add(model);
                         }
                         if (!fvrtList.isEmpty()) {
@@ -507,6 +508,7 @@ public class HomeFragment extends Fragment {
     public void onResume() {
         super.onResume();
         Stash.put(Constants.SELECTED_PAGE, "Home");
+        refreshFavoris();
     }
 
     private void initializeDialog() {
@@ -537,6 +539,7 @@ public class HomeFragment extends Fragment {
                     MovieModel model = new MovieModel();
                     model.type = channelsModel.type;
                     model.banner = channelsModel.image;
+                    model.series_id = channelsModel.series_id;
                     model.extension = channelsModel.extension;
                     model.original_title = channelsModel.name;
                     fvrtList.add(model);
@@ -545,6 +548,12 @@ public class HomeFragment extends Fragment {
             list.add(new TopItems("Favoris", fvrtList));
         }
         adapter.notifyItemChanged(list.size() - 1);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        requestQueue.stop();
     }
 
 }

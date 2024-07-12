@@ -7,32 +7,38 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.fxn.stash.Stash;
 import com.moutamid.daiptv.fragments.HomeFragment;
+import com.moutamid.daiptv.listener.FavoriteListener;
 import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.UserModel;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AddFavoriteDialog {
     Context context;
     FavoriteModel model;
     boolean isHome;
+    FavoriteListener listener;
 
-    public AddFavoriteDialog(Context context, FavoriteModel model) {
+    public AddFavoriteDialog(Context context, FavoriteModel model, FavoriteListener listener) {
         this.context = context;
         this.model = model;
         this.isHome = false;
+        this.listener = listener;
     }
 
-    public AddFavoriteDialog(Context context, FavoriteModel model, boolean isHome) {
+    public AddFavoriteDialog(Context context, FavoriteModel model, boolean isHome, FavoriteListener listener) {
         this.context = context;
         this.model = model;
         this.isHome = isHome;
+        this.listener = listener;
     }
+
 
     public void show() {
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
         ArrayList<FavoriteModel> list = Stash.getArrayList(userModel.id, FavoriteModel.class);
-        boolean check = list.stream().anyMatch(favoriteModel -> favoriteModel.steam_id == model.steam_id);
+        boolean check = list.stream().anyMatch(favoriteModel -> favoriteModel.stream_id == model.stream_id);
 
         String title = check ? "Supprimer des Favoris" : "Ajouter aux Favoris";
         String messgae = check ? "Souhaitez-vous retirer cet article de votre liste de favoris?" :
@@ -53,7 +59,7 @@ public class AddFavoriteDialog {
                             Toast.makeText(context, "Je ne peux pas être ajouté à la liste pour le moment", Toast.LENGTH_SHORT).show();
                         else {
                             int index = list.stream()
-                                    .filter(favoriteModel -> favoriteModel.steam_id == model.steam_id)
+                                    .filter(favoriteModel -> favoriteModel.stream_id == model.stream_id)
                                     .findFirst()
                                     .map(list::indexOf)
                                     .orElse(-1);
@@ -66,8 +72,14 @@ public class AddFavoriteDialog {
                             }
                         }
                     }
+                    if (listener != null){
+                        listener.isAdded(true);
+                    }
                 }).setNegativeButton("Fermer", (dialog, which) -> {
                     dialog.dismiss();
+                    if (listener != null){
+                        listener.isAdded(false);
+                    }
                 })
                 .show();
     }
