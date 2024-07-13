@@ -83,9 +83,13 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
         Glide.with(context).load(link).listener(new RequestListener<Drawable>() {
             @Override
             public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object object, @NonNull Target<Drawable> target, boolean isFirstResource) {
-                holder.name.setVisibility(View.VISIBLE);
-                holder.image.setVisibility(View.GONE);
-                holder.name.setText(model.original_title);
+               try {
+                   holder.name.setVisibility(View.VISIBLE);
+                   holder.image.setVisibility(View.GONE);
+                   holder.name.setText(model.original_title);
+               } catch (Exception er) {
+                   Log.d(TAG, "onLoadFailed: " + er.getLocalizedMessage());
+               }
                 return false;
             }
 

@@ -108,8 +108,11 @@ public class FilmFragment extends Fragment {
             listAll.add(new FilmsModel(Constants.topRated, "Top Films", topRated));
             getCategory();
         } else {
-            parentAdapter = new FilmParentAdapter(mContext, film, selectedFilm);
+            listAll = new ArrayList<>();
+            listAll.addAll(film);
+            parentAdapter = new FilmParentAdapter(mContext, listAll, selectedFilm);
             binding.recycler.setAdapter(parentAdapter);
+            getAllVods();
         }
 
         return binding.getRoot();
@@ -420,6 +423,7 @@ public class FilmFragment extends Fragment {
                                 dialog.dismiss();
                                 parentAdapter = new FilmParentAdapter(mContext, listAll, selectedFilm);
                                 binding.recycler.setAdapter(parentAdapter);
+                                getAllVods();
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -447,6 +451,40 @@ public class FilmFragment extends Fragment {
         snackbar.show();
         getCategory();
     }
+
+    public void getAllVods() {
+        Log.d(TAG, "getAllVods: ");
+        String url = ApiLinks.getVod();
+        JsonArrayRequest objectRequest = new JsonArrayRequest(Request.Method.GET, url, null,
+                response -> {
+                    try {
+                        ArrayList<VodModel> list = new ArrayList<>();
+                        for (int i = 0; i < response.length(); i++) {
+                            JSONObject object = response.getJSONObject(i);
+                            VodModel model = new VodModel();
+                            model.num = object.getInt("num");
+                            model.stream_id = object.getInt("stream_id");
+                            model.name = object.getString("name");
+                            model.stream_type = object.getString("stream_type");
+                            model.stream_icon = object.getString("stream_icon");
+                            model.added = object.getString("added");
+                            model.category_id = object.getString("category_id");
+                            model.container_extension = object.getString("container_extension");
+                            list.add(model);
+                        }
+                        list.sort(Comparator.comparing(vodModel -> Long.parseLong(vodModel.added)));
+                        Collections.reverse(list);
+                        listAll.add(1, new FilmsModel("Resents", "Récemment ajoutés", list));
+                        parentAdapter.notifyItemInserted(1);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }, error -> {
+            error.printStackTrace();
+        });
+        requestQueue.add(objectRequest);
+    }
+
 
     @Override
     public void onDestroy() {

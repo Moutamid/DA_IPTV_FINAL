@@ -30,14 +30,20 @@ import androidx.media3.ui.PlayerView;
 import com.fxn.stash.Stash;
 import com.moutamid.daiptv.BaseActivity;
 import com.moutamid.daiptv.R;
+import com.moutamid.daiptv.database.AppDatabase;
 import com.moutamid.daiptv.databinding.ActivityVideoPlayerBinding;
+import com.moutamid.daiptv.models.EPGModel;
 import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.SeriesModel;
 import com.moutamid.daiptv.models.VodModel;
 import com.moutamid.daiptv.utilis.Constants;
 import com.moutamid.daiptv.utilis.Features;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public class VideoPlayerActivity extends BaseActivity {
@@ -60,6 +66,7 @@ public class VideoPlayerActivity extends BaseActivity {
 
         String url = getIntent().getStringExtra("url");
         String name = getIntent().getStringExtra("name");
+        String channel_id = getIntent().getStringExtra("channel_id");
         banner = getIntent().getStringExtra("banner");
         resume = getIntent().getStringExtra("resume");
         type = getIntent().getStringExtra("type");
@@ -71,8 +78,23 @@ public class VideoPlayerActivity extends BaseActivity {
                 seriesModel = (SeriesModel) Stash.getObject(Constants.TYPE_SERIES, SeriesModel.class);
             }
         }
-
         binding.title.setText(name);
+        if (channel_id != null) {
+            StringBuilder titleWithEpg = new StringBuilder(name);
+            List<EPGModel> epgList = AppDatabase.getInstance(this).epgDAO().getTitle(channel_id.trim());
+            SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            int i = 0;
+            for (EPGModel e : epgList) {
+                i++;
+                Date startDate = Constants.parseDate(e.getStart());
+                Date endDate = Constants.parseDate(e.getStop());
+                titleWithEpg.append("\n\u2022 ").append(dateFormat.format(startDate)).append(" > ").append(dateFormat.format(endDate)).append(" ").append(e.getTitle());
+                if (i == 5) {
+                    break;
+                }
+            }
+            binding.title.setText(titleWithEpg);
+        }
 
         Log.d("VideoURLPlayer", "" + url);
         Log.d("VideoURLPlayer", "resume   " + resume);

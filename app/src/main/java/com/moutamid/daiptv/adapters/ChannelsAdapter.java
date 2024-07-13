@@ -83,7 +83,11 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
                 channelsList.add(model);
                 Stash.put(Constants.RECENT_CHANNELS, channelsList);
             }
-            context.startActivity(new Intent(context, VideoPlayerActivity.class).putExtra("url", link).putExtra("type", Constants.TYPE_CHANNEL).putExtra("name", model.name));
+            context.startActivity(new Intent(context, VideoPlayerActivity.class)
+                    .putExtra("url", link)
+                            .putExtra("channel_id", model.epg_channel_id)
+                    .putExtra("type", Constants.TYPE_CHANNEL)
+                    .putExtra("name", model.name));
         });
 
         holder.itemView.setOnLongClickListener(v -> {

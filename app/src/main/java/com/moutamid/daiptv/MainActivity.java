@@ -204,15 +204,15 @@ public class MainActivity extends BaseActivity {
 
         Snackbar snackbar = Snackbar.make(this, binding.getRoot(), "Loading EPG ....", Snackbar.LENGTH_INDEFINITE);
         snackbar.show();
-        Log.d(TAG, "get: LOADING");
+        Log.d("TAGGER", "get: LOADING");
         String url = "http://vbn123.com:8080/xmltv.php?username=9tqadv9utC4B28qe&password=X8J6qeYDNcbzvWns";
         new Thread(() -> {
             RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
             Log.d(TAG, "get: " + url);
             StringRequest stringRequest = new StringRequest(Request.Method.GET, url, response -> {
-                Log.d("TAGGER", "onResponse/45: data loaded");
+                Log.d(TAG, "onResponse/45: data loaded");
                 //  Log.d("TAGGER", "onResponse/45: data: : " + response);
-                Log.d("TAGGER", "onResponse/45: length: : " + response.length());
+                Log.d(TAG, "onResponse/45: length: : " + response.length());
 
                 try {
                     String xmlContent = response.toString();

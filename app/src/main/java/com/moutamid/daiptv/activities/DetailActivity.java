@@ -434,8 +434,22 @@ public class DetailActivity extends BaseActivity {
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.progress_layout);
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
+        dialog.setCancelable(true);
         dialog.show();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        requestQueue.stop();
+        dialog.dismiss();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        requestQueue.stop();
+        dialog.dismiss();
     }
 
     private FavoriteModel getFavoriteModel() {

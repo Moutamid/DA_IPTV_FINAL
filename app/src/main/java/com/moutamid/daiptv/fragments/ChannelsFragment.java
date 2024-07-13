@@ -10,18 +10,22 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.RetryPolicy;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.fxn.stash.Stash;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputLayout;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.ChannelsAdapter;
 import com.moutamid.daiptv.databinding.FragmentChannelsBinding;
@@ -51,6 +55,7 @@ public class ChannelsFragment extends Fragment {
     private static final String TAG = "ChannelsFragment";
     Map<String, String> channels;
     private Context mContext;
+    RetryPolicy policy;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -74,6 +79,9 @@ public class ChannelsFragment extends Fragment {
 
         requestQueue = VolleySingleton.getInstance(mContext).getRequestQueue();
 
+        int timeout = 30000;
+        policy = new DefaultRetryPolicy(timeout, DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
+
         initializeDialog();
 
         ArrayList<CategoryModel> list = Stash.getArrayList(Constants.CHANNELS, CategoryModel.class);
@@ -89,11 +97,15 @@ public class ChannelsFragment extends Fragment {
 
     private void showButtons(ArrayList<CategoryModel> list) {
         channels = new HashMap<>();
+        ArrayList<ChannelsModel> channelsList1 = Stash.getArrayList(Constants.CHANNELS_ALL, ChannelsModel.class);
         for (CategoryModel model : list) {
             if (!model.category_name.isEmpty()) {
                 channels.put(model.category_name.trim(), model.category_id);
                 MaterialButton button = new MaterialButton(mContext);
                 button.setText(model.category_name.trim());
+                if (model.category_name.trim().equals("All")) {
+                    button.setText(model.category_name.trim() + " - " + channelsList1.size());
+                }
                 button.setTextColor(getResources().getColor(R.color.white));
                 button.setBackgroundColor(getResources().getColor(R.color.transparent));
                 button.setCornerRadius(12);
@@ -110,12 +122,16 @@ public class ChannelsFragment extends Fragment {
                 button.setOnClickListener(v -> {
                     isAll = false;
                     selectedGroup = button.getText().toString().trim();
+                    if (selectedButton != null) {
+                        selectedButton.setStrokeColorResource(R.color.transparent);
+                    }
+                    button.setStrokeColorResource(R.color.red);
+                    selectedButton = button;
                     switch (selectedGroup) {
                         case "All":
-                            ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.CHANNELS_ALL, ChannelsModel.class);
-                            adapter = new ChannelsAdapter(mContext, channelsList);
+                            adapter = new ChannelsAdapter(mContext, channelsList1);
                             binding.channelsRC.setAdapter(adapter);
-                            selectedButton.setText("All - " + channelsList.size());
+                            selectedButton.setText("All - " + channelsList1.size());
                             break;
                         case "Chaînes récentes":
                             showRecentChannels();
@@ -127,24 +143,46 @@ public class ChannelsFragment extends Fragment {
                             switchGroup(channels.get(selectedGroup), selectedGroup);
                             break;
                     }
-                    if (selectedButton != null) {
-                        selectedButton.setStrokeColorResource(R.color.transparent);
-                    }
-                    button.setStrokeColorResource(R.color.red);
-                    selectedButton = button;
                 });
                 binding.sidePanel.addView(button);
-//                if (button.getText().toString().equals("All")) {
-//                    View view = new View(requireContext());
-//                    view.setBackgroundColor(getResources().getColor(R.color.grey2));
-//                    binding.sidePanel.addView(view);
-//                }
             }
         }
+
+        setButtonText(list, 3);
 
         ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.CHANNELS_ALL, ChannelsModel.class);
         adapter = new ChannelsAdapter(mContext, channelsList);
         binding.channelsRC.setAdapter(adapter);
+    }
+
+    private void setButtonText(ArrayList<CategoryModel> buttons, int buttonCount) {
+        if (buttonCount <= buttons.size() - 1) {
+            String url = ApiLinks.getLiveStreamsByID(buttons.get(buttonCount).category_id);
+            JsonArrayRequest objectRequest = new JsonArrayRequest(Request.Method.GET, url, null,
+                    response -> {
+                        try {
+                            int size = response.length();
+                            for (int i = 0; i < binding.sidePanel.getChildCount(); i++) {
+                                View view = binding.sidePanel.getChildAt(i);
+                                if (view instanceof MaterialButton) {
+                                    MaterialButton button = (MaterialButton) view;
+                                    String enteredText = button.getText().toString();
+                                    String original = buttons.get(buttonCount).category_name;
+                                    if (!enteredText.isEmpty() && enteredText.equals(original)) {
+                                        button.setText(original + " - " + size);
+                                    }
+                                }
+                            }
+                            setButtonText(buttons, buttonCount + 1);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }, error -> {
+                error.printStackTrace();
+            });
+            objectRequest.setRetryPolicy(policy);
+            requestQueue.add(objectRequest);
+        }
     }
 
     private MaterialButton selectedButton = null;
@@ -192,6 +230,11 @@ public class ChannelsFragment extends Fragment {
                                 button.setOnClickListener(v -> {
                                     isAll = false;
                                     selectedGroup = button.getText().toString().trim();
+                                    if (selectedButton != null) {
+                                        selectedButton.setStrokeColorResource(R.color.transparent); // Remove stroke from previously selected button
+                                    }
+                                    button.setStrokeColorResource(R.color.red); // Add stroke to newly selected button
+                                    selectedButton = button;
                                     switch (selectedGroup) {
                                         case "All":
                                             showAllItems();
@@ -206,16 +249,12 @@ public class ChannelsFragment extends Fragment {
                                             switchGroup(channels.get(selectedGroup), selectedGroup);
                                             break;
                                     }
-                                    if (selectedButton != null) {
-                                        selectedButton.setStrokeColorResource(R.color.transparent); // Remove stroke from previously selected button
-                                    }
-                                    button.setStrokeColorResource(R.color.red); // Add stroke to newly selected button
-                                    selectedButton = button;
                                 });
                             }
                         }
                         Stash.put(Constants.CHANNELS, list);
                         switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
+                        setButtonText(list, 3);
                     } catch (JSONException e) {
                         e.printStackTrace();
                         dialog.dismiss();
@@ -232,6 +271,7 @@ public class ChannelsFragment extends Fragment {
                 Toast.makeText(mContext, error.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
             }
         });
+        objectRequest.setRetryPolicy(policy);
         requestQueue.add(objectRequest);
     }
 
@@ -276,6 +316,7 @@ public class ChannelsFragment extends Fragment {
                 Toast.makeText(mContext, error.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
             }
         });
+        objectRequest.setRetryPolicy(policy);
         requestQueue.add(objectRequest);
     }
 
@@ -325,6 +366,7 @@ public class ChannelsFragment extends Fragment {
                 Toast.makeText(mContext, error.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
             }
         });
+        objectRequest.setRetryPolicy(policy);
         requestQueue.add(objectRequest);
     }
 

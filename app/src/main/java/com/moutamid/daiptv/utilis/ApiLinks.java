@@ -38,9 +38,17 @@ public class ApiLinks {
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
         return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_vod_streams + "&category_id=" + id;
     }
+    public static String getVod() {
+        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_vod_streams;
+    }
     public static String getSeriesByID(String id) {
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
         return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_series + "&category_id=" + id;
+    }
+    public static String getSeries() {
+        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_series;
     }
     public static String getSeriesInfoByID(String id) {
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);

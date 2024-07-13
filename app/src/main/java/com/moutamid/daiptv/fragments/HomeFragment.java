@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.PagerSnapHelper;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.bumptech.glide.Glide;
 import com.fxn.stash.Stash;
@@ -27,11 +28,13 @@ import com.moutamid.daiptv.adapters.HomeParentAdapter;
 import com.moutamid.daiptv.databinding.FragmentHomeBinding;
 import com.moutamid.daiptv.listener.ItemSelectedHome;
 import com.moutamid.daiptv.models.FavoriteModel;
+import com.moutamid.daiptv.models.FilmsModel;
 import com.moutamid.daiptv.models.MovieModel;
 import com.moutamid.daiptv.models.SeriesModel;
 import com.moutamid.daiptv.models.TopItems;
 import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.models.VodModel;
+import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
 import com.moutamid.daiptv.utilis.VolleySingleton;
 
@@ -43,6 +46,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 
@@ -548,6 +552,82 @@ public class HomeFragment extends Fragment {
             list.add(new TopItems("Favoris", fvrtList));
             adapter.notifyItemChanged(list.size() - 1);
         }
+    }
+
+    public void getAllVods() {
+        Log.d(TAG, "getAllVods: ");
+        String url = ApiLinks.getVod();
+        JsonArrayRequest objectRequest = new JsonArrayRequest(Request.Method.GET, url, null,
+                response -> {
+                    try {
+                        ArrayList<VodModel> list = new ArrayList<>();
+                        for (int i = 0; i < response.length(); i++) {
+                            JSONObject object = response.getJSONObject(i);
+                            VodModel model = new VodModel();
+                            model.num = object.getInt("num");
+                            model.stream_id = object.getInt("stream_id");
+                            model.name = object.getString("name");
+                            model.stream_type = object.getString("stream_type");
+                            model.stream_icon = object.getString("stream_icon");
+                            model.added = object.getString("added");
+                            model.category_id = object.getString("category_id");
+                            model.container_extension = object.getString("container_extension");
+                            list.add(model);
+                        }
+                        list.sort(Comparator.comparing(vodModel -> Long.parseLong(vodModel.added)));
+                        Collections.reverse(list);
+                        // TODO Update Adapter
+                        getAllStreams();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }, error -> {
+            error.printStackTrace();
+        });
+        requestQueue.add(objectRequest);
+    }
+    public void getAllStreams() {
+        Log.d(TAG, "getAllStreams: ");
+        String url = ApiLinks.getSeries();
+        JsonArrayRequest objectRequest = new JsonArrayRequest(Request.Method.GET, url, null,
+                response -> {
+                    try {
+                        ArrayList<SeriesModel> list = new ArrayList<>();
+                        for (int i = 0; i < response.length(); i++) {
+                            JSONObject object = response.getJSONObject(i);
+                            SeriesModel model = new SeriesModel();
+                            model.num = object.getInt("num");
+                            model.series_id = object.getInt("series_id");
+                            model.name = object.getString("name");
+                            model.cover = object.getString("cover");
+                            model.plot = object.getString("plot");
+                            model.cast = object.getString("cast");
+                            model.director = object.getString("director");
+                            model.genre = object.getString("genre");
+                            model.releaseDate = object.getString("releaseDate");
+                            model.last_modified = object.getString("last_modified");
+//                                JSONArray backdrops = object.getJSONArray("backdrop_path");
+//                                if (!backdrops.isNull(0)) {
+//                                    if (backdrops.length() >= 1) {
+//                                        Log.d(TAG, "getSeries: " + backdrops);
+//                                        model.backdrop_path = (String) backdrops.get(0);
+//                                    }
+//                                } else model.backdrop_path = "";
+                            model.stream_type = Constants.TYPE_SERIES;
+                            model.youtube_trailer = object.getString("youtube_trailer");
+                            model.category_id = object.getString("category_id");
+                            list.add(model);
+                        }
+                        list.sort(Comparator.comparing(seriesModel -> Long.parseLong(seriesModel.last_modified)));
+                        Collections.reverse(list);
+                        // TODO Update Adapter
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }, error -> {
+            error.printStackTrace();
+        });
+        requestQueue.add(objectRequest);
     }
 
     @Override
