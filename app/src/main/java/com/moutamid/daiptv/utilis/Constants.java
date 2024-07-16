@@ -102,7 +102,6 @@ public class Constants {
 
     public static Date parseDate(String dateString) {
         try {
-            Log.d(TAG, "parseDate: " + dateString);
             // 2024-05-30 11:35:00
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss Z", Locale.getDefault());
             return dateFormat.parse(dateString);

@@ -188,8 +188,8 @@ public class MainActivity extends BaseActivity {
             database.epgDAO().Delete();
         }
         List<EPGModel> list = database.epgDAO().getEPG();
-        if (list.isEmpty())
-            get();
+//        if (list.isEmpty())
+         //   get();
     }
 
     private static final String TAG = "MainActivity";

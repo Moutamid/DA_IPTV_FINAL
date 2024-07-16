@@ -256,6 +256,7 @@ public class ChannelsFragment extends Fragment {
                         switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
                         setButtonText(list, 3);
                     } catch (JSONException e) {
+                        Log.d(TAG, "addButton: EE " + e.getLocalizedMessage());
                         e.printStackTrace();
                         dialog.dismiss();
                         if (snackbar != null) {
@@ -264,6 +265,7 @@ public class ChannelsFragment extends Fragment {
                         }
                     }
                 }, error -> {
+            Log.d(TAG, "addButton: " + error.getLocalizedMessage());
             error.printStackTrace();
             dialog.dismiss();
             if (snackbar != null) {
@@ -271,7 +273,7 @@ public class ChannelsFragment extends Fragment {
                 Toast.makeText(mContext, error.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
             }
         });
-        objectRequest.setRetryPolicy(policy);
+//        objectRequest.setRetryPolicy(policy);
         requestQueue.add(objectRequest);
     }
 
@@ -359,6 +361,7 @@ public class ChannelsFragment extends Fragment {
                         }
                     }
                 }, error -> {
+            Log.d(TAG, "switchGroup: " + error.getLocalizedMessage());
             error.printStackTrace();
             dialog.dismiss();
             if (snackbar != null) {

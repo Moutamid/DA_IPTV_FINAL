@@ -28,7 +28,6 @@ import com.moutamid.daiptv.adapters.HomeParentAdapter;
 import com.moutamid.daiptv.databinding.FragmentHomeBinding;
 import com.moutamid.daiptv.listener.ItemSelectedHome;
 import com.moutamid.daiptv.models.FavoriteModel;
-import com.moutamid.daiptv.models.FilmsModel;
 import com.moutamid.daiptv.models.MovieModel;
 import com.moutamid.daiptv.models.SeriesModel;
 import com.moutamid.daiptv.models.TopItems;
@@ -229,45 +228,8 @@ public class HomeFragment extends Fragment {
                         list.add(new TopItems("Top Series", series));
                         Stash.put(Constants.TOP_SERIES, seriesChan);
                         Stash.put(Constants.HOME, list);
-                        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-                        ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);
-                        if (!fvrt.isEmpty()) {
-                            ArrayList<MovieModel> fvrtList = new ArrayList<>();
-                            for (FavoriteModel channelsModel : fvrt) {
-                                if (!channelsModel.type.equals("live")) {
-                                    MovieModel model = new MovieModel();
-                                    model.type = channelsModel.type;
-                                    model.banner = channelsModel.image;
-                                    model.series_id = channelsModel.series_id;
-                                    model.extension = channelsModel.extension;
-                                    model.original_title = channelsModel.name;
-                                    fvrtList.add(model);
-                                }
-                            }
-                            list.add(new TopItems("Favoris", fvrtList));
-                        }
-                        if (snackbar != null) {
-                            snackbar.dismiss();
-                            snackbar = null;
-                            Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
-                        }
 
-                        ArrayList<FavoriteModel> films = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
-                        ArrayList<MovieModel> fvrtList = new ArrayList<>();
-                        for (FavoriteModel channelsModel : films) {
-                            MovieModel model = new MovieModel();
-                            model.type = channelsModel.type;
-                            model.banner = channelsModel.image;
-                            model.original_title = channelsModel.name;
-                            model.streamID = channelsModel.stream_id;
-                            fvrtList.add(model);
-                        }
-                        if (!fvrtList.isEmpty()) {
-                            Collections.reverse(fvrtList);
-                            list.add(0, new TopItems("Reprendre la lecture", fvrtList));
-                        }
-                        adapter = new HomeParentAdapter(mContext, list, selected);
-                        binding.recycler.setAdapter(adapter);
+                        getAllVods();
                     } catch (JSONException e) {
                         e.printStackTrace();
                         dialog.dismiss();
@@ -560,23 +522,22 @@ public class HomeFragment extends Fragment {
         JsonArrayRequest objectRequest = new JsonArrayRequest(Request.Method.GET, url, null,
                 response -> {
                     try {
-                        ArrayList<VodModel> list = new ArrayList<>();
+                        ArrayList<MovieModel> vodList = new ArrayList<>();
                         for (int i = 0; i < response.length(); i++) {
                             JSONObject object = response.getJSONObject(i);
-                            VodModel model = new VodModel();
-                            model.num = object.getInt("num");
-                            model.stream_id = object.getInt("stream_id");
-                            model.name = object.getString("name");
-                            model.stream_type = object.getString("stream_type");
-                            model.stream_icon = object.getString("stream_icon");
-                            model.added = object.getString("added");
-                            model.category_id = object.getString("category_id");
-                            model.container_extension = object.getString("container_extension");
-                            list.add(model);
+                            MovieModel model = new MovieModel();
+                            model.id = object.getInt("num");
+                            model.streamID = object.getInt("stream_id");
+                            model.original_title = object.getString("name");
+                            model.banner = object.getString("stream_icon");
+                            model.type = Constants.TYPE_MOVIE;
+                            model.release_date = object.getString("added");
+                            model.extension = object.getString("container_extension");
+                            vodList.add(model);
                         }
-                        list.sort(Comparator.comparing(vodModel -> Long.parseLong(vodModel.added)));
-                        Collections.reverse(list);
-                        // TODO Update Adapter
+                        vodList.sort(Comparator.comparing(vodModel -> Long.parseLong(vodModel.release_date)));
+                        Collections.reverse(vodList);
+                        list.add(new TopItems("Tous les films", vodList));
                         getAllStreams();
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -586,41 +547,71 @@ public class HomeFragment extends Fragment {
         });
         requestQueue.add(objectRequest);
     }
+
     public void getAllStreams() {
         Log.d(TAG, "getAllStreams: ");
         String url = ApiLinks.getSeries();
         JsonArrayRequest objectRequest = new JsonArrayRequest(Request.Method.GET, url, null,
                 response -> {
                     try {
-                        ArrayList<SeriesModel> list = new ArrayList<>();
+                        ArrayList<MovieModel> seriesList = new ArrayList<>();
                         for (int i = 0; i < response.length(); i++) {
                             JSONObject object = response.getJSONObject(i);
-                            SeriesModel model = new SeriesModel();
-                            model.num = object.getInt("num");
+                            MovieModel model = new MovieModel();
+                            model.id = object.getInt("num");
                             model.series_id = object.getInt("series_id");
-                            model.name = object.getString("name");
-                            model.cover = object.getString("cover");
-                            model.plot = object.getString("plot");
-                            model.cast = object.getString("cast");
-                            model.director = object.getString("director");
-                            model.genre = object.getString("genre");
-                            model.releaseDate = object.getString("releaseDate");
-                            model.last_modified = object.getString("last_modified");
-//                                JSONArray backdrops = object.getJSONArray("backdrop_path");
-//                                if (!backdrops.isNull(0)) {
-//                                    if (backdrops.length() >= 1) {
-//                                        Log.d(TAG, "getSeries: " + backdrops);
-//                                        model.backdrop_path = (String) backdrops.get(0);
-//                                    }
-//                                } else model.backdrop_path = "";
-                            model.stream_type = Constants.TYPE_SERIES;
-                            model.youtube_trailer = object.getString("youtube_trailer");
-                            model.category_id = object.getString("category_id");
-                            list.add(model);
+                            model.original_title = object.getString("name");
+                            model.banner = object.getString("cover");
+                            model.overview = object.getString("plot");
+                            model.type = Constants.TYPE_SERIES;
+                            model.release_date = object.getString("last_modified");
+                            model.extension = object.getString("container_extension");
+                            seriesList.add(model);
                         }
-                        list.sort(Comparator.comparing(seriesModel -> Long.parseLong(seriesModel.last_modified)));
+                        seriesList.sort(Comparator.comparing(seriesModel -> Long.parseLong(seriesModel.release_date)));
                         Collections.reverse(list);
-                        // TODO Update Adapter
+
+                        list.add(new TopItems("Toutes les séries", seriesList));
+
+                        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+                        ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);
+                        if (!fvrt.isEmpty()) {
+                            ArrayList<MovieModel> fvrtList = new ArrayList<>();
+                            for (FavoriteModel channelsModel : fvrt) {
+                                if (!channelsModel.type.equals("live")) {
+                                    MovieModel model = new MovieModel();
+                                    model.type = channelsModel.type;
+                                    model.banner = channelsModel.image;
+                                    model.series_id = channelsModel.series_id;
+                                    model.extension = channelsModel.extension;
+                                    model.original_title = channelsModel.name;
+                                    fvrtList.add(model);
+                                }
+                            }
+                            list.add(new TopItems("Favoris", fvrtList));
+                        }
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            snackbar = null;
+                            Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                        }
+                        ArrayList<FavoriteModel> films = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
+                        ArrayList<MovieModel> fvrtList = new ArrayList<>();
+                        for (FavoriteModel channelsModel : films) {
+                            MovieModel model = new MovieModel();
+                            model.type = channelsModel.type;
+                            model.banner = channelsModel.image;
+                            model.original_title = channelsModel.name;
+                            model.streamID = channelsModel.stream_id;
+                            fvrtList.add(model);
+                        }
+                        if (!fvrtList.isEmpty()) {
+                            Collections.reverse(fvrtList);
+                            list.add(0, new TopItems("Reprendre la lecture", fvrtList));
+                        }
+                        adapter = new HomeParentAdapter(mContext, list, selected);
+                        binding.recycler.setAdapter(adapter);
+
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
