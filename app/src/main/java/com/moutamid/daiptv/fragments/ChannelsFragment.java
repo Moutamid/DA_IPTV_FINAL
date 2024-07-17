@@ -116,7 +116,7 @@ public class ChannelsFragment extends Fragment {
                 }
                 button.setOnClickListener(v -> {
                     isAll = false;
-                    selectedGroup = button.getText().toString().trim();
+                    selectedGroup = model.category_name;
                     if (selectedButton != null) {
                         selectedButton.setStrokeColorResource(R.color.transparent);
                     }
@@ -143,7 +143,7 @@ public class ChannelsFragment extends Fragment {
             }
         }
 
-        setButtonText(list, 3);
+        setButtonText(list, 2);
 
         ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.CHANNELS_ALL, ChannelsModel.class);
         adapter = new ChannelsAdapter(mContext, channelsList);
@@ -283,7 +283,7 @@ public class ChannelsFragment extends Fragment {
                             }
                             button.setOnClickListener(v -> {
                                 isAll = false;
-                                selectedGroup = button.getText().toString().trim();
+                                selectedGroup = model.category_name;
                                 if (selectedButton != null) {
                                     selectedButton.setStrokeColorResource(R.color.transparent); // Remove stroke from previously selected button
                                 }
@@ -308,7 +308,7 @@ public class ChannelsFragment extends Fragment {
                     }
                     Stash.put(Constants.CHANNELS, list);
                     switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
-                    setButtonText(list, 3);
+                    setButtonText(list, 2);
                     dialog.dismiss();
                 });
             } catch (JSONException e) {
@@ -330,7 +330,7 @@ public class ChannelsFragment extends Fragment {
         dialog.show();
         ArrayList<ChannelsModel> list = new ArrayList<>();
         String url = ApiLinks.getLiveStreams();
-
+        Log.d(TAG, "showAllItems: " + url);
         new Thread(() -> {
             URL google = null;
             try {
@@ -402,7 +402,7 @@ public class ChannelsFragment extends Fragment {
         dialog.show();
         ArrayList<ChannelsModel> list = new ArrayList<>();
         String url = ApiLinks.getLiveStreamsByID(id);
-
+        Log.d(TAG, "switchGroup: " + url);
         new Thread(() -> {
             URL google = null;
             try {
@@ -460,7 +460,8 @@ public class ChannelsFragment extends Fragment {
                     }
                     adapter = new ChannelsAdapter(mContext, list);
                     binding.channelsRC.setAdapter(adapter);
-                    selectedButton.setText(name + " - " + list.size());
+                    String[] n = splitString(name);
+                    selectedButton.setText(n[0] + " - " + list.size());
                 });
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -474,6 +475,20 @@ public class ChannelsFragment extends Fragment {
             }
 
         }).start();
+    }
+
+    public static String[] splitString(String input) {
+        // Use regex to find the last numeric part
+        String regex = " - (\\d+)$";
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex);
+        java.util.regex.Matcher matcher = pattern.matcher(input);
+        if (matcher.find()) {
+            String numericPart = matcher.group(1);
+            String alphabeticPart = input.substring(0, matcher.start()).trim();
+            return new String[]{alphabeticPart, numericPart};
+        } else {
+            return new String[]{input};
+        }
     }
 
     private void showFavoriteChannels() {
