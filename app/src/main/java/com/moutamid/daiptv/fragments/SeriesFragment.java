@@ -28,9 +28,11 @@ import com.moutamid.daiptv.adapters.SeriesParentAdapter;
 import com.moutamid.daiptv.databinding.FragmentSeriesBinding;
 import com.moutamid.daiptv.listener.ItemSelectedSeries;
 import com.moutamid.daiptv.models.CategoryModel;
+import com.moutamid.daiptv.models.FilmsModel;
 import com.moutamid.daiptv.models.MovieModel;
 import com.moutamid.daiptv.models.SeriesModel;
 import com.moutamid.daiptv.models.TVModel;
+import com.moutamid.daiptv.models.VodModel;
 import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
 import com.moutamid.daiptv.utilis.VolleySingleton;
@@ -106,8 +108,11 @@ public class SeriesFragment extends Fragment {
             listAll.add(new TVModel(Constants.topRated, "Top Series", topRated));
             getCategory();
         } else {
-            parentAdapter = new SeriesParentAdapter(mContext, series, selectedFilm);
+            listAll = new ArrayList<>();
+            listAll.addAll(series);
+            parentAdapter = new SeriesParentAdapter(mContext, listAll, selectedFilm);
             binding.recycler.setAdapter(parentAdapter);
+            getAllSeries();
         }
 
         return binding.getRoot();
@@ -267,6 +272,7 @@ public class SeriesFragment extends Fragment {
                         Stash.put(Constants.SERIES, listAll);
                         parentAdapter = new SeriesParentAdapter(mContext, listAll, selectedFilm);
                         binding.recycler.setAdapter(parentAdapter);
+                        getAllSeries();
                     });
                 } else {
                     getSeriesRecursive(k + 1);
@@ -279,6 +285,90 @@ public class SeriesFragment extends Fragment {
                         Toast.makeText(mContext, e.getLocalizedMessage()+"", Toast.LENGTH_SHORT).show();
                     }
                     dialog.dismiss();
+                });
+            }
+        }).start();
+    }
+
+    private void getAllSeries() {
+        String url = ApiLinks.getSeries();
+
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+            Log.d(TAG, "getVodRecursive: " + htmlData);
+
+            try {
+                JSONArray response = new JSONArray(htmlData);
+                ArrayList<SeriesModel> list = new ArrayList<>();
+                for (int i = 0; i < response.length(); i++) {
+                    JSONObject object = response.getJSONObject(i);
+                    SeriesModel model = new SeriesModel();
+                    model.num = object.getInt("num");
+                    model.series_id = object.getInt("series_id");
+                    model.name = object.getString("name");
+                    model.cover = object.getString("cover");
+                    model.plot = object.getString("plot");
+                    model.cast = object.getString("cast");
+                    model.director = object.getString("director");
+                    model.genre = object.getString("genre");
+                    model.releaseDate = object.getString("releaseDate");
+                    model.last_modified = object.getString("last_modified");
+//                        JSONArray backdrops = object.getJSONArray("backdrop_path");
+//                        if (!backdrops.isNull(0)) {
+//                            if (backdrops.length() >= 1) {
+//                                Log.d(TAG, "getSeries: " + backdrops);
+//                                model.backdrop_path = (String) backdrops.get(0);
+//                            }
+//                        } else model.backdrop_path = "";
+                    model.stream_type = Constants.TYPE_SERIES;
+                    model.youtube_trailer = object.getString("youtube_trailer");
+                    model.category_id = object.getString("category_id");
+                    list.add(model);
+                }
+                list.sort(Comparator.comparing(vodModel -> Long.parseLong(vodModel.last_modified)));
+                Collections.reverse(list);
+                listAll.add(1, new TVModel("Resents", "Récemment ajoutés", list));
+                requireActivity().runOnUiThread(() -> {
+                    parentAdapter.notifyItemInserted(1);
+                });
+            } catch (JSONException e) {
+                Log.d(TAG, "getVod: EEE " + e.getLocalizedMessage());
+                e.printStackTrace();
+                requireActivity().runOnUiThread(() -> {
+                    dialog.dismiss();
+                    if (snackbar != null) {
+                        snackbar.dismiss();
+                        Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                    }
                 });
             }
         }).start();

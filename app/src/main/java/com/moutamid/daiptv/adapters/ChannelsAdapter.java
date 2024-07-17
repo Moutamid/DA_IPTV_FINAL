@@ -85,7 +85,7 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
             }
             context.startActivity(new Intent(context, VideoPlayerActivity.class)
                     .putExtra("url", link)
-                            .putExtra("channel_id", model.epg_channel_id)
+                    .putExtra("channel_id", model.epg_channel_id)
                     .putExtra("type", Constants.TYPE_CHANNEL)
                     .putExtra("name", model.name));
         });

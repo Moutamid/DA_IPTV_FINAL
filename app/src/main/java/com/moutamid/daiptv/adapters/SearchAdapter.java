@@ -12,9 +12,15 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.fxn.stash.Stash;
 import com.google.android.material.card.MaterialCardView;
 import com.moutamid.daiptv.R;
+import com.moutamid.daiptv.activities.VideoPlayerActivity;
 import com.moutamid.daiptv.models.ChannelsModel;
+import com.moutamid.daiptv.models.SeriesModel;
+import com.moutamid.daiptv.models.UserModel;
+import com.moutamid.daiptv.models.VodModel;
+import com.moutamid.daiptv.utilis.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,11 +47,15 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchVH> 
         ChannelsModel model = list.get(holder.getAdapterPosition());
         try {
             Glide.with(context).load(model.stream_icon.trim()).placeholder(R.color.transparent).into(holder.image);
-
             holder.itemView.setOnClickListener(v -> {
-             // TODO   context.startActivity(new Intent(context, VideoPlayerActivity.class).putExtra("url", model.getChannelUrl()).putExtra("name", model.getChannelName()));
+                UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+                String url = userModel.url + userModel.username + "/" + userModel.password + "/" + model.stream_id;
+                context.startActivity(new Intent(context, VideoPlayerActivity.class)
+                        .putExtra("resume", String.valueOf(model.stream_id))
+                        .putExtra("url", url)
+                        .putExtra("channel_id", model.epg_channel_id)
+                        .putExtra("name", model.name));
             });
-
         } catch (Exception e){
             Log.d(TAG, "onBindViewHolder: " + e.getLocalizedMessage());
             e.printStackTrace();
