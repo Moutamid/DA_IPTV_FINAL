@@ -58,19 +58,45 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
     public MovieVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         if (reprendreLaLecture) {
             return new MovieVH(LayoutInflater.from(context).inflate(R.layout.resume_home, parent, false));
-        } else if (!favoris) {
-            return new MovieVH(LayoutInflater.from(context).inflate(R.layout.top_items_home, parent, false));
         }
-        return new MovieVH(LayoutInflater.from(context).inflate(R.layout.child_item, parent, false));
+        String[] isRecents = list.get(0).type.split(",");
+        if (isRecents.length == 2) {
+            if (favoris || isRecents[1].equals(Constants.RECENTS)) {
+                return new MovieVH(LayoutInflater.from(context).inflate(R.layout.child_item, parent, false));
+            }
+        } else {
+            if (favoris) {
+                return new MovieVH(LayoutInflater.from(context).inflate(R.layout.child_item, parent, false));
+            }
+        }
+        return new MovieVH(LayoutInflater.from(context).inflate(R.layout.top_items_home, parent, false));
     }
 
     @Override
     public void onBindViewHolder(@NonNull MovieVH holder, int position) {
         MovieModel model = list.get(holder.getAdapterPosition());
-
-        if (!favoris && !reprendreLaLecture){
+        String[] isRecents = model.type.split(",");
+        if (!favoris && !reprendreLaLecture && isRecents.length != 2) {
             holder.count.setText(String.valueOf(holder.getAdapterPosition()+1));
         }
+
+        if (reprendreLaLecture || isRecents.length != 2){
+            holder.itemView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if (hasFocus) {
+                        Log.d(TAG, "onFocusChange: Image " + model.banner);
+                        Log.d(TAG, "onFocusChange: TYPE " + model.type);
+                        Log.d(TAG, "onFocusChange: NAME " + model.original_title);
+                        itemSelected.selected(model);
+                        if (reprendreLaLecture) {
+                            holder.banner.requestFocus();
+                        }
+                    }
+                }
+            });
+        }
+
 
         String link;
         if (reprendreLaLecture) {
@@ -113,7 +139,8 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
         });
 
         holder.banner.setOnClickListener(v -> {
-            if (model.type.equals(Constants.TYPE_SERIES)) {
+            String type = isRecents[0];
+            if (type.equals(Constants.TYPE_SERIES)) {
                 SeriesModel seriesModel = new SeriesModel();
                 seriesModel.name = model.original_title;
                 seriesModel.cover = model.banner;
@@ -137,9 +164,10 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
 
         if (reprendreLaLecture) {
             holder.banner.setOnClickListener(v -> {
+                String type = isRecents[0];
                 UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
                 String url;
-                if (model.type.equals(Constants.TYPE_MOVIE)) {
+                if (type.equals(Constants.TYPE_MOVIE)) {
                     url = userModel.url + "/movie/" + userModel.username + "/" + userModel.password + "/" + model.streamID + "." + model.extension;
                     VodModel vodModel = new VodModel();
                     vodModel.name = model.original_title;
@@ -167,21 +195,6 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
             });
         }
 
-        holder.banner.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus) {
-                    Log.d(TAG, "onFocusChange: Image " + model.banner);
-                    Log.d(TAG, "onFocusChange: TYPE " + model.type);
-                    Log.d(TAG, "onFocusChange: NAME " + model.original_title);
-                    itemSelected.selected(model);
-                    if (reprendreLaLecture) {
-                        holder.banner.requestFocus();
-                    }
-                }
-            }
-        });
-
         if (reprendreLaLecture) {
             holder.banner.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
@@ -195,6 +208,19 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                 }
             });
         }
+
+        holder.banner.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    Log.d(TAG, "onFocusChange: Image " + model.banner);
+                    Log.d(TAG, "onFocusChange: TYPE " + model.type);
+                    Log.d(TAG, "onFocusChange: NAME " + model.original_title);
+                    itemSelected.selected(model);
+                }
+            }
+        });
+
     }
 
     @Override

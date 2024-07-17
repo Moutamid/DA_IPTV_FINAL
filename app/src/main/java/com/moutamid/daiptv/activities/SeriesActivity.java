@@ -9,11 +9,9 @@ import android.view.Window;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.fxn.stash.Stash;
 import com.moutamid.daiptv.BaseActivity;
 import com.moutamid.daiptv.R;
@@ -33,6 +31,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.regex.Matcher;
@@ -44,7 +47,6 @@ public class SeriesActivity extends BaseActivity {
     SeriesModel model;
     String output;
     Dialog dialog;
-    RequestQueue requestQueue;
     int id;
     String searchQuery;
     SeriesInfoModel infoModel;
@@ -65,8 +67,6 @@ public class SeriesActivity extends BaseActivity {
         setContentView(binding.getRoot());
 
         model = (SeriesModel) Stash.getObject(Constants.PASS_SERIES, SeriesModel.class);
-
-        requestQueue = VolleySingleton.getInstance(this).getRequestQueue();
 
         binding.seasonsRC.setLayoutManager(new LinearLayoutManager(this));
         binding.seasonsRC.setHasFixedSize(false);
@@ -92,24 +92,52 @@ public class SeriesActivity extends BaseActivity {
 
         Log.d(TAG, "fetchID: URL  " + url);
 
-        JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    try {
-                        JSONArray array = response.getJSONArray("results");
-                        JSONObject object = array.getJSONObject(0);
-                        id = object.getInt("id");
-                        getDetails(id, 1);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        Log.d(TAG, "Error: " + e.getMessage());
-                        dialog.dismiss();
-                    }
-                }, error -> {
-            error.printStackTrace();
-            Log.d(TAG, "Error: " + error.getMessage());
-            dialog.dismiss();
-        });
-        requestQueue.add(objectRequest);
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+
+            try {
+                JSONObject response = new JSONObject(htmlData);
+                JSONArray array = response.getJSONArray("results");
+                JSONObject object = array.getJSONObject(0);
+                id = object.getInt("id");
+                getDetails(id, 1);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Log.d(TAG, "Error: " + e.getMessage());
+                dialog.dismiss();
+            }
+
+        }).start();
+
     }
 
     private void getDetails(int id, int count) {
@@ -117,37 +145,66 @@ public class SeriesActivity extends BaseActivity {
         ArrayList<EpisodesModel> episodesModelArrayList = new ArrayList<>();
         Log.d(TAG, "fetchID: ID  " + id);
         Log.d(TAG, "fetchID: URL  " + url);
-        JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    dialog.dismiss();
-                    try {
-                        JSONArray episodes = response.getJSONArray("episodes");
-                        for (int i = 0; i < episodes.length(); i++) {
-                            JSONObject object = episodes.getJSONObject(i);
-                            int season_number = object.getInt("season_number");
-                            int episode_number = object.getInt("episode_number");
-                            String name = object.getString("name");
-                            String overview = object.getString("overview");
-                            String still_path = object.getString("still_path");
-                            String se = String.format("S%02d E%02d", season_number, episode_number);
-                            EpisodesModel episodesModel = new EpisodesModel(se, name, overview, still_path);
-                            episodesModelArrayList.add(episodesModel);
-                        }
-                        Log.d(TAG, "getDetails: " + episodesModelArrayList.size());
-                        EpisodesAdapter episodesAdapter = new EpisodesAdapter(SeriesActivity.this, episodesModelArrayList, episodeModel -> {
-                            getLink(episodeModel.se);
-                        });
-                        binding.episodeRC.setAdapter(episodesAdapter);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        Log.e(TAG, "JSONException: " + e.getMessage());
-                    }
-                }, error -> {
-            Log.e(TAG, "error: " + error.getMessage());
-            error.printStackTrace();
-            dialog.dismiss();
-        });
-        requestQueue.add(objectRequest);
+
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+
+            try {
+                JSONObject response = new JSONObject(htmlData);
+                JSONArray episodes = response.getJSONArray("episodes");
+                for (int i = 0; i < episodes.length(); i++) {
+                    JSONObject object = episodes.getJSONObject(i);
+                    int season_number = object.getInt("season_number");
+                    int episode_number = object.getInt("episode_number");
+                    String name = object.getString("name");
+                    String overview = object.getString("overview");
+                    String still_path = object.getString("still_path");
+                    String se = String.format("S%02d E%02d", season_number, episode_number);
+                    EpisodesModel episodesModel = new EpisodesModel(se, name, overview, still_path);
+                    episodesModelArrayList.add(episodesModel);
+                }
+                Log.d(TAG, "getDetails: " + episodesModelArrayList.size());
+                runOnUiThread(() -> {
+                    EpisodesAdapter episodesAdapter = new EpisodesAdapter(SeriesActivity.this, episodesModelArrayList, episodeModel -> {
+                        getLink(episodeModel.se);
+                    });
+                    binding.episodeRC.setAdapter(episodesAdapter);
+                });
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Log.e(TAG, "JSONException: " + e.getMessage());
+            }
+            runOnUiThread(() -> dialog.dismiss());
+        }).start();
     }
 
     private void getLink(String se) {
@@ -166,77 +223,139 @@ public class SeriesActivity extends BaseActivity {
     private void getInfo(int season, int episode) {
         String url = ApiLinks.getSeriesInfoByID(String.valueOf(model.series_id));
         Log.d(TAG, "fetchID: URL  " + url);
-        JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    try {
-                        dialog.dismiss();
-                        JSONObject episodes = response.getJSONObject("episodes");
-                        JSONArray array = episodes.getJSONArray(String.valueOf(season));
-                        for (int i = 0; i < array.length(); i++) {
-                            JSONObject object = array.getJSONObject(i);
-                            int episode_num = object.getInt("episode_num");
-                            int season_num = object.getInt("season");
-                            if (season_num == season && episode_num == episode) {
-                                infoModel = new SeriesInfoModel(object.getString("id"), object.getString("container_extension"));
-                                break;
-                            }
-                        }
-                        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-                        String link = userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + infoModel.id + "." + infoModel.container_extension;
-                        Stash.put(Constants.SERIES_LINK + infoModel.id, infoModel);
-                        startActivity(new Intent(this, VideoPlayerActivity.class)
-                                .putExtra("resume", infoModel.id)
-                                .putExtra("url", link)
-                                .putExtra("banner", "")
-                                .putExtra("type", Constants.TYPE_SERIES)
-                                .putExtra("name", model.name));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        runOnUiThread(() -> {
-                            dialog.dismiss();
-                            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-                        });
+
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+
+            try {
+                runOnUiThread(() -> {
+                    dialog.dismiss();
+                });
+                JSONObject response = new JSONObject(htmlData);
+                JSONObject episodes = response.getJSONObject("episodes");
+                JSONArray array = episodes.getJSONArray(String.valueOf(season));
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject object = array.getJSONObject(i);
+                    int episode_num = object.getInt("episode_num");
+                    int season_num = object.getInt("season");
+                    if (season_num == season && episode_num == episode) {
+                        infoModel = new SeriesInfoModel(object.getString("id"), object.getString("container_extension"));
+                        break;
                     }
-                }, error -> {
-            error.printStackTrace();
-            runOnUiThread(() -> {
-                dialog.dismiss();
-            });
-        });
-        requestQueue.add(objectRequest);
+                }
+                UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+                String link = userModel.url + "/series/" + userModel.username + "/" + userModel.password + "/" + infoModel.id + "." + infoModel.container_extension;
+                Stash.put(Constants.SERIES_LINK + infoModel.id, infoModel);
+                runOnUiThread(() -> {
+                    startActivity(new Intent(this, VideoPlayerActivity.class)
+                            .putExtra("resume", infoModel.id)
+                            .putExtra("url", link)
+                            .putExtra("banner", "")
+                            .putExtra("type", Constants.TYPE_SERIES)
+                            .putExtra("name", model.name));
+                });
+            } catch (JSONException e) {
+                e.printStackTrace();
+                runOnUiThread(() -> {
+                    dialog.dismiss();
+                    Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+        }).start();
+
     }
 
     private void getList() {
         // dialog.show();
         ArrayList<SeasonsItem> seasonSummaries = new ArrayList<>();
         String url = ApiLinks.getSeriesInfoByID(String.valueOf(model.series_id));
-        JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    try {
-                        JSONArray seasons = response.getJSONArray("seasons");
-                        for (int i = 0; i < seasons.length(); i++) {
-                            JSONObject object = seasons.getJSONObject(i);
-                            SeasonsItem item = new SeasonsItem();
-                            item.name = object.getString("name");
-                            item.episode_count = object.getString("episode_count");
-                            item.season_number = object.getInt("season_number");
-                            seasonSummaries.add(item);
-                        }
-                        seasonSummaries.sort(Comparator.comparing(seasonsItem -> seasonsItem.season_number));
-                        SeasonsAdapter seasonsAdapter = new SeasonsAdapter(this, seasonSummaries, pos -> {
-                            getDetails(id, pos);
-                        });
-                        Log.d(TAG, "seasonSummaries: " + seasonSummaries.size());
-                        binding.seasonsRC.setAdapter(seasonsAdapter);
-                        getSeasonEpisodes();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        dialog.dismiss();
-                    }
-                }, error -> {
-            error.printStackTrace();
-            dialog.dismiss();
-        });
-        requestQueue.add(objectRequest);
+
+
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+            runOnUiThread(() -> dialog.dismiss());
+            try {
+                JSONObject response = new JSONObject(htmlData);
+                JSONArray seasons = response.getJSONArray("seasons");
+                for (int i = 0; i < seasons.length(); i++) {
+                    JSONObject object = seasons.getJSONObject(i);
+                    SeasonsItem item = new SeasonsItem();
+                    item.name = object.getString("name");
+                    item.episode_count = object.getString("episode_count");
+                    item.season_number = object.getInt("season_number");
+                    seasonSummaries.add(item);
+                }
+                seasonSummaries.sort(Comparator.comparing(seasonsItem -> seasonsItem.season_number));
+                runOnUiThread(() -> {
+                    SeasonsAdapter seasonsAdapter = new SeasonsAdapter(this, seasonSummaries, pos -> {
+                        getDetails(id, pos);
+                    });
+                    Log.d(TAG, "seasonSummaries: " + seasonSummaries.size());
+                    binding.seasonsRC.setAdapter(seasonsAdapter);
+                    getSeasonEpisodes();
+                });
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }).start();
+
     }
 }

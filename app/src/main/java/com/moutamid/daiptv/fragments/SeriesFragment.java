@@ -13,14 +13,11 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.bumptech.glide.Glide;
 import com.fxn.stash.Stash;
 import com.google.android.material.snackbar.Snackbar;
@@ -42,9 +39,16 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Random;
@@ -54,7 +58,6 @@ public class SeriesFragment extends Fragment {
     SeriesParentAdapter parentAdapter;
     Dialog dialog;
     ArrayList<TVModel> listAll;
-    private RequestQueue requestQueue;
     private static final String TAG = "SeriesFragment";
 
     public SeriesFragment() {
@@ -86,8 +89,6 @@ public class SeriesFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentSeriesBinding.inflate(getLayoutInflater(), container, false);
-
-        requestQueue = VolleySingleton.getInstance(mContext).getRequestQueue();
 
         topRated = Stash.getArrayList(Constants.TOP_SERIES, SeriesModel.class);
         fetchID(topRated.get(0));
@@ -123,97 +124,166 @@ public class SeriesFragment extends Fragment {
     private void getCategory() {
         dialog.show();
         String url = ApiLinks.getSeriesCategories();
-        JsonArrayRequest objectRequest = new JsonArrayRequest(Request.Method.GET, url, null,
-                response -> {
-                    try {
-                        for (int i = 0; i < response.length(); i++) {
-                            JSONObject object = response.getJSONObject(i);
-                            CategoryModel model = new CategoryModel();
-                            model.category_id = object.getString("category_id");
-                            model.category_name = object.getString("category_name");
-                            model.parent_id = object.getInt("parent_id");
-                            listAll.add(new TVModel(model.category_id, model.category_name, new ArrayList<>()));
-                        }
-                        parentAdapter = new SeriesParentAdapter(mContext, listAll, selectedFilm);
-                        binding.recycler.setAdapter(parentAdapter);
-                        getSeries();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        dialog.dismiss();
-                    }
-                }, error -> {
-            error.printStackTrace();
-            dialog.dismiss();
-        });
-        requestQueue.add(objectRequest);
+
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+
+            try {
+                JSONArray response = new JSONArray(htmlData);
+                for (int i = 0; i < response.length(); i++) {
+                    JSONObject object = response.getJSONObject(i);
+                    CategoryModel model = new CategoryModel();
+                    model.category_id = object.getString("category_id");
+                    model.category_name = object.getString("category_name");
+                    model.parent_id = object.getInt("parent_id");
+                    listAll.add(new TVModel(model.category_id, model.category_name, new ArrayList<>()));
+                }
+                requireActivity().runOnUiThread(() -> {
+                    parentAdapter = new SeriesParentAdapter(mContext, listAll, selectedFilm);
+                    binding.recycler.setAdapter(parentAdapter);
+                    getSeries();
+                });
+            } catch (JSONException e) {
+                e.printStackTrace();
+                dialog.dismiss();
+            }
+        }).start();
+
     }
 
     private void getSeries() {
-        for (int k = 1; k < listAll.size(); k++) {
-            TVModel items = listAll.get(k);
-            String url = ApiLinks.getSeriesByID(items.category_id);
-            int finalK = k;
-            JsonArrayRequest objectRequest = new JsonArrayRequest(Request.Method.GET, url, null,
-                    response -> {
-                        try {
-                            ArrayList<SeriesModel> list = new ArrayList<>();
-                            for (int i = 0; i < response.length(); i++) {
-                                JSONObject object = response.getJSONObject(i);
-                                SeriesModel model = new SeriesModel();
-                                model.num = object.getInt("num");
-                                model.series_id = object.getInt("series_id");
-                                model.name = object.getString("name");
-                                model.cover = object.getString("cover");
-                                model.plot = object.getString("plot");
-                                model.cast = object.getString("cast");
-                                model.director = object.getString("director");
-                                model.genre = object.getString("genre");
-                                model.releaseDate = object.getString("releaseDate");
-                                model.last_modified = object.getString("last_modified");
-//                                JSONArray backdrops = object.getJSONArray("backdrop_path");
-//                                if (!backdrops.isNull(0)) {
-//                                    if (backdrops.length() >= 1) {
-//                                        Log.d(TAG, "getSeries: " + backdrops);
-//                                        model.backdrop_path = (String) backdrops.get(0);
-//                                    }
-//                                } else model.backdrop_path = "";
-                                model.stream_type = Constants.TYPE_SERIES;
-                                model.youtube_trailer = object.getString("youtube_trailer");
-                                model.category_id = object.getString("category_id");
-                                list.add(model);
-                            }
-                            TVModel model = new TVModel(items.category_id, items.category_name, list);
-                            listAll.set(finalK, model);
-                            if (finalK == listAll.size() - 1) {
-                                dialog.dismiss();
-                                if (snackbar != null){
-                                    snackbar.dismiss();
-                                    snackbar = null;
-                                    Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
-                                }
-                                Stash.put(Constants.SERIES, listAll);
-                                parentAdapter = new SeriesParentAdapter(mContext, listAll, selectedFilm);
-                                binding.recycler.setAdapter(parentAdapter);
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            if (snackbar != null){
-                                snackbar.dismiss();
-                                Toast.makeText(mContext, e.getLocalizedMessage()+"", Toast.LENGTH_SHORT).show();
-                            }
-                            dialog.dismiss();
-                        }
-                    }, error -> {
-                error.printStackTrace();
-                if (snackbar != null){
-                    snackbar.dismiss();
-                    Toast.makeText(mContext, error.getLocalizedMessage()+"", Toast.LENGTH_SHORT).show();
-                }
-                dialog.dismiss();
-            });
-            requestQueue.add(objectRequest);
-        }
+        getSeriesRecursive(1);
     }
+
+    private void getSeriesRecursive(int k) {
+        if (k >= listAll.size()) {
+            return;
+        }
+        TVModel items = listAll.get(k);
+        String url = ApiLinks.getSeriesByID(items.category_id);
+
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+
+            try {
+                JSONArray response = new JSONArray(htmlData);
+                ArrayList<SeriesModel> list = new ArrayList<>();
+                for (int i = 0; i < response.length(); i++) {
+                    JSONObject object = response.getJSONObject(i);
+                    SeriesModel model = new SeriesModel();
+                    model.num = object.getInt("num");
+                    model.series_id = object.getInt("series_id");
+                    model.name = object.getString("name");
+                    model.cover = object.getString("cover");
+                    model.plot = object.getString("plot");
+                    model.cast = object.getString("cast");
+                    model.director = object.getString("director");
+                    model.genre = object.getString("genre");
+                    model.releaseDate = object.getString("releaseDate");
+                    model.last_modified = object.getString("last_modified");
+//                        JSONArray backdrops = object.getJSONArray("backdrop_path");
+//                        if (!backdrops.isNull(0)) {
+//                            if (backdrops.length() >= 1) {
+//                                Log.d(TAG, "getSeries: " + backdrops);
+//                                model.backdrop_path = (String) backdrops.get(0);
+//                            }
+//                        } else model.backdrop_path = "";
+                    model.stream_type = Constants.TYPE_SERIES;
+                    model.youtube_trailer = object.getString("youtube_trailer");
+                    model.category_id = object.getString("category_id");
+                    list.add(model);
+                }
+                list.sort(Comparator.comparingLong(vodModel -> Long.parseLong(vodModel.last_modified)));
+                Collections.reverse(list);
+                TVModel model = new TVModel(items.category_id, items.category_name, list);
+                listAll.set(k, model);
+
+                if (k == listAll.size() - 1) {
+                    requireActivity().runOnUiThread(() -> {
+                        dialog.dismiss();
+                        if (snackbar != null){
+                            snackbar.dismiss();
+                            snackbar = null;
+                            Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                        }
+                        Stash.put(Constants.SERIES, listAll);
+                        parentAdapter = new SeriesParentAdapter(mContext, listAll, selectedFilm);
+                        binding.recycler.setAdapter(parentAdapter);
+                    });
+                } else {
+                    getSeriesRecursive(k + 1);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                requireActivity().runOnUiThread(() -> {
+                    if (snackbar != null){
+                        snackbar.dismiss();
+                        Toast.makeText(mContext, e.getLocalizedMessage()+"", Toast.LENGTH_SHORT).show();
+                    }
+                    dialog.dismiss();
+                });
+            }
+        }).start();
+    }
+
 
     ItemSelectedSeries selectedFilm = model -> {
         if (!model.stream_type.equals(Constants.topRated)) {
@@ -243,26 +313,54 @@ public class SeriesFragment extends Fragment {
         String url;
         url = Constants.getMovieData(name, Constants.extractYear(model.name), Constants.TYPE_TV);
         Log.d("TRANSJSILS", "fetchID: URL  " + url);
-        JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    try {
-                        JSONArray array = response.getJSONArray("results");
-                        if (array.length() >= 1) {
-                            int id = 0;
-                            JSONObject object = array.getJSONObject(0);
-                            id = object.getInt("id");
-                            getDetails(id, Constants.lang_fr, model);
-                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        dialog.dismiss();
-                    }
-                }, error -> {
-            Log.d("TRANSJSILS", "ERROR: " + error.getLocalizedMessage());
-            error.printStackTrace();
-            dialog.dismiss();
-        });
-        requestQueue.add(objectRequest);
+
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+
+            try {
+                JSONObject response = new JSONObject(htmlData);
+                JSONArray array = response.getJSONArray("results");
+                if (array.length() >= 1) {
+                    int id = 0;
+                    JSONObject object = array.getJSONObject(0);
+                    id = object.getInt("id");
+                    getDetails(id, Constants.lang_fr, model);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                requireActivity().runOnUiThread(() -> dialog.dismiss());
+            }
+
+        }).start();
     }
 
     MovieModel movieModel;
@@ -271,109 +369,142 @@ public class SeriesFragment extends Fragment {
         String url = Constants.getMovieDetails(id, Constants.TYPE_TV, language);
         Log.d("TRANSJSILS", "fetchID: ID  " + id);
         Log.d("TRANSJSILS", "fetchID: URL  " + url);
-        JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    try {
-                        movieModel = new MovieModel();
-                        try {
-                            movieModel.original_title = response.getString("title");
-                        } catch (Exception e) {
-                            movieModel.original_title = response.getString("name");
-                        }
-                        try {
-                            movieModel.release_date = response.getString("release_date");
-                        } catch (Exception e) {
-                            movieModel.release_date = response.getString("first_air_date");
-                        }
-                        movieModel.overview = response.getString("overview");
 
-                        if (movieModel.overview.isEmpty() && !language.isEmpty())
-                            getDetails(id, "", model);
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
 
-                        movieModel.isFrench = !movieModel.overview.isEmpty();
-                        movieModel.tagline = response.getString("tagline");
-                        movieModel.vote_average = String.valueOf(response.getDouble("vote_average"));
-                        if (response.getJSONArray("genres").length() > 0)
-                            movieModel.genres = response.getJSONArray("genres").getJSONObject(0).getString("name");
-                        else movieModel.genres = "N/A";
+            try {
+                JSONObject response = new JSONObject(htmlData);
+                movieModel = new MovieModel();
+                try {
+                    movieModel.original_title = response.getString("title");
+                } catch (Exception e) {
+                    movieModel.original_title = response.getString("name");
+                }
+                try {
+                    movieModel.release_date = response.getString("release_date");
+                } catch (Exception e) {
+                    movieModel.release_date = response.getString("first_air_date");
+                }
+                movieModel.overview = response.getString("overview");
 
-                        JSONArray videos = response.getJSONObject("videos").getJSONArray("results");
-                        JSONArray images = response.getJSONObject("images").getJSONArray("backdrops");
+                if (movieModel.overview.isEmpty() && !language.isEmpty())
+                    getDetails(id, "", model);
 
-                        int index = -1, logoIndex = 0;
-                        if (images.length() > 1) {
-                            String[] preferredLanguages = {"null", "fr", "en"};
-                            for (String lang : preferredLanguages) {
-                                for (int i = 0; i < images.length(); i++) {
-                                    JSONObject object = images.getJSONObject(i);
-                                    String isoLang = object.getString("iso_639_1");
-                                    if (isoLang.equalsIgnoreCase(lang)) {
-                                        index = i;
-                                        break;
-                                    }
-                                }
-                                if (index != -1) {
-                                    break;
-                                }
-                            }
-                            String banner = "";
-                            if (index != -1) {
-                                banner = images.getJSONObject(index).getString("file_path");
-                            }
-                            movieModel.banner = banner;
-                        } else {
-                            getBackdrop(id, "", model);
-                        }
-                        Log.d(TAG, "getDetails: after Back");
+                movieModel.isFrench = !movieModel.overview.isEmpty();
+                movieModel.tagline = response.getString("tagline");
+                movieModel.vote_average = String.valueOf(response.getDouble("vote_average"));
+                if (response.getJSONArray("genres").length() > 0)
+                    movieModel.genres = response.getJSONArray("genres").getJSONObject(0).getString("name");
+                else movieModel.genres = "N/A";
 
-                        JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
-                        if (logos.length() > 1) {
-                            binding.name.setVisibility(View.GONE);
-                            for (int i = 0; i < logos.length(); i++) {
-                                JSONObject object = logos.getJSONObject(i);
-                                String lang = object.getString("iso_639_1");
-                                if (lang.equals("fr") || (logoIndex == 0 && lang.isEmpty())) {
-                                    logoIndex = i;
-                                    break;
-                                } else if (logoIndex == 0 && lang.equals("en")) {
-                                    logoIndex = i;
-                                }
-                            }
-                            String path = logos.getJSONObject(logoIndex).getString("file_path");
-                            Log.d(TAG, "getlogo: " + path);
-                            try {
-                                Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            binding.name.setVisibility(View.VISIBLE);
-                            try {
-                                Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
+                JSONArray videos = response.getJSONObject("videos").getJSONArray("results");
+                JSONArray images = response.getJSONObject("images").getJSONArray("backdrops");
 
-                        for (int i = 0; i < videos.length(); i++) {
-                            JSONObject object = videos.getJSONObject(i);
-                            boolean official = object.getBoolean("official");
-                            String type = object.getString("type");
-                            if (type.equals("Trailer")) {
-                                movieModel.trailer = "https://www.youtube.com/watch?v=" + object.getString("key");
+                int index = -1, logoIndex = 0;
+                if (images.length() > 1) {
+                    String[] preferredLanguages = {"null", "fr", "en"};
+                    for (String lang : preferredLanguages) {
+                        for (int i = 0; i < images.length(); i++) {
+                            JSONObject object = images.getJSONObject(i);
+                            String isoLang = object.getString("iso_639_1");
+                            if (isoLang.equalsIgnoreCase(lang)) {
+                                index = i;
                                 break;
                             }
                         }
-                        setUI();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        dialog.dismiss();
+                        if (index != -1) {
+                            break;
+                        }
                     }
-                }, error -> {
-            error.printStackTrace();
-            dialog.dismiss();
-        });
-        requestQueue.add(objectRequest);
+                    String banner = "";
+                    if (index != -1) {
+                        banner = images.getJSONObject(index).getString("file_path");
+                    }
+                    movieModel.banner = banner;
+                } else {
+                    getBackdrop(id, "", model);
+                }
+                Log.d(TAG, "getDetails: after Back");
+
+                JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
+                if (logos.length() > 1) {
+                    for (int i = 0; i < logos.length(); i++) {
+                        JSONObject object = logos.getJSONObject(i);
+                        String lang = object.getString("iso_639_1");
+                        if (lang.equals("fr") || (logoIndex == 0 && lang.isEmpty())) {
+                            logoIndex = i;
+                            break;
+                        } else if (logoIndex == 0 && lang.equals("en")) {
+                            logoIndex = i;
+                        }
+                    }
+                    String path = logos.getJSONObject(logoIndex).getString("file_path");
+                    Log.d(TAG, "getlogo: " + path);
+
+                    requireActivity().runOnUiThread(()-> {
+                        binding.name.setVisibility(View.GONE);
+                        try {
+                            Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                } else {
+                    requireActivity().runOnUiThread(()-> {
+                        binding.name.setVisibility(View.VISIBLE);
+                        try {
+                            Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                }
+
+                for (int i = 0; i < videos.length(); i++) {
+                    JSONObject object = videos.getJSONObject(i);
+                    boolean official = object.getBoolean("official");
+                    String type = object.getString("type");
+                    if (type.equals("Trailer")) {
+                        movieModel.trailer = "https://www.youtube.com/watch?v=" + object.getString("key");
+                        break;
+                    }
+                }
+                requireActivity().runOnUiThread(()-> setUI());
+            } catch (JSONException e) {
+                e.printStackTrace();
+                requireActivity().runOnUiThread(()-> dialog.dismiss());
+            }
+        }).start();
     }
 
     private void getBackdrop(int id, String language, SeriesModel model) {
@@ -381,46 +512,73 @@ public class SeriesFragment extends Fragment {
         String url = Constants.getMovieDetails(id, Constants.TYPE_TV, language);
         Log.d(TAG, "fetchID: ID  " + id);
         Log.d(TAG, "fetchID: URL  " + url);
-        JsonObjectRequest objectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                jsonObject -> {
-                    try {
-                        JSONArray images = jsonObject.getJSONObject("images").getJSONArray("backdrops");
-                        int index = -1, logoIndex = 0;
-                        if (images.length() > 1) {
-                            String[] preferredLanguages = {"null", "fr", "en"};
-                            for (String lang : preferredLanguages) {
-                                for (int i = 0; i < images.length(); i++) {
-                                    JSONObject object = images.getJSONObject(i);
-                                    String isoLang = object.getString("iso_639_1");
-                                    if (isoLang.equalsIgnoreCase(lang)) {
-                                        index = i;
-                                        break;
-                                    }
-                                }
-                                if (index != -1) {
-                                    break;
-                                }
-                            }
-                            String banner = "";
-                            if (index != -1) {
-                                banner = images.getJSONObject(index).getString("file_path");
-                            }
-                            movieModel.banner = banner;
-                            try {
-                                Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
-                            } catch (Exception e) {
-                                e.printStackTrace();
+
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+            Log.d(TAG, "getVodRecursive: " + htmlData);
+
+            try {
+                JSONObject jsonObject = new JSONObject(htmlData);
+                JSONArray images = jsonObject.getJSONObject("images").getJSONArray("backdrops");
+                int index = -1, logoIndex = 0;
+                if (images.length() > 1) {
+                    String[] preferredLanguages = {"null", "fr", "en"};
+                    for (String lang : preferredLanguages) {
+                        for (int i = 0; i < images.length(); i++) {
+                            JSONObject object = images.getJSONObject(i);
+                            String isoLang = object.getString("iso_639_1");
+                            if (isoLang.equalsIgnoreCase(lang)) {
+                                index = i;
+                                break;
                             }
                         }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                        if (index != -1) {
+                            break;
+                        }
                     }
+                    String banner = "";
+                    if (index != -1) {
+                        banner = images.getJSONObject(index).getString("file_path");
+                    }
+                    movieModel.banner = banner;
+                    requireActivity().runOnUiThread(() -> {
+                        Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
+                    });
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 
-                }, volleyError -> {
-            Log.d(TAG, "getBackdrop: " + volleyError.getLocalizedMessage());
-        }
-        );
-        requestQueue.add(objectRequest);
+        }).start();
     }
 
     private void setUI() {
@@ -460,7 +618,6 @@ public class SeriesFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        requestQueue.stop();
     }
 
 }

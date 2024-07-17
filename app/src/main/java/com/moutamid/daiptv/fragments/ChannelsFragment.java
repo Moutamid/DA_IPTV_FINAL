@@ -15,13 +15,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
-import com.android.volley.DefaultRetryPolicy;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.RetryPolicy;
-import com.android.volley.toolbox.JsonArrayRequest;
 import com.fxn.stash.Stash;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -37,9 +33,15 @@ import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
 import com.moutamid.daiptv.utilis.VolleySingleton;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,11 +53,9 @@ public class ChannelsFragment extends Fragment {
     String selectedGroup = "";
     ChannelsAdapter adapter;
     Dialog dialog;
-    private RequestQueue requestQueue;
     private static final String TAG = "ChannelsFragment";
     Map<String, String> channels;
     private Context mContext;
-    RetryPolicy policy;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -76,11 +76,6 @@ public class ChannelsFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentChannelsBinding.inflate(getLayoutInflater(), container, false);
-
-        requestQueue = VolleySingleton.getInstance(mContext).getRequestQueue();
-
-        int timeout = 30000;
-        policy = new DefaultRetryPolicy(timeout, DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
 
         initializeDialog();
 
@@ -158,30 +153,59 @@ public class ChannelsFragment extends Fragment {
     private void setButtonText(ArrayList<CategoryModel> buttons, int buttonCount) {
         if (buttonCount <= buttons.size() - 1) {
             String url = ApiLinks.getLiveStreamsByID(buttons.get(buttonCount).category_id);
-            JsonArrayRequest objectRequest = new JsonArrayRequest(Request.Method.GET, url, null,
-                    response -> {
-                        try {
-                            int size = response.length();
-                            for (int i = 0; i < binding.sidePanel.getChildCount(); i++) {
-                                View view = binding.sidePanel.getChildAt(i);
-                                if (view instanceof MaterialButton) {
-                                    MaterialButton button = (MaterialButton) view;
-                                    String enteredText = button.getText().toString();
-                                    String original = buttons.get(buttonCount).category_name;
-                                    if (!enteredText.isEmpty() && enteredText.equals(original)) {
-                                        button.setText(original + " - " + size);
-                                    }
+            new Thread(() -> {
+                URL google = null;
+                try {
+                    google = new URL(url);
+                } catch (final MalformedURLException e) {
+                    e.printStackTrace();
+                }
+                BufferedReader in = null;
+                try {
+                    in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                String input = null;
+                StringBuffer stringBuffer = new StringBuffer();
+                while (true) {
+                    try {
+                        if ((input = in != null ? in.readLine() : null) == null) break;
+                    } catch (final IOException e) {
+                        e.printStackTrace();
+                    }
+                    stringBuffer.append(input);
+                }
+                try {
+                    if (in != null) {
+                        in.close();
+                    }
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                String htmlData = stringBuffer.toString();
+                try {
+                    JSONArray response = new JSONArray(htmlData);
+                    int size = response.length();
+                    requireActivity().runOnUiThread(() -> {
+                        for (int i = 0; i < binding.sidePanel.getChildCount(); i++) {
+                            View view = binding.sidePanel.getChildAt(i);
+                            if (view instanceof MaterialButton) {
+                                MaterialButton button = (MaterialButton) view;
+                                String enteredText = button.getText().toString();
+                                String original = buttons.get(buttonCount).category_name;
+                                if (!enteredText.isEmpty() && enteredText.equals(original)) {
+                                    button.setText(original + " - " + size);
                                 }
                             }
-                            setButtonText(buttons, buttonCount + 1);
-                        } catch (Exception e) {
-                            e.printStackTrace();
                         }
-                    }, error -> {
-                error.printStackTrace();
-            });
-            objectRequest.setRetryPolicy(policy);
-            requestQueue.add(objectRequest);
+                        setButtonText(buttons, buttonCount + 1);
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }).start();
         }
     }
 
@@ -194,183 +218,262 @@ public class ChannelsFragment extends Fragment {
         list.add(1, new CategoryModel("fav", "Favoris", 0));
         list.add(2, new CategoryModel("all", "All", 0));
         String url = ApiLinks.getLiveCategories();
-        JsonArrayRequest objectRequest = new JsonArrayRequest(Request.Method.GET, url, null,
-                response -> {
-                    dialog.dismiss();
-                    try {
-                        for (int i = 0; i < response.length(); i++) {
-                            JSONObject object = response.getJSONObject(i);
-                            CategoryModel model = new CategoryModel();
-                            model.category_id = object.getString("category_id");
-                            model.category_name = object.getString("category_name");
-                            model.parent_id = object.getInt("parent_id");
-                            list.add(model);
-                        }
 
-                        channels = new HashMap<>();
-                        for (CategoryModel model : list) {
-                            if (!model.category_name.isEmpty()) {
-                                channels.put(model.category_name.trim(), model.category_id);
-                                MaterialButton button = new MaterialButton(mContext);
-                                button.setText(model.category_name.trim());
-                                button.setTextColor(getResources().getColor(R.color.white));
-                                button.setBackgroundColor(getResources().getColor(R.color.transparent));
-                                button.setCornerRadius(12);
-                                button.setNextFocusUpId(R.id.Chaines);
-                                button.setGravity(Gravity.START | Gravity.CENTER);
-                                binding.sidePanel.addView(button);
-                                button.setStrokeColorResource(R.color.transparent);
-                                button.setStrokeWidth(2);
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+            try {
+                JSONArray response = new JSONArray(htmlData);
+                for (int i = 0; i < response.length(); i++) {
+                    JSONObject object = response.getJSONObject(i);
+                    CategoryModel model = new CategoryModel();
+                    model.category_id = object.getString("category_id");
+                    model.category_name = object.getString("category_name");
+                    model.parent_id = object.getInt("parent_id");
+                    list.add(model);
+                }
+                channels = new HashMap<>();
+                requireActivity().runOnUiThread(() -> {
+                    for (CategoryModel model : list) {
+                        if (!model.category_name.isEmpty()) {
+                            channels.put(model.category_name.trim(), model.category_id);
+                            MaterialButton button = new MaterialButton(mContext);
+                            button.setText(model.category_name.trim());
+                            button.setTextColor(getResources().getColor(R.color.white));
+                            button.setBackgroundColor(getResources().getColor(R.color.transparent));
+                            button.setCornerRadius(12);
+                            button.setNextFocusUpId(R.id.Chaines);
+                            button.setGravity(Gravity.START | Gravity.CENTER);
+                            binding.sidePanel.addView(button);
+                            button.setStrokeColorResource(R.color.transparent);
+                            button.setStrokeWidth(2);
 
-                                if (selectedButton == null && button.getText().toString().equals("FRANCE FHD | TV")) {
-                                    button.setStrokeColorResource(R.color.red);
-                                    selectedButton = button;
-                                    selectedButton.requestFocus();
-                                }
-                                button.setOnClickListener(v -> {
-                                    isAll = false;
-                                    selectedGroup = button.getText().toString().trim();
-                                    if (selectedButton != null) {
-                                        selectedButton.setStrokeColorResource(R.color.transparent); // Remove stroke from previously selected button
-                                    }
-                                    button.setStrokeColorResource(R.color.red); // Add stroke to newly selected button
-                                    selectedButton = button;
-                                    switch (selectedGroup) {
-                                        case "All":
-                                            showAllItems();
-                                            break;
-                                        case "Chaînes récentes":
-                                            showRecentChannels();
-                                            break;
-                                        case "Favoris":
-                                            showFavoriteChannels();
-                                            break;
-                                        default:
-                                            switchGroup(channels.get(selectedGroup), selectedGroup);
-                                            break;
-                                    }
-                                });
+                            if (selectedButton == null && button.getText().toString().equals("FRANCE FHD | TV")) {
+                                button.setStrokeColorResource(R.color.red);
+                                selectedButton = button;
+                                selectedButton.requestFocus();
                             }
-                        }
-                        Stash.put(Constants.CHANNELS, list);
-                        switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
-                        setButtonText(list, 3);
-                    } catch (JSONException e) {
-                        Log.d(TAG, "addButton: EE " + e.getLocalizedMessage());
-                        e.printStackTrace();
-                        dialog.dismiss();
-                        if (snackbar != null) {
-                            snackbar.dismiss();
-                            Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                            button.setOnClickListener(v -> {
+                                isAll = false;
+                                selectedGroup = button.getText().toString().trim();
+                                if (selectedButton != null) {
+                                    selectedButton.setStrokeColorResource(R.color.transparent); // Remove stroke from previously selected button
+                                }
+                                button.setStrokeColorResource(R.color.red); // Add stroke to newly selected button
+                                selectedButton = button;
+                                switch (selectedGroup) {
+                                    case "All":
+                                        showAllItems();
+                                        break;
+                                    case "Chaînes récentes":
+                                        showRecentChannels();
+                                        break;
+                                    case "Favoris":
+                                        showFavoriteChannels();
+                                        break;
+                                    default:
+                                        switchGroup(channels.get(selectedGroup), selectedGroup);
+                                        break;
+                                }
+                            });
                         }
                     }
-                }, error -> {
-            Log.d(TAG, "addButton: " + error.getLocalizedMessage());
-            error.printStackTrace();
-            dialog.dismiss();
-            if (snackbar != null) {
-                snackbar.dismiss();
-                Toast.makeText(mContext, error.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                    Stash.put(Constants.CHANNELS, list);
+                    switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
+                    setButtonText(list, 3);
+                    dialog.dismiss();
+                });
+            } catch (JSONException e) {
+                Log.d(TAG, "addButton: EE " + e.getLocalizedMessage());
+                e.printStackTrace();
+                requireActivity().runOnUiThread(() -> {
+                    dialog.dismiss();
+                    if (snackbar != null) {
+                        snackbar.dismiss();
+                        Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
-        });
-//        objectRequest.setRetryPolicy(policy);
-        requestQueue.add(objectRequest);
+
+        }).start();
     }
 
     private void showAllItems() {
         dialog.show();
         ArrayList<ChannelsModel> list = new ArrayList<>();
         String url = ApiLinks.getLiveStreams();
-        JsonArrayRequest objectRequest = new JsonArrayRequest(Request.Method.GET, url, null,
-                response -> {
-                    dialog.dismiss();
-                    try {
-                        for (int i = 0; i < response.length(); i++) {
-                            JSONObject object = response.getJSONObject(i);
-                            ChannelsModel model = new ChannelsModel();
-                            model.num = object.getInt("num");
-                            model.stream_id = object.getInt("stream_id");
-                            model.name = object.getString("name");
-                            model.stream_type = object.getString("stream_type");
-                            model.stream_icon = object.getString("stream_icon");
-                            model.epg_channel_id = object.getString("epg_channel_id");
-                            model.added = object.getString("added");
-                            model.category_id = object.getString("category_id");
-                            model.stream_link = "";
-                            list.add(model);
-                        }
-                        Stash.put(Constants.CHANNELS_ALL, list);
-                        adapter = new ChannelsAdapter(mContext, list);
-                        binding.channelsRC.setAdapter(adapter);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        dialog.dismiss();
-                        if (snackbar != null) {
-                            snackbar.dismiss();
-                            Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }, error -> {
-            error.printStackTrace();
-            dialog.dismiss();
-            if (snackbar != null) {
-                snackbar.dismiss();
-                Toast.makeText(mContext, error.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
             }
-        });
-        objectRequest.setRetryPolicy(policy);
-        requestQueue.add(objectRequest);
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+
+            try {
+                JSONArray response = new JSONArray(htmlData);
+                for (int i = 0; i < response.length(); i++) {
+                    JSONObject object = response.getJSONObject(i);
+                    ChannelsModel model = new ChannelsModel();
+                    model.num = object.getInt("num");
+                    model.stream_id = object.getInt("stream_id");
+                    model.name = object.getString("name");
+                    model.stream_type = object.getString("stream_type");
+                    model.stream_icon = object.getString("stream_icon");
+                    model.epg_channel_id = object.getString("epg_channel_id");
+                    model.added = object.getString("added");
+                    model.category_id = object.getString("category_id");
+                    model.stream_link = "";
+                    list.add(model);
+                }
+                Stash.put(Constants.CHANNELS_ALL, list);
+                requireActivity().runOnUiThread(() -> {
+                    adapter = new ChannelsAdapter(mContext, list);
+                    binding.channelsRC.setAdapter(adapter);
+                    dialog.dismiss();
+                });
+            } catch (JSONException e) {
+                e.printStackTrace();
+                requireActivity().runOnUiThread(() -> {
+                    dialog.dismiss();
+                    if (snackbar != null) {
+                        snackbar.dismiss();
+                        Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }).start();
     }
 
     private void switchGroup(String id, String name) {
         dialog.show();
         ArrayList<ChannelsModel> list = new ArrayList<>();
         String url = ApiLinks.getLiveStreamsByID(id);
-        JsonArrayRequest objectRequest = new JsonArrayRequest(Request.Method.GET, url, null,
-                response -> {
-                    dialog.dismiss();
-                    try {
-                        for (int i = 0; i < response.length(); i++) {
-                            JSONObject object = response.getJSONObject(i);
-                            ChannelsModel model = new ChannelsModel();
-                            model.num = object.getInt("num");
-                            model.stream_id = object.getInt("stream_id");
-                            model.name = object.getString("name");
-                            model.stream_type = object.getString("stream_type");
-                            model.stream_icon = object.getString("stream_icon");
-                            model.epg_channel_id = object.getString("epg_channel_id");
-                            model.added = object.getString("added");
-                            model.category_id = object.getString("category_id");
-                            model.stream_link = "";
-                            list.add(model);
-                        }
-                        if (snackbar != null) {
-                            snackbar.dismiss();
-                            snackbar = null;
-                            Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
-                        }
-                        adapter = new ChannelsAdapter(mContext, list);
-                        binding.channelsRC.setAdapter(adapter);
-                        selectedButton.setText(name + " - " + list.size());
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        dialog.dismiss();
-                        if (snackbar != null) {
-                            snackbar.dismiss();
-                            Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }, error -> {
-            Log.d(TAG, "switchGroup: " + error.getLocalizedMessage());
-            error.printStackTrace();
-            dialog.dismiss();
-            if (snackbar != null) {
-                snackbar.dismiss();
-                Toast.makeText(mContext, error.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
             }
-        });
-        objectRequest.setRetryPolicy(policy);
-        requestQueue.add(objectRequest);
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+
+            try {
+                JSONArray response = new JSONArray(htmlData);
+                for (int i = 0; i < response.length(); i++) {
+                    JSONObject object = response.getJSONObject(i);
+                    ChannelsModel model = new ChannelsModel();
+                    model.num = object.getInt("num");
+                    model.stream_id = object.getInt("stream_id");
+                    model.name = object.getString("name");
+                    model.stream_type = object.getString("stream_type");
+                    model.stream_icon = object.getString("stream_icon");
+                    model.epg_channel_id = object.getString("epg_channel_id");
+                    model.added = object.getString("added");
+                    model.category_id = object.getString("category_id");
+                    model.stream_link = "";
+                    list.add(model);
+                }
+                requireActivity().runOnUiThread(() -> {
+                    dialog.dismiss();
+                    if (snackbar != null) {
+                        snackbar.dismiss();
+                        snackbar = null;
+                        Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                    }
+                    adapter = new ChannelsAdapter(mContext, list);
+                    binding.channelsRC.setAdapter(adapter);
+                    selectedButton.setText(name + " - " + list.size());
+                });
+            } catch (JSONException e) {
+                e.printStackTrace();
+                requireActivity().runOnUiThread(() -> {
+                    dialog.dismiss();
+                    if (snackbar != null) {
+                        snackbar.dismiss();
+                        Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+        }).start();
     }
 
     private void showFavoriteChannels() {

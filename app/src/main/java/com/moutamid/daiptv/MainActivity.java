@@ -1,7 +1,6 @@
 package com.moutamid.daiptv;
 
 import android.app.Dialog;
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
@@ -188,8 +187,8 @@ public class MainActivity extends BaseActivity {
             database.epgDAO().Delete();
         }
         List<EPGModel> list = database.epgDAO().getEPG();
-//        if (list.isEmpty())
-         //   get();
+        if (list.isEmpty())
+            get();
     }
 
     private static final String TAG = "MainActivity";

@@ -45,7 +45,7 @@ public class MyListAdapter extends RecyclerView.Adapter<MyListAdapter.ListVH> {
         holder.epg.setText(model.type);
 
         holder.itemView.setOnClickListener(v -> {
-          //  context.startActivity(new Intent(context, VideoPlayerActivity.class).putExtra("url", model.getChannelUrl()).putExtra("name", model.getChannelName()));
+          // TODO context.startActivity(new Intent(context, VideoPlayerActivity.class).putExtra("url", model.getChannelUrl()).putExtra("name", model.getChannelName()));
         });
     }
 

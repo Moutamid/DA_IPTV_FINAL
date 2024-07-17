@@ -10,8 +10,6 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.android.volley.RequestQueue;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.listener.ItemSelectedFilm;
 import com.moutamid.daiptv.models.FilmsModel;

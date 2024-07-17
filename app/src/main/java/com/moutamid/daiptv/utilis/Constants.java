@@ -45,6 +45,7 @@ public class Constants {
     public static final String USER_LIST = "USER_LIST";
     public static final String EPG = "EPG";
     public static final String SELECTED_PAGE = "SELECTED_PAGE";
+    public static final String RECENTS = "RECENTS";
     public static final String TOP_FILMS = "TOP_FILMS";
     public static final String RESUME = "RESUME";
     public static final String topRated = "topRated";

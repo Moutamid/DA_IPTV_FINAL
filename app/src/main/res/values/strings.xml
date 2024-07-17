@@ -1,7 +1,6 @@
 <resources>
     <string name="app_name">DA IPTV</string>
     <string name="terms">En vous connectant, vous acceptez nos <b><u>Conditions d\'utilisation</u></b> et nos conditions d\'utilisation. <b><u>Politique de confidentialité</u></b></string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="lorem">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus dolore eos labore quis, repellendus similique.</string>
     <string name="lorem50">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Accusamus accusantium asperiores atque aut, autem blanditiis consequatur consequuntur cum deleniti distinctio dolore eaque et, excepturi exercitationem explicabo illum ipsam ipsum, maiores minima neque nesciunt odio quaerat quasi sunt tempora temporibus voluptatibus. Commodi placeat quo ut. Aperiam blanditiis deserunt ea odio sed.</string>
