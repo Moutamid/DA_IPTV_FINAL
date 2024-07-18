@@ -10,18 +10,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.fxn.stash.Stash;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.textfield.TextInputLayout;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.ChannelsAdapter;
 import com.moutamid.daiptv.databinding.FragmentChannelsBinding;
@@ -31,7 +28,6 @@ import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
-import com.moutamid.daiptv.utilis.VolleySingleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -136,6 +132,9 @@ public class ChannelsFragment extends Fragment {
                         case "Chaînes récentes":
                             showRecentChannels();
                             break;
+                        case "Rejouer":
+                            showRecentsServer();
+                            break;
                         case "Favoris":
                             showFavoriteChannels();
                             break;
@@ -148,7 +147,7 @@ public class ChannelsFragment extends Fragment {
             }
         }
 
-        setButtonText(list, 2);
+        setButtonText(list, 3);
 
         ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.CHANNELS_ALL, ChannelsModel.class);
         adapter = new ChannelsAdapter(mContext, channelsList);
@@ -227,9 +226,10 @@ public class ChannelsFragment extends Fragment {
     private void addButton() {
         dialog.show();
         ArrayList<CategoryModel> list = new ArrayList<>();
-        list.add(0, new CategoryModel("recent", "Chaînes récentes", 0));
-        list.add(1, new CategoryModel("fav", "Favoris", 0));
-        list.add(2, new CategoryModel("all", "All", 0));
+        list.add(0, new CategoryModel("recent_played", "Chaînes récentes", 0));
+        list.add(1, new CategoryModel("recent", "Rejouer", 0));
+        list.add(2, new CategoryModel("fav", "Favoris", 0));
+        list.add(3, new CategoryModel("all", "All", 0));
         String url = ApiLinks.getLiveCategories();
 
         new Thread(() -> {
@@ -306,6 +306,9 @@ public class ChannelsFragment extends Fragment {
                                     case "All":
                                         showAllItems();
                                         break;
+                                    case "Rejouer":
+                                        showRecentsServer();
+                                        break;
                                     case "Chaînes récentes":
                                         showRecentChannels();
                                         break;
@@ -321,7 +324,7 @@ public class ChannelsFragment extends Fragment {
                     }
                     Stash.put(Constants.CHANNELS, list);
                     switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
-                    setButtonText(list, 2);
+                    setButtonText(list, 3);
                     dialog.dismiss();
                 });
             } catch (JSONException e) {
@@ -337,6 +340,14 @@ public class ChannelsFragment extends Fragment {
             }
 
         }).start();
+    }
+
+    private void showRecentsServer() {
+        ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.RECENT_CHANNELS_SERVER, ChannelsModel.class);
+        Collections.reverse(channelsList);
+        adapter = new ChannelsAdapter(mContext, channelsList);
+        binding.channelsRC.setAdapter(adapter);
+        selectedButton.setText("Rejouer - " + channelsList.size());
     }
 
     private void showAllItems() {
@@ -451,6 +462,7 @@ public class ChannelsFragment extends Fragment {
 
             try {
                 JSONArray response = new JSONArray(htmlData);
+                ArrayList<ChannelsModel> channelsList = new ArrayList<>();
                 for (int i = 0; i < response.length(); i++) {
                     JSONObject object = response.getJSONObject(i);
                     ChannelsModel model = new ChannelsModel();
@@ -464,6 +476,10 @@ public class ChannelsFragment extends Fragment {
                     model.category_id = object.getString("category_id");
                     model.stream_link = "";
                     list.add(model);
+                    if (model.stream_id == 9629) {
+                        channelsList.add(model);
+                        Stash.put(Constants.RECENT_CHANNELS_SERVER, channelsList);
+                    }
                 }
                 requireActivity().runOnUiThread(() -> {
                     dialog.dismiss();

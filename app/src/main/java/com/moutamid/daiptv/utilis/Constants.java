@@ -42,6 +42,7 @@ public class Constants {
     public static final String CHANNELS_ALL = "CHANNELS_ALL";
     public static final String USER = "USER";
     public static final String RECENT_CHANNELS = "RECENT_CHANNELS";
+    public static final String RECENT_CHANNELS_SERVER = "RECENT_CHANNELS_SERVER";
     public static final String USER_LIST = "USER_LIST";
     public static final String EPG = "EPG";
     public static final String SELECTED_PAGE = "SELECTED_PAGE";
