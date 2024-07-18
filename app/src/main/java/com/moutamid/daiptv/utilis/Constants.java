@@ -234,6 +234,7 @@ public class Constants {
     }
 
     public static String regexName(String name) {
+        name = name.replace("H.265", "");
         name = name.replace("|PT| ", "");
         name = name.replace("PT| ", "");
         name = name.replace("PT", "");

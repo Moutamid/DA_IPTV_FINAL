@@ -124,9 +124,14 @@ public class ChannelsFragment extends Fragment {
                     selectedButton = button;
                     switch (selectedGroup) {
                         case "All":
-                            adapter = new ChannelsAdapter(mContext, channelsList1);
-                            binding.channelsRC.setAdapter(adapter);
-                            selectedButton.setText("All - " + channelsList1.size());
+                            ArrayList<ChannelsModel> allList = Stash.getArrayList(Constants.CHANNELS_ALL, ChannelsModel.class);
+                            if (allList.isEmpty()) {
+                                showAllItems();
+                            } else {
+                                adapter = new ChannelsAdapter(mContext, allList);
+                                binding.channelsRC.setAdapter(adapter);
+                                selectedButton.setText("All - " + allList.size());
+                            }
                             break;
                         case "Chaînes récentes":
                             showRecentChannels();
@@ -151,8 +156,16 @@ public class ChannelsFragment extends Fragment {
     }
 
     private void setButtonText(ArrayList<CategoryModel> buttons, int buttonCount) {
+        Log.d(TAG, "setButtonText: " + buttonCount);
         if (buttonCount <= buttons.size() - 1) {
-            String url = ApiLinks.getLiveStreamsByID(buttons.get(buttonCount).category_id);
+            String url;
+            if (buttons.get(buttonCount).category_id.equals("all")) {
+                url = ApiLinks.getLiveStreams();
+            } else {
+                url = ApiLinks.getLiveStreamsByID(buttons.get(buttonCount).category_id);
+            }
+
+            Log.d(TAG, "setButtonText: " + url);
             new Thread(() -> {
                 URL google = null;
                 try {
@@ -384,6 +397,7 @@ public class ChannelsFragment extends Fragment {
                     adapter = new ChannelsAdapter(mContext, list);
                     binding.channelsRC.setAdapter(adapter);
                     dialog.dismiss();
+                    selectedButton.setText("All" + " - " + list.size());
                 });
             } catch (JSONException e) {
                 e.printStackTrace();
