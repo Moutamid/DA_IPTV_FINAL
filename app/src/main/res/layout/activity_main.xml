@@ -45,6 +45,8 @@
                 android:orientation="horizontal"
                 android:layout_centerInParent="true"
                 android:gravity="center"
+                android:background="@drawable/bg_gradient"
+                android:backgroundTint="@color/black_bg_trans"
                 android:layout_toStartOf="@id/settings"
                 android:layout_toEndOf="@id/logo">
 
