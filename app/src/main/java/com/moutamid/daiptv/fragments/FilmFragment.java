@@ -30,9 +30,10 @@ import com.moutamid.daiptv.models.CategoryModel;
 import com.moutamid.daiptv.models.FilmsModel;
 import com.moutamid.daiptv.models.MovieModel;
 import com.moutamid.daiptv.models.VodModel;
+import com.moutamid.daiptv.retrofit.Api;
+import com.moutamid.daiptv.retrofit.RetrofitClientInstance;
 import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
-import com.moutamid.daiptv.utilis.VolleySingleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,7 +50,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class FilmFragment extends Fragment {
 
@@ -127,62 +134,33 @@ public class FilmFragment extends Fragment {
 
     private void getCategory() {
         dialog.show();
-        String url = ApiLinks.getVodCategories();
-
-        new Thread(() -> {
-            URL google = null;
-            try {
-                google = new URL(url);
-            } catch (final MalformedURLException e) {
-                e.printStackTrace();
-            }
-            BufferedReader in = null;
-            try {
-                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String input = null;
-            StringBuffer stringBuffer = new StringBuffer();
-            while (true) {
-                try {
-                    if ((input = in != null ? in.readLine() : null) == null) break;
-                } catch (final IOException e) {
-                    e.printStackTrace();
+        Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+        Call<List<CategoryModel>> call = api.getVodCategory(ApiLinks.vodCategory());
+        call.enqueue(new Callback<List<CategoryModel>>() {
+            @Override
+            public void onResponse(Call<List<CategoryModel>> call, Response<List<CategoryModel>> response) {
+                if (response.isSuccessful()) {
+                    List<CategoryModel> categoryList = response.body();
+                    listAll.addAll(categoryList.stream()
+                            .map(model -> new FilmsModel(model.category_id, model.category_name, new ArrayList<>()))
+                            .collect(Collectors.toList()));
+                    requireActivity().runOnUiThread(() -> {
+                        parentAdapter = new FilmParentAdapter(mContext, listAll, selectedFilm);
+                        binding.recycler.setAdapter(parentAdapter);
+                    });
+                    getVod();
+                } else {
+                    int statusCode = response.code();
+                    Log.d(TAG, "onResponse: Error code : " + statusCode);
                 }
-                stringBuffer.append(input);
-            }
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String htmlData = stringBuffer.toString();
-            Log.d(TAG, "getVodRecursive: " + htmlData);
-            try {
-                JSONArray response = new JSONArray(htmlData);
-                for (int i = 0; i < response.length(); i++) {
-                    JSONObject object = response.getJSONObject(i);
-                    CategoryModel model = new CategoryModel();
-                    model.category_id = object.getString("category_id");
-                    model.category_name = object.getString("category_name");
-                    model.parent_id = object.getInt("parent_id");
-                    listAll.add(new FilmsModel(model.category_id, model.category_name, new ArrayList<>()));
-                }
-                Log.d(TAG, "getCategory: " + listAll.size());
-                requireActivity().runOnUiThread(() -> {
-                    parentAdapter = new FilmParentAdapter(mContext, listAll, selectedFilm);
-                    binding.recycler.setAdapter(parentAdapter);
-                });
-                getVod();
-            } catch (JSONException e) {
-                e.printStackTrace();
-                requireActivity().runOnUiThread(() -> dialog.dismiss());
             }
 
-        }).start();
+            @Override
+            public void onFailure(Call<List<CategoryModel>> call, Throwable t) {
+                t.printStackTrace();
+                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
+            }
+        });
     }
 
     ItemSelectedFilm selectedFilm = new ItemSelectedFilm() {
@@ -384,25 +362,27 @@ public class FilmFragment extends Fragment {
                     }
                     String path = logos.getJSONObject(logoIndex).getString("file_path");
                     Log.d(TAG, "getlogo: " + path);
-                    requireActivity().runOnUiThread(()-> {
-                        binding.name.setVisibility(View.GONE);
-                        try {
-                            Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
-
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            binding.name.setVisibility(View.GONE);
+                            try {
+                                Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
                 } else {
-                    requireActivity().runOnUiThread(()-> {
-                        binding.name.setVisibility(View.VISIBLE);
-                        try {
-                            Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
-
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            binding.name.setVisibility(View.VISIBLE);
+                            try {
+                                Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
                 }
 
                 for (int i = 0; i < videos.length(); i++) {
@@ -414,12 +394,16 @@ public class FilmFragment extends Fragment {
                         break;
                     }
                 }
-                requireActivity().runOnUiThread(()-> setUI());
+                if (isAdded() && getActivity() != null) {
+                    getActivity().runOnUiThread(() -> setUI());
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
-                requireActivity().runOnUiThread(() -> {
-                    dialog.dismiss();
-                });
+                if (isAdded() && getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        dialog.dismiss();
+                    });
+                }
             }
 
         }).start();
@@ -488,9 +472,11 @@ public class FilmFragment extends Fragment {
                         banner = images.getJSONObject(index).getString("file_path");
                     }
                     movieModel.banner = banner;
-                    requireActivity().runOnUiThread(() -> {
-                        Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
-                    });
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
+                        });
+                    }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -540,96 +526,65 @@ public class FilmFragment extends Fragment {
             Log.d(TAG, "getVodRecursive: RETURN");
             return;
         }
-
         FilmsModel items = listAll.get(k);
-        String url = ApiLinks.getVodByID(items.category_id);
-        Log.d(TAG, "getVodRecursive: " + url);
+        Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+        Call<List<VodModel>> call = api.getVodByID(ApiLinks.getVodByID(items.category_id));
+        call.enqueue(new Callback<List<VodModel>>() {
+            @Override
+            public void onResponse(Call<List<VodModel>> call, Response<List<VodModel>> response) {
+                if (response.isSuccessful()) {
+                    List<VodModel> list = response.body();
+                    list.sort(Comparator.comparingLong(vodModel -> Long.parseLong(vodModel.added)));
+                    Collections.reverse(list);
+                    FilmsModel model = new FilmsModel(items.category_id, items.category_name, (ArrayList<VodModel>) list);
+                    listAll.set(k, model);
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            if (k == listAll.size() - 1) {
+                                if (snackbar != null) {
+                                    snackbar.dismiss();
+                                    snackbar = null;
+                                    Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                                }
+                                Stash.put(Constants.FILMS, listAll);
+                                parentAdapter = new FilmParentAdapter(mContext, listAll, selectedFilm);
+                                binding.recycler.setAdapter(parentAdapter);
+                                getAllVods();
+                            } else {
+                                getVodRecursive(k + 1);
+                            }
+                        });
+                    }
+                } else {
+                    int statusCode = response.code();
+                    Log.d(TAG, "onResponse: Error code : " + statusCode);
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            dialog.dismiss();
+                            if (snackbar != null) {
+                                snackbar.dismiss();
+                                Toast.makeText(mContext, "Error code : " + statusCode, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                }
+            }
 
-        new Thread(() -> {
-            URL google = null;
-            try {
-                google = new URL(url);
-            } catch (final MalformedURLException e) {
-                e.printStackTrace();
-            }
-            BufferedReader in = null;
-            try {
-                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String input = null;
-            StringBuffer stringBuffer = new StringBuffer();
-            while (true) {
-                try {
-                    if ((input = in != null ? in.readLine() : null) == null) break;
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
-                stringBuffer.append(input);
-            }
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String htmlData = stringBuffer.toString();
-            Log.d(TAG, "getVodRecursive: " + htmlData);
-
-            try {
-                JSONArray response = new JSONArray(htmlData);
-                ArrayList<VodModel> list = new ArrayList<>();
-                for (int i = 0; i < response.length(); i++) {
-                    JSONObject object = response.getJSONObject(i);
-                    VodModel model = new VodModel();
-                    model.num = object.getInt("num");
-                    model.stream_id = object.getInt("stream_id");
-                    model.name = object.getString("name");
-                    model.stream_type = object.getString("stream_type");
-                    model.stream_icon = object.getString("stream_icon");
-                    model.added = object.getString("added");
-                    model.category_id = object.getString("category_id");
-                    model.container_extension = object.getString("container_extension");
-//                        model.rating = object.getDouble("rating");
-//                        model.rating_5based = object.getDouble("rating_5based");
-                    list.add(model);
-                }
-                list.sort(Comparator.comparingLong(vodModel -> Long.parseLong(vodModel.added)));
-                Collections.reverse(list);
-                FilmsModel model = new FilmsModel(items.category_id, items.category_name, list);
-                listAll.set(k, model);
-                requireActivity().runOnUiThread(() -> {
-                    if (k == listAll.size() - 1) {
+            @Override
+            public void onFailure(Call<List<VodModel>> call, Throwable t) {
+                t.printStackTrace();
+                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
+                if (isAdded() && getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        dialog.dismiss();
                         if (snackbar != null) {
                             snackbar.dismiss();
-                            snackbar = null;
-                            Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mContext, t.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
                         }
-                        Stash.put(Constants.FILMS, listAll);
-                        dialog.dismiss();
-                        parentAdapter = new FilmParentAdapter(mContext, listAll, selectedFilm);
-                        binding.recycler.setAdapter(parentAdapter);
-                        getAllVods();
-                    } else {
-                        getVodRecursive(k + 1);
-                    }
-                });
-
-            } catch (JSONException e) {
-                Log.d(TAG, "getVod: EEE " + e.getLocalizedMessage());
-                e.printStackTrace();
-                requireActivity().runOnUiThread(() -> {
-                    dialog.dismiss();
-                    if (snackbar != null) {
-                        snackbar.dismiss();
-                        Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                    });
+                }
             }
-
-        }).start();
+        });
     }
 
     Snackbar snackbar;
@@ -644,76 +599,39 @@ public class FilmFragment extends Fragment {
 
     public void getAllVods() {
         Log.d(TAG, "getAllVods: ");
-        String url = ApiLinks.getVod();
+        Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+        Call<List<VodModel>> call = api.getAllVods(ApiLinks.vodAll());
+        call.enqueue(new Callback<List<VodModel>>() {
+            @Override
+            public void onResponse(Call<List<VodModel>> call, Response<List<VodModel>> response) {
+                if (response.isSuccessful()) {
+                    List<VodModel> vods = response.body();
+                    Log.d(TAG, "onResponse: " + vods.size());
 
-        new Thread(() -> {
-            URL google = null;
-            try {
-                google = new URL(url);
-            } catch (final MalformedURLException e) {
-                e.printStackTrace();
-            }
-            BufferedReader in = null;
-            try {
-                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String input = null;
-            StringBuffer stringBuffer = new StringBuffer();
-            while (true) {
-                try {
-                    if ((input = in != null ? in.readLine() : null) == null) break;
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
-                stringBuffer.append(input);
-            }
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String htmlData = stringBuffer.toString();
-            Log.d(TAG, "getVodRecursive: " + htmlData);
-
-            try {
-                JSONArray response = new JSONArray(htmlData);
-                ArrayList<VodModel> list = new ArrayList<>();
-                for (int i = 0; i < response.length(); i++) {
-                    JSONObject object = response.getJSONObject(i);
-                    VodModel model = new VodModel();
-                    model.num = object.getInt("num");
-                    model.stream_id = object.getInt("stream_id");
-                    model.name = object.getString("name");
-                    model.stream_type = object.getString("stream_type");
-                    model.stream_icon = object.getString("stream_icon");
-                    model.added = object.getString("added");
-                    model.category_id = object.getString("category_id");
-                    model.container_extension = object.getString("container_extension");
-                    list.add(model);
-                }
-                list.sort(Comparator.comparing(vodModel -> Long.parseLong(vodModel.added)));
-                Collections.reverse(list);
-                listAll.add(1, new FilmsModel("Resents", "Récemment ajoutés", list));
-                requireActivity().runOnUiThread(() -> {
-                    parentAdapter.notifyItemInserted(1);
-                });
-            } catch (JSONException e) {
-                Log.d(TAG, "getVod: EEE " + e.getLocalizedMessage());
-                e.printStackTrace();
-                requireActivity().runOnUiThread(() -> {
-                    dialog.dismiss();
-                    if (snackbar != null) {
-                        snackbar.dismiss();
-                        Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                    vods.sort(Comparator.comparing(vodModel -> Long.parseLong(vodModel.added)));
+                    Collections.reverse(vods);
+                    listAll.add(1, new FilmsModel("Resents", "Récemment ajoutés", (ArrayList<VodModel>) vods));
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            dialog.dismiss();
+                            parentAdapter.notifyItemInserted(1);
+                        });
                     }
-                });
+                } else {
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> dialog.dismiss());
+                    }
+                    int statusCode = response.code();
+                    Log.d(TAG, "onResponse: Error code : " + statusCode);
+                }
             }
-        }).start();
 
+            @Override
+            public void onFailure(Call<List<VodModel>> call, Throwable t) {
+                t.printStackTrace();
+                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
+            }
+        });
     }
 
 

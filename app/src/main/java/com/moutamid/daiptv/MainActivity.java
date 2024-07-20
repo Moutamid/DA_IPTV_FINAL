@@ -17,8 +17,17 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
-import com.android.volley.Request;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
@@ -37,7 +46,13 @@ import com.moutamid.daiptv.fragments.HomeFragment;
 import com.moutamid.daiptv.fragments.RechercheFragment;
 import com.moutamid.daiptv.fragments.SeriesFragment;
 import com.moutamid.daiptv.models.EPGModel;
+import com.moutamid.daiptv.models.TopItems;
 import com.moutamid.daiptv.models.UserModel;
+import com.moutamid.daiptv.models.VodModel;
+import com.moutamid.daiptv.retrofit.Api;
+import com.moutamid.daiptv.retrofit.EpgResponse;
+import com.moutamid.daiptv.retrofit.RetrofitClientInstance;
+import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
 import com.moutamid.daiptv.utilis.Features;
 
@@ -47,6 +62,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -57,6 +73,8 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import retrofit2.Call;
+import retrofit2.Callback;
 public class MainActivity extends BaseActivity {
     ActivityMainBinding binding;
     UserModel userModel;
@@ -64,6 +82,7 @@ public class MainActivity extends BaseActivity {
     ChannelsFragment channelsFragment;
     FilmFragment filmFragment;
     SeriesFragment seriesFragment;
+
     AppDatabase database;
 
     @Override
@@ -73,11 +92,13 @@ public class MainActivity extends BaseActivity {
         setContentView(binding.getRoot());
         Constants.checkApp(this);
 
+        userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+
+        database = AppDatabase.getInstance(this);
+
         updateAndroidSecurityProvider();
 
         new Thread(() -> {
-
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
                 ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
                 Intent intent = new Intent(this, SplashActivity.class);
@@ -168,7 +189,6 @@ public class MainActivity extends BaseActivity {
             getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, new RechercheFragment()).commit();
         });
 
-        database = AppDatabase.getInstance(this);
         long time = Stash.getLong(Constants.IS_TODAY, 0);
         LocalDate date;
         if (time != 0) {
@@ -186,14 +206,19 @@ public class MainActivity extends BaseActivity {
         } else {
             database.epgDAO().Delete();
         }
-        List<EPGModel> list = database.epgDAO().getEPG();
-        if (list.isEmpty())
-            get();
+
+        List<EPGModel> epg = database.epgDAO().getEPG();
+        if (epg.isEmpty()) {
+            getEpg();
+        }
     }
 
     private static final String TAG = "MainActivity";
 
-    private void get() {
+
+    Snackbar snackbarEpg;
+
+    private void getEpg() {
         Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.progress_layout);
@@ -201,21 +226,68 @@ public class MainActivity extends BaseActivity {
         dialog.setCancelable(false);
         dialog.show();
 
-        Snackbar snackbar = Snackbar.make(this, binding.getRoot(), "Loading EPG ....", Snackbar.LENGTH_INDEFINITE);
-        snackbar.show();
+        snackbarEpg = Snackbar.make(binding.getRoot(), "Loading EPG ....", Snackbar.LENGTH_INDEFINITE);
+        snackbarEpg.show();
+
         Log.d("TAGGER", "get: LOADING");
-        String url = "http://vbn123.com:8080/xmltv.php?username=9tqadv9utC4B28qe&password=X8J6qeYDNcbzvWns";
-        new Thread(() -> {
-            RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-            Log.d(TAG, "get: " + url);
-            StringRequest stringRequest = new StringRequest(Request.Method.GET, url, response -> {
-                Log.d(TAG, "onResponse/45: data loaded");
-                //  Log.d("TAGGER", "onResponse/45: data: : " + response);
-                Log.d(TAG, "onResponse/45: length: : " + response.length());
+        String url = ApiLinks.base() + "xmltv.php?username=" + userModel.username + "&password=" + userModel.password;
+//        Api api = RetrofitClientInstance.getRetrofitInstanceXml().create(Api.class);
+//        Call<EpgResponse> call = api.getEpgData(url);
+//        call.enqueue(new Callback<EpgResponse>() {
+//            @Override
+//            public void onResponse(Call<EpgResponse> call, Response<EpgResponse> response) {
+//                Log.d(TAG, "onResponse: " + response.toString());
+//                if (response.isSuccessful() && response.body() != null) {
+//                    List<EpgResponse.Programme> programmes = response.body().getProgrammes();
+//                    Log.d(TAG, "programmeList: " + programmes.size());
+//                    for (EpgResponse.Programme programme : programmes) {
+//                        String start = programme.getStart();
+//                        String stop = programme.getStop();
+//                        String channel = programme.getChannel();
+//                        String title = programme.getTitle();
+//                        EPGModel epgModel = new EPGModel(start, stop, channel, title);
+//                        database.epgDAO().insert(epgModel);
+//                    }
+//                    dialog.dismiss();
+//                    snackbarEpg.dismiss();
+//                    Stash.put(Constants.IS_TODAY, System.currentTimeMillis());
+//                } else {
+//                    int statusCode = response.code();
+//                    Log.d(TAG, "onResponse: Error code : " + statusCode);
+//                }
+//            }
+//
+//            @Override
+//            public void onFailure(Call<EpgResponse> call, Throwable t) {
+//                dialog.dismiss();
+//                snackbarEpg.dismiss();
+//                t.printStackTrace();
+//                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
+//            }
+//        });
+
+        OkHttpClient client = new OkHttpClient();
+
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        client.newCall(request).enqueue(new okhttp3.Callback() {
+            @Override
+            public void onFailure(okhttp3.Call call, IOException e) {
+                e.printStackTrace();
+                // Handle failure
+            }
+
+            @Override
+            public void onResponse(okhttp3.Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                }
+
+                String xmlContent = response.body().string();
 
                 try {
-                    String xmlContent = response.toString();
-//                        Log.d(TAG, "XML : " + xmlContent);
                     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                     DocumentBuilder builder = factory.newDocumentBuilder();
                     Document document = builder.parse(new InputSource(new StringReader(xmlContent)));
@@ -225,6 +297,7 @@ public class MainActivity extends BaseActivity {
                     // Get a NodeList of programme elements
                     NodeList programmeList = root.getElementsByTagName("programme");
                     Log.d(TAG, "programmeList: " + programmeList.getLength());
+
                     for (int i = 0; i < programmeList.getLength(); i++) {
                         Node programmeNode = programmeList.item(i);
                         if (programmeNode.getNodeType() == Node.ELEMENT_NODE) {
@@ -241,32 +314,27 @@ public class MainActivity extends BaseActivity {
                             EPGModel epgModel = new EPGModel(start, stop, channel, title);
                             database.epgDAO().insert(epgModel);
                         }
+
                         if (i == programmeList.getLength() - 1) {
                             dialog.dismiss();
-                            snackbar.dismiss();
+                            snackbarEpg.dismiss();
                             Stash.put(Constants.IS_TODAY, System.currentTimeMillis());
                         }
                     }
                 } catch (Exception e) {
-                    dialog.dismiss();
-                    snackbar.dismiss();
                     e.printStackTrace();
-                    Log.d(TAG, "get: ERROR " + e.getLocalizedMessage());
+                    // Handle parsing error
                 }
-            }, error -> {
-                dialog.dismiss();
-                snackbar.dismiss();
-                Log.d(TAG, "onErrorResponse: " + error.toString());
-            });
-            queue.add(stringRequest);
-        }).start();
+            }
+        });
+
+
     }
+
 
     @Override
     protected void onResume() {
         super.onResume();
-        userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-
         binding.Accueil.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {

@@ -14,48 +14,55 @@ public class ApiLinks {
     public static final String get_series_info = "&action=get_series_info";
     public static final String get_vod_info = "&action=get_vod_info";
 
-    public static String getLiveCategories() {
+    public static String base() {
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_live_categories;
+        return userModel.url;
     }
-    public static String getVodCategories() {
+
+    public static String baseUrl() {
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_vod_categories;
+        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password;
     }
-    public static String getSeriesCategories() {
+
+    public static String basePath() {
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_series_categories;
+        return common + "username=" + userModel.username + "&password=" + userModel.password;
     }
-    public static String getLiveStreams() {
-        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_live_streams;
+
+    public static String vodAll() {
+        return basePath() + get_vod_streams;
     }
-    public static String getLiveStreamsByID(String id) {
-        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_live_streams + "&category_id=" + id;
+
+    public static String seriesAll() {
+        return basePath() + get_series;
+    }
+
+    public static String vodCategory() {
+        return basePath() + get_vod_categories;
+    }
+    public static String seriesCategory() {
+        return basePath() + get_series_categories;
     }
     public static String getVodByID(String id) {
-        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_vod_streams + "&category_id=" + id;
-    }
-    public static String getVod() {
-        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_vod_streams;
+        return basePath() + get_vod_streams + "&category_id=" + id;
     }
     public static String getSeriesByID(String id) {
-        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_series + "&category_id=" + id;
+        return basePath() + get_series + "&category_id=" + id;
     }
-    public static String getSeries() {
-        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_series;
+    public static String getLiveCategories() {
+        return basePath() + get_live_categories;
+    }
+
+    public static String getLiveStreams() {
+        return basePath() + get_live_streams;
+    }
+    public static String getLiveStreamsByID(String id) {
+        return basePath() + get_live_streams + "&category_id=" + id;
     }
     public static String getSeriesInfoByID(String id) {
-        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_series_info + "&series_id=" + id;
+        return baseUrl() + get_series_info + "&series_id=" + id;
     }
     public static String getVodInfoByID(String id) {
-        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password + get_vod_info + "&vod_id=" + id;
+        return baseUrl() + get_vod_info + "&vod_id=" + id;
     }
 }

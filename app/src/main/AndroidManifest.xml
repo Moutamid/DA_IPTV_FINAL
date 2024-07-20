@@ -40,6 +40,7 @@
     </queries>
 
     <application
+        android:largeHeap="true"
         android:name=".MyApplication"
         android:allowBackup="true"
         android:banner="@mipmap/ic_launcher"

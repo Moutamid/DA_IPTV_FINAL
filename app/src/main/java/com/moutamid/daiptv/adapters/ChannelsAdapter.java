@@ -57,13 +57,15 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
                 .into(holder.image);
         holder.title.setText(model.name);
 
-        List<EPGModel> epgList = AppDatabase.getInstance(context).epgDAO().getTitle(model.epg_channel_id.trim());
-        for (EPGModel e : epgList) {
-            Date startDate = Constants.parseDate(e.getStart());
-            Date endDate = Constants.parseDate(e.getStop());
-            if (Constants.isCurrentDateInBetween(startDate, endDate)) {
-                holder.epg.setText(e.getTitle());
-                break;
+        if (model.epg_channel_id != null) {
+            List<EPGModel> epgList = AppDatabase.getInstance(context).epgDAO().getTitle(model.epg_channel_id.trim());
+            for (EPGModel e : epgList) {
+                Date startDate = Constants.parseDate(e.getStart());
+                Date endDate = Constants.parseDate(e.getStop());
+                if (Constants.isCurrentDateInBetween(startDate, endDate)) {
+                    holder.epg.setText(e.getTitle());
+                    break;
+                }
             }
         }
 

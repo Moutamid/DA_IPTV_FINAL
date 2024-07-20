@@ -13,7 +13,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
@@ -28,14 +27,13 @@ import com.moutamid.daiptv.adapters.SeriesParentAdapter;
 import com.moutamid.daiptv.databinding.FragmentSeriesBinding;
 import com.moutamid.daiptv.listener.ItemSelectedSeries;
 import com.moutamid.daiptv.models.CategoryModel;
-import com.moutamid.daiptv.models.FilmsModel;
 import com.moutamid.daiptv.models.MovieModel;
 import com.moutamid.daiptv.models.SeriesModel;
 import com.moutamid.daiptv.models.TVModel;
-import com.moutamid.daiptv.models.VodModel;
+import com.moutamid.daiptv.retrofit.Api;
+import com.moutamid.daiptv.retrofit.RetrofitClientInstance;
 import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
-import com.moutamid.daiptv.utilis.VolleySingleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -52,8 +50,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
-import java.util.Random;
+import java.util.stream.Collectors;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class SeriesFragment extends Fragment {
     FragmentSeriesBinding binding;
@@ -128,61 +131,33 @@ public class SeriesFragment extends Fragment {
 
     private void getCategory() {
         dialog.show();
-        String url = ApiLinks.getSeriesCategories();
-
-        new Thread(() -> {
-            URL google = null;
-            try {
-                google = new URL(url);
-            } catch (final MalformedURLException e) {
-                e.printStackTrace();
-            }
-            BufferedReader in = null;
-            try {
-                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String input = null;
-            StringBuffer stringBuffer = new StringBuffer();
-            while (true) {
-                try {
-                    if ((input = in != null ? in.readLine() : null) == null) break;
-                } catch (final IOException e) {
-                    e.printStackTrace();
+        Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+        Call<List<CategoryModel>> call = api.getSeriesCategory(ApiLinks.seriesCategory());
+        call.enqueue(new Callback<List<CategoryModel>>() {
+            @Override
+            public void onResponse(Call<List<CategoryModel>> call, Response<List<CategoryModel>> response) {
+                if (response.isSuccessful()) {
+                    List<CategoryModel> categoryList = response.body();
+                    listAll.addAll(categoryList.stream()
+                            .map(model -> new TVModel(model.category_id, model.category_name, new ArrayList<>()))
+                            .collect(Collectors.toList()));
+                    requireActivity().runOnUiThread(() -> {
+                        parentAdapter = new SeriesParentAdapter(mContext, listAll, selectedFilm);
+                        binding.recycler.setAdapter(parentAdapter);
+                        getSeries();
+                    });
+                } else {
+                    int statusCode = response.code();
+                    Log.d(TAG, "onResponse: Error code : " + statusCode);
                 }
-                stringBuffer.append(input);
             }
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String htmlData = stringBuffer.toString();
 
-            try {
-                JSONArray response = new JSONArray(htmlData);
-                for (int i = 0; i < response.length(); i++) {
-                    JSONObject object = response.getJSONObject(i);
-                    CategoryModel model = new CategoryModel();
-                    model.category_id = object.getString("category_id");
-                    model.category_name = object.getString("category_name");
-                    model.parent_id = object.getInt("parent_id");
-                    listAll.add(new TVModel(model.category_id, model.category_name, new ArrayList<>()));
-                }
-                requireActivity().runOnUiThread(() -> {
-                    parentAdapter = new SeriesParentAdapter(mContext, listAll, selectedFilm);
-                    binding.recycler.setAdapter(parentAdapter);
-                    getSeries();
-                });
-            } catch (JSONException e) {
-                e.printStackTrace();
-                dialog.dismiss();
+            @Override
+            public void onFailure(Call<List<CategoryModel>> call, Throwable t) {
+                t.printStackTrace();
+                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
             }
-        }).start();
-
+        });
     }
 
     private void getSeries() {
@@ -194,208 +169,112 @@ public class SeriesFragment extends Fragment {
             return;
         }
         TVModel items = listAll.get(k);
-        String url = ApiLinks.getSeriesByID(items.category_id);
+        Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+        Call<List<SeriesModel>> call = api.getSeriesByID(ApiLinks.getSeriesByID(items.category_id));
+        call.enqueue(new Callback<List<SeriesModel>>() {
+            @Override
+            public void onResponse(Call<List<SeriesModel>> call, Response<List<SeriesModel>> response) {
+                if (response.isSuccessful()) {
+                    List<SeriesModel> list = response.body();
+                    list.sort(Comparator.comparingLong(vodModel -> Long.parseLong(vodModel.last_modified)));
+                    Collections.reverse(list);
+                    TVModel model = new TVModel(items.category_id, items.category_name, (ArrayList<SeriesModel>) list);
+                    listAll.set(k, model);
 
-        new Thread(() -> {
-            URL google = null;
-            try {
-                google = new URL(url);
-            } catch (final MalformedURLException e) {
-                e.printStackTrace();
-            }
-            BufferedReader in = null;
-            try {
-                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String input = null;
-            StringBuffer stringBuffer = new StringBuffer();
-            while (true) {
-                try {
-                    if ((input = in != null ? in.readLine() : null) == null) break;
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
-                stringBuffer.append(input);
-            }
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String htmlData = stringBuffer.toString();
-
-            try {
-                JSONArray response = new JSONArray(htmlData);
-                ArrayList<SeriesModel> list = new ArrayList<>();
-                for (int i = 0; i < response.length(); i++) {
-                    JSONObject object = response.getJSONObject(i);
-                    SeriesModel model = new SeriesModel();
-                    model.num = object.getInt("num");
-                    model.series_id = object.getInt("series_id");
-                    model.name = object.getString("name");
-                    model.cover = object.getString("cover");
-                    model.plot = object.getString("plot");
-                    model.cast = object.getString("cast");
-                    model.director = object.getString("director");
-                    model.genre = object.getString("genre");
-                    model.releaseDate = object.getString("releaseDate");
-                    model.last_modified = object.getString("last_modified");
-//                        JSONArray backdrops = object.getJSONArray("backdrop_path");
-//                        if (!backdrops.isNull(0)) {
-//                            if (backdrops.length() >= 1) {
-//                                Log.d(TAG, "getSeries: " + backdrops);
-//                                model.backdrop_path = (String) backdrops.get(0);
-//                            }
-//                        } else model.backdrop_path = "";
-                    model.stream_type = Constants.TYPE_SERIES;
-                    model.youtube_trailer = object.getString("youtube_trailer");
-                    model.category_id = object.getString("category_id");
-                    list.add(model);
-                }
-                list.sort(Comparator.comparingLong(vodModel -> Long.parseLong(vodModel.last_modified)));
-                Collections.reverse(list);
-                TVModel model = new TVModel(items.category_id, items.category_name, list);
-                listAll.set(k, model);
-
-                if (k == listAll.size() - 1) {
-                    requireActivity().runOnUiThread(() -> {
-                        dialog.dismiss();
-                        if (snackbar != null){
-                            snackbar.dismiss();
-                            snackbar = null;
-                            Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
-                        }
-                        Stash.put(Constants.SERIES, listAll);
-                        parentAdapter = new SeriesParentAdapter(mContext, listAll, selectedFilm);
-                        binding.recycler.setAdapter(parentAdapter);
-                        getAllSeries();
-                    });
-                } else {
-                    getSeriesRecursive(k + 1);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                requireActivity().runOnUiThread(() -> {
-                    if (snackbar != null){
-                        snackbar.dismiss();
-                        Toast.makeText(mContext, e.getLocalizedMessage()+"", Toast.LENGTH_SHORT).show();
+                    if (k == listAll.size() - 1) {
+                        requireActivity().runOnUiThread(() -> {
+                            dialog.dismiss();
+                            if (snackbar != null) {
+                                snackbar.dismiss();
+                                snackbar = null;
+                                Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                            }
+                            Stash.put(Constants.SERIES, listAll);
+                            parentAdapter = new SeriesParentAdapter(mContext, listAll, selectedFilm);
+                            binding.recycler.setAdapter(parentAdapter);
+                            getAllSeries();
+                        });
+                    } else {
+                        getSeriesRecursive(k + 1);
                     }
-                    dialog.dismiss();
-                });
-            }
-        }).start();
-    }
-
-    private void getAllSeries() {
-        String url = ApiLinks.getSeries();
-
-        new Thread(() -> {
-            URL google = null;
-            try {
-                google = new URL(url);
-            } catch (final MalformedURLException e) {
-                e.printStackTrace();
-            }
-            BufferedReader in = null;
-            try {
-                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String input = null;
-            StringBuffer stringBuffer = new StringBuffer();
-            while (true) {
-                try {
-                    if ((input = in != null ? in.readLine() : null) == null) break;
-                } catch (final IOException e) {
-                    e.printStackTrace();
                 }
-                stringBuffer.append(input);
             }
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String htmlData = stringBuffer.toString();
-            Log.d(TAG, "getVodRecursive: " + htmlData);
 
-            try {
-                JSONArray response = new JSONArray(htmlData);
-                ArrayList<SeriesModel> list = new ArrayList<>();
-                for (int i = 0; i < response.length(); i++) {
-                    JSONObject object = response.getJSONObject(i);
-                    SeriesModel model = new SeriesModel();
-                    model.num = object.getInt("num");
-                    model.series_id = object.getInt("series_id");
-                    model.name = object.getString("name");
-                    model.cover = object.getString("cover");
-                    model.plot = object.getString("plot");
-                    model.cast = object.getString("cast");
-                    model.director = object.getString("director");
-                    model.genre = object.getString("genre");
-                    model.releaseDate = object.getString("releaseDate");
-                    model.last_modified = object.getString("last_modified");
-//                        JSONArray backdrops = object.getJSONArray("backdrop_path");
-//                        if (!backdrops.isNull(0)) {
-//                            if (backdrops.length() >= 1) {
-//                                Log.d(TAG, "getSeries: " + backdrops);
-//                                model.backdrop_path = (String) backdrops.get(0);
-//                            }
-//                        } else model.backdrop_path = "";
-                    model.stream_type = Constants.TYPE_SERIES;
-                    model.youtube_trailer = object.getString("youtube_trailer");
-                    model.category_id = object.getString("category_id");
-                    list.add(model);
-                }
-                list.sort(Comparator.comparing(vodModel -> Long.parseLong(vodModel.last_modified)));
-                Collections.reverse(list);
-                listAll.add(1, new TVModel("Resents", "Récemment ajoutés", list));
-                requireActivity().runOnUiThread(() -> {
-                    parentAdapter.notifyItemInserted(1);
-                });
-            } catch (JSONException e) {
-                Log.d(TAG, "getVod: EEE " + e.getLocalizedMessage());
-                e.printStackTrace();
+            @Override
+            public void onFailure(Call<List<SeriesModel>> call, Throwable t) {
+                t.printStackTrace();
+                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
                 requireActivity().runOnUiThread(() -> {
                     dialog.dismiss();
                     if (snackbar != null) {
                         snackbar.dismiss();
-                        Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, t.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
-        }).start();
+        });
+    }
+
+    private void getAllSeries() {
+        Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+        Call<List<SeriesModel>> call = api.getAllSeries(ApiLinks.seriesAll());
+        call.enqueue(new Callback<List<SeriesModel>>() {
+            @Override
+            public void onResponse(Call<List<SeriesModel>> call, Response<List<SeriesModel>> response) {
+                if (response.isSuccessful()) {
+                    List<SeriesModel> series = response.body();
+                    for (SeriesModel seriesList : series) {
+                        seriesList.stream_type = Constants.TYPE_SERIES;
+                    }
+                    Log.d(TAG, "onResponse: " + series.size());
+                    series.sort(Comparator.comparing(seriesModel -> Long.parseLong(seriesModel.last_modified)));
+                    Collections.reverse(series);
+                    listAll.add(1, new TVModel("Resents", "Récemment ajoutés", (ArrayList<SeriesModel>) series));
+                    requireActivity().runOnUiThread(() -> {
+                        dialog.dismiss();
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                        }
+                        parentAdapter.notifyItemInserted(1);
+                    });
+
+                } else {
+                    int statusCode = response.code();
+                    Log.d(TAG, "onResponse: Error code : " + statusCode);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<SeriesModel>> call, Throwable t) {
+                t.printStackTrace();
+                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
+            }
+        });
     }
 
 
     ItemSelectedSeries selectedFilm = model -> {
-        if (!model.stream_type.equals(Constants.topRated)) {
-            TranslateAPI type = new TranslateAPI(
-                    Language.AUTO_DETECT,   //Source Language
-                    Language.ENGLISH,         //Target Language
-                    Constants.regexName(model.name));           //Query Text
+        if (model != null) {
+            if (!model.stream_type.equals(Constants.topRated)) {
+                TranslateAPI type = new TranslateAPI(
+                        Language.AUTO_DETECT,
+                        Language.ENGLISH,
+                        Constants.regexName(model.name));
+                type.setTranslateListener(new TranslateAPI.TranslateListener() {
+                    @Override
+                    public void onSuccess(String translatedText) {
+                        Log.d("TRANSJSILS", "onSuccess: " + translatedText);
+                        model.name = translatedText;
+                        fetchID(model);
+                    }
 
-            type.setTranslateListener(new TranslateAPI.TranslateListener() {
-                @Override
-                public void onSuccess(String translatedText) {
-                    Log.d("TRANSJSILS", "onSuccess: " + translatedText);
-                    model.name = translatedText;
-                    fetchID(model);
-                }
-
-                @Override
-                public void onFailure(String ErrorText) {
-                    Log.d(TAG, "onFailure: " + ErrorText);
-                }
-            });
-        } else fetchID(model);
+                    @Override
+                    public void onFailure(String ErrorText) {
+                        Log.d(TAG, "onFailure: " + ErrorText);
+                    }
+                });
+            } else fetchID(model);
+        }
     };
 
     private void fetchID(SeriesModel model) {
@@ -560,24 +439,27 @@ public class SeriesFragment extends Fragment {
                     }
                     String path = logos.getJSONObject(logoIndex).getString("file_path");
                     Log.d(TAG, "getlogo: " + path);
-
-                    requireActivity().runOnUiThread(()-> {
-                        binding.name.setVisibility(View.GONE);
-                        try {
-                            Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            binding.name.setVisibility(View.GONE);
+                            try {
+                                Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
                 } else {
-                    requireActivity().runOnUiThread(()-> {
-                        binding.name.setVisibility(View.VISIBLE);
-                        try {
-                            Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            binding.name.setVisibility(View.VISIBLE);
+                            try {
+                                Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
                 }
 
                 for (int i = 0; i < videos.length(); i++) {
@@ -589,10 +471,11 @@ public class SeriesFragment extends Fragment {
                         break;
                     }
                 }
-                requireActivity().runOnUiThread(()-> setUI());
+                if (isAdded() && getActivity() != null)
+                    getActivity().runOnUiThread(() -> setUI());
             } catch (JSONException e) {
                 e.printStackTrace();
-                requireActivity().runOnUiThread(()-> dialog.dismiss());
+                requireActivity().runOnUiThread(() -> dialog.dismiss());
             }
         }).start();
     }
@@ -660,9 +543,11 @@ public class SeriesFragment extends Fragment {
                         banner = images.getJSONObject(index).getString("file_path");
                     }
                     movieModel.banner = banner;
-                    requireActivity().runOnUiThread(() -> {
-                        Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
-                    });
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
+                        });
+                    }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -696,7 +581,9 @@ public class SeriesFragment extends Fragment {
             e.printStackTrace();
         }
     }
+
     Snackbar snackbar;
+
     public void refreshList() {
         listAll = new ArrayList<>();
         listAll.add(new TVModel(Constants.topRated, "Top Series", topRated));

@@ -26,22 +26,20 @@ import com.moutamid.daiptv.models.CategoryModel;
 import com.moutamid.daiptv.models.ChannelsModel;
 import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.UserModel;
+import com.moutamid.daiptv.retrofit.Api;
+import com.moutamid.daiptv.retrofit.RetrofitClientInstance;
 import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ChannelsFragment extends Fragment {
     FragmentChannelsBinding binding;
@@ -82,7 +80,6 @@ public class ChannelsFragment extends Fragment {
             showButtons(list);
             switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
         }
-
         return binding.getRoot();
     }
 
@@ -147,7 +144,7 @@ public class ChannelsFragment extends Fragment {
             }
         }
 
-        setButtonText(list, 3);
+        setButtonText(list, 4);
 
         ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.CHANNELS_ALL, ChannelsModel.class);
         adapter = new ChannelsAdapter(mContext, channelsList);
@@ -159,65 +156,45 @@ public class ChannelsFragment extends Fragment {
         if (buttonCount <= buttons.size() - 1) {
             String url;
             if (buttons.get(buttonCount).category_id.equals("all")) {
+                Log.d(TAG, "setButtonText: ALLL");
                 url = ApiLinks.getLiveStreams();
             } else {
                 url = ApiLinks.getLiveStreamsByID(buttons.get(buttonCount).category_id);
             }
-
-            Log.d(TAG, "setButtonText: " + url);
-            new Thread(() -> {
-                URL google = null;
-                try {
-                    google = new URL(url);
-                } catch (final MalformedURLException e) {
-                    e.printStackTrace();
-                }
-                BufferedReader in = null;
-                try {
-                    in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
-                String input = null;
-                StringBuffer stringBuffer = new StringBuffer();
-                while (true) {
-                    try {
-                        if ((input = in != null ? in.readLine() : null) == null) break;
-                    } catch (final IOException e) {
-                        e.printStackTrace();
-                    }
-                    stringBuffer.append(input);
-                }
-                try {
-                    if (in != null) {
-                        in.close();
-                    }
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
-                String htmlData = stringBuffer.toString();
-                try {
-                    JSONArray response = new JSONArray(htmlData);
-                    int size = response.length();
-                    requireActivity().runOnUiThread(() -> {
-                        for (int i = 0; i < binding.sidePanel.getChildCount(); i++) {
-                            View view = binding.sidePanel.getChildAt(i);
-                            if (view instanceof MaterialButton) {
-                                MaterialButton button = (MaterialButton) view;
-                                String enteredText = button.getText().toString();
-                                String original = buttons.get(buttonCount).category_name;
-                                if (!enteredText.isEmpty() && enteredText.equals(original)) {
-                                    button.setText(original + " - " + size);
+            Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+            Call<List<ChannelsModel>> call = api.getChannels(url);
+            call.enqueue(new Callback<List<ChannelsModel>>() {
+                @Override
+                public void onResponse(Call<List<ChannelsModel>> call, Response<List<ChannelsModel>> response) {
+                    if (response.isSuccessful()) {
+                        List<ChannelsModel> list = response.body();
+                        Log.d(TAG, "onResponse: Size " + list.size());
+                        if (isAdded() && getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                for (int i = 0; i < binding.sidePanel.getChildCount(); i++) {
+                                    View view = binding.sidePanel.getChildAt(i);
+                                    if (view instanceof MaterialButton) {
+                                        MaterialButton button = (MaterialButton) view;
+                                        String enteredText = button.getText().toString();
+                                        String original = buttons.get(buttonCount).category_name;
+                                        if (!enteredText.isEmpty() && enteredText.equals(original)) {
+                                            button.setText(original + " - " + list.size());
+                                        }
+                                    }
                                 }
-                            }
+                                setButtonText(buttons, buttonCount + 1);
+                            });
                         }
-                        setButtonText(buttons, buttonCount + 1);
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
+
+                    }
                 }
 
-            }).start();
+                @Override
+                public void onFailure(Call<List<ChannelsModel>> call, Throwable t) {
+                    t.printStackTrace();
+                    Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
+                }
+            });
         }
     }
 
@@ -230,116 +207,94 @@ public class ChannelsFragment extends Fragment {
         list.add(1, new CategoryModel("recent", "Rejouer", 0));
         list.add(2, new CategoryModel("fav", "Favoris", 0));
         list.add(3, new CategoryModel("all", "All", 0));
-        String url = ApiLinks.getLiveCategories();
 
-        new Thread(() -> {
-            URL google = null;
-            try {
-                google = new URL(url);
-            } catch (final MalformedURLException e) {
-                e.printStackTrace();
-            }
-            BufferedReader in = null;
-            try {
-                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String input = null;
-            StringBuffer stringBuffer = new StringBuffer();
-            while (true) {
-                try {
-                    if ((input = in != null ? in.readLine() : null) == null) break;
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
-                stringBuffer.append(input);
-            }
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String htmlData = stringBuffer.toString();
-            try {
-                JSONArray response = new JSONArray(htmlData);
-                for (int i = 0; i < response.length(); i++) {
-                    JSONObject object = response.getJSONObject(i);
-                    CategoryModel model = new CategoryModel();
-                    model.category_id = object.getString("category_id");
-                    model.category_name = object.getString("category_name");
-                    model.parent_id = object.getInt("parent_id");
-                    list.add(model);
-                }
-                channels = new HashMap<>();
-                requireActivity().runOnUiThread(() -> {
-                    for (CategoryModel model : list) {
-                        if (!model.category_name.isEmpty()) {
-                            channels.put(model.category_name.trim(), model.category_id);
-                            MaterialButton button = new MaterialButton(mContext);
-                            button.setText(model.category_name.trim());
-                            button.setTextColor(getResources().getColor(R.color.white));
-                            button.setBackgroundColor(getResources().getColor(R.color.transparent));
-                            button.setCornerRadius(12);
-                            button.setNextFocusUpId(R.id.Chaines);
-                            button.setGravity(Gravity.START | Gravity.CENTER);
-                            binding.sidePanel.addView(button);
-                            button.setStrokeColorResource(R.color.transparent);
-                            button.setStrokeWidth(2);
+        Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+        Call<List<CategoryModel>> call = api.getChannelsCategory(ApiLinks.getLiveCategories());
+        call.enqueue(new Callback<List<CategoryModel>>() {
+            @Override
+            public void onResponse(Call<List<CategoryModel>> call, Response<List<CategoryModel>> response) {
+                if (response.isSuccessful()) {
+                    list.addAll(response.body());
+                    channels = new HashMap<>();
+                    requireActivity().runOnUiThread(() -> {
+                        for (CategoryModel model : list) {
+                            if (!model.category_name.isEmpty()) {
+                                channels.put(model.category_name.trim(), model.category_id);
+                                MaterialButton button = new MaterialButton(mContext);
+                                button.setText(model.category_name.trim());
+                                button.setTextColor(getResources().getColor(R.color.white));
+                                button.setBackgroundColor(getResources().getColor(R.color.transparent));
+                                button.setCornerRadius(12);
+                                button.setNextFocusUpId(R.id.Chaines);
+                                button.setGravity(Gravity.START | Gravity.CENTER);
+                                binding.sidePanel.addView(button);
+                                button.setStrokeColorResource(R.color.transparent);
+                                button.setStrokeWidth(2);
 
-                            if (selectedButton == null && button.getText().toString().equals("FRANCE FHD | TV")) {
-                                button.setStrokeColorResource(R.color.red);
-                                selectedButton = button;
-                                selectedButton.requestFocus();
+                                if (selectedButton == null && button.getText().toString().equals("FRANCE FHD | TV")) {
+                                    button.setStrokeColorResource(R.color.red);
+                                    selectedButton = button;
+                                    selectedButton.requestFocus();
+                                }
+                                button.setOnClickListener(v -> {
+                                    isAll = false;
+                                    selectedGroup = model.category_name;
+                                    if (selectedButton != null) {
+                                        selectedButton.setStrokeColorResource(R.color.transparent); // Remove stroke from previously selected button
+                                    }
+                                    button.setStrokeColorResource(R.color.red); // Add stroke to newly selected button
+                                    selectedButton = button;
+                                    switch (selectedGroup) {
+                                        case "All":
+                                            showAllItems();
+                                            break;
+                                        case "Rejouer":
+                                            showRecentsServer();
+                                            break;
+                                        case "Chaînes récentes":
+                                            showRecentChannels();
+                                            break;
+                                        case "Favoris":
+                                            showFavoriteChannels();
+                                            break;
+                                        default:
+                                            switchGroup(channels.get(selectedGroup), selectedGroup);
+                                            break;
+                                    }
+                                });
                             }
-                            button.setOnClickListener(v -> {
-                                isAll = false;
-                                selectedGroup = model.category_name;
-                                if (selectedButton != null) {
-                                    selectedButton.setStrokeColorResource(R.color.transparent); // Remove stroke from previously selected button
-                                }
-                                button.setStrokeColorResource(R.color.red); // Add stroke to newly selected button
-                                selectedButton = button;
-                                switch (selectedGroup) {
-                                    case "All":
-                                        showAllItems();
-                                        break;
-                                    case "Rejouer":
-                                        showRecentsServer();
-                                        break;
-                                    case "Chaînes récentes":
-                                        showRecentChannels();
-                                        break;
-                                    case "Favoris":
-                                        showFavoriteChannels();
-                                        break;
-                                    default:
-                                        switchGroup(channels.get(selectedGroup), selectedGroup);
-                                        break;
-                                }
-                            });
                         }
-                    }
-                    Stash.put(Constants.CHANNELS, list);
-                    switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
-                    setButtonText(list, 3);
-                    dialog.dismiss();
-                });
-            } catch (JSONException e) {
-                Log.d(TAG, "addButton: EE " + e.getLocalizedMessage());
-                e.printStackTrace();
+                        Stash.put(Constants.CHANNELS, list);
+                        switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
+                        setButtonText(list, 4);
+                        dialog.dismiss();
+                    });
+                } else {
+                    requireActivity().runOnUiThread(() -> {
+                        dialog.dismiss();
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            Toast.makeText(mContext, "Error code : " + response.code(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    int statusCode = response.code();
+                    Log.d(TAG, "onResponse: Error code : " + statusCode);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<CategoryModel>> call, Throwable t) {
+                t.printStackTrace();
+                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
                 requireActivity().runOnUiThread(() -> {
                     dialog.dismiss();
                     if (snackbar != null) {
                         snackbar.dismiss();
-                        Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, "Error : " + t.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
             }
-
-        }).start();
+        });
     }
 
     private void showRecentsServer() {
@@ -352,159 +307,93 @@ public class ChannelsFragment extends Fragment {
 
     private void showAllItems() {
         dialog.show();
-        ArrayList<ChannelsModel> list = new ArrayList<>();
         String url = ApiLinks.getLiveStreams();
-        Log.d(TAG, "showAllItems: " + url);
-        new Thread(() -> {
-            URL google = null;
-            try {
-                google = new URL(url);
-            } catch (final MalformedURLException e) {
-                e.printStackTrace();
-            }
-            BufferedReader in = null;
-            try {
-                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String input = null;
-            StringBuffer stringBuffer = new StringBuffer();
-            while (true) {
-                try {
-                    if ((input = in != null ? in.readLine() : null) == null) break;
-                } catch (final IOException e) {
-                    e.printStackTrace();
+        Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+        Call<List<ChannelsModel>> call = api.getChannels(url);
+        call.enqueue(new Callback<List<ChannelsModel>>() {
+            @Override
+            public void onResponse(Call<List<ChannelsModel>> call, Response<List<ChannelsModel>> response) {
+                if (response.isSuccessful()) {
+                    List<ChannelsModel> list = response.body();
+                    Stash.put(Constants.CHANNELS_ALL, list);
+                    requireActivity().runOnUiThread(() -> {
+                        adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list);
+                        binding.channelsRC.setAdapter(adapter);
+                        dialog.dismiss();
+                        selectedButton.setText("All" + " - " + list.size());
+                    });
+                } else {
+                    requireActivity().runOnUiThread(() -> {
+                        dialog.dismiss();
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            Toast.makeText(mContext, "Error Code : " + response.code(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
-                stringBuffer.append(input);
             }
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String htmlData = stringBuffer.toString();
 
-            try {
-                JSONArray response = new JSONArray(htmlData);
-                for (int i = 0; i < response.length(); i++) {
-                    JSONObject object = response.getJSONObject(i);
-                    ChannelsModel model = new ChannelsModel();
-                    model.num = object.getInt("num");
-                    model.stream_id = object.getInt("stream_id");
-                    model.name = object.getString("name");
-                    model.stream_type = object.getString("stream_type");
-                    model.stream_icon = object.getString("stream_icon");
-                    model.epg_channel_id = object.getString("epg_channel_id");
-                    model.added = object.getString("added");
-                    model.category_id = object.getString("category_id");
-                    model.stream_link = "";
-                    list.add(model);
-                }
-                Stash.put(Constants.CHANNELS_ALL, list);
-                requireActivity().runOnUiThread(() -> {
-                    adapter = new ChannelsAdapter(mContext, list);
-                    binding.channelsRC.setAdapter(adapter);
-                    dialog.dismiss();
-                    selectedButton.setText("All" + " - " + list.size());
-                });
-            } catch (JSONException e) {
-                e.printStackTrace();
+            @Override
+            public void onFailure(Call<List<ChannelsModel>> call, Throwable t) {
+                t.printStackTrace();
+                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
                 requireActivity().runOnUiThread(() -> {
                     dialog.dismiss();
                     if (snackbar != null) {
                         snackbar.dismiss();
-                        Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, t.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
-        }).start();
+        });
     }
 
     private void switchGroup(String id, String name) {
         dialog.show();
         ArrayList<ChannelsModel> list = new ArrayList<>();
         String url = ApiLinks.getLiveStreamsByID(id);
-        Log.d(TAG, "switchGroup: " + url);
-        new Thread(() -> {
-            URL google = null;
-            try {
-                google = new URL(url);
-            } catch (final MalformedURLException e) {
-                e.printStackTrace();
-            }
-            BufferedReader in = null;
-            try {
-                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String input = null;
-            StringBuffer stringBuffer = new StringBuffer();
-            while (true) {
-                try {
-                    if ((input = in != null ? in.readLine() : null) == null) break;
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
-                stringBuffer.append(input);
-            }
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String htmlData = stringBuffer.toString();
 
-            try {
-                JSONArray response = new JSONArray(htmlData);
-                ArrayList<ChannelsModel> channelsList = new ArrayList<>();
-                for (int i = 0; i < response.length(); i++) {
-                    JSONObject object = response.getJSONObject(i);
-                    ChannelsModel model = new ChannelsModel();
-                    model.num = object.getInt("num");
-                    model.stream_id = object.getInt("stream_id");
-                    model.name = object.getString("name");
-                    model.stream_type = object.getString("stream_type");
-                    model.stream_icon = object.getString("stream_icon");
-                    model.epg_channel_id = object.getString("epg_channel_id");
-                    model.added = object.getString("added");
-                    model.category_id = object.getString("category_id");
-                    model.stream_link = "";
-                    list.add(model);
-                    if (model.stream_id == 9629) {
+        Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+        Call<List<ChannelsModel>> call = api.getChannels(url);
+        call.enqueue(new Callback<List<ChannelsModel>>() {
+            @Override
+            public void onResponse(Call<List<ChannelsModel>> call, Response<List<ChannelsModel>> response) {
+                if (response.isSuccessful()) {
+                    ArrayList<ChannelsModel> channelsList = new ArrayList<>();
+                    List<ChannelsModel> list = response.body();
+                    ChannelsModel model = list.stream().filter(channelsModel -> channelsModel.stream_id == 9629).findFirst().orElse(null);
+                    if (model != null) {
                         channelsList.add(model);
                         Stash.put(Constants.RECENT_CHANNELS_SERVER, channelsList);
                     }
+                    requireActivity().runOnUiThread(() -> {
+                        dialog.dismiss();
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            snackbar = null;
+                            Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                        }
+                        adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list);
+                        binding.channelsRC.setAdapter(adapter);
+                        String[] n = splitString(name);
+                        selectedButton.setText(n[0] + " - " + list.size());
+                    });
                 }
+            }
+
+            @Override
+            public void onFailure(Call<List<ChannelsModel>> call, Throwable t) {
+                t.printStackTrace();
+                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
                 requireActivity().runOnUiThread(() -> {
                     dialog.dismiss();
                     if (snackbar != null) {
                         snackbar.dismiss();
-                        snackbar = null;
-                        Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
-                    }
-                    adapter = new ChannelsAdapter(mContext, list);
-                    binding.channelsRC.setAdapter(adapter);
-                    String[] n = splitString(name);
-                    selectedButton.setText(n[0] + " - " + list.size());
-                });
-            } catch (JSONException e) {
-                e.printStackTrace();
-                requireActivity().runOnUiThread(() -> {
-                    dialog.dismiss();
-                    if (snackbar != null) {
-                        snackbar.dismiss();
-                        Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, t.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
-
-        }).start();
+        });
     }
 
     public static String[] splitString(String input) {

@@ -36,6 +36,16 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-database")
 
+    implementation(libs.retrofit)
+    implementation(libs.simple.xml)
+    implementation(libs.converter.jaxb)
+    implementation(libs.jaxb.api)
+    implementation(libs.converter.simplexml)
+    implementation(libs.converter.gson)
+
+    implementation(libs.okhttp)
+
+
     implementation(libs.glide)
     annotationProcessor(libs.compiler)
     implementation(libs.okhttp3.integration)

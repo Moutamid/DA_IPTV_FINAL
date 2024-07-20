@@ -12,56 +12,82 @@ import android.view.Window;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
 import com.fxn.stash.Stash;
 import com.google.android.material.snackbar.Snackbar;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.HomeParentAdapter;
+import com.moutamid.daiptv.database.AppDatabase;
 import com.moutamid.daiptv.databinding.FragmentHomeBinding;
 import com.moutamid.daiptv.listener.ItemSelectedHome;
+import com.moutamid.daiptv.models.EPGModel;
 import com.moutamid.daiptv.models.FavoriteModel;
+import com.moutamid.daiptv.models.FilmsModel;
 import com.moutamid.daiptv.models.MovieModel;
 import com.moutamid.daiptv.models.SeriesModel;
 import com.moutamid.daiptv.models.TopItems;
 import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.models.VodModel;
+import com.moutamid.daiptv.retrofit.Api;
+import com.moutamid.daiptv.retrofit.RetrofitClientInstance;
 import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
-import com.moutamid.daiptv.utilis.VolleySingleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class HomeFragment extends Fragment {
     private static final String TAG = "HomeFragment";
-    static FragmentHomeBinding binding;
-    static Dialog dialog;
+    FragmentHomeBinding binding;
+    static Dialog loadingBar;
     static MovieModel movieModel;
     static HomeParentAdapter adapter;
     ArrayList<MovieModel> films = new ArrayList<>(), series = new ArrayList<>();
     static ArrayList<VodModel> filmsChan = new ArrayList<>();
     static ArrayList<SeriesModel> seriesChan = new ArrayList<>();
     static ArrayList<TopItems> list = new ArrayList<>();
-
+    UserModel userModel;
     private static Context mContext;
 
     @Override
@@ -83,7 +109,6 @@ public class HomeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(getLayoutInflater(), container, false);
-
         initializeDialog();
 
         binding.recycler.setLayoutManager(new GridLayoutManager(mContext, 1));
@@ -91,12 +116,15 @@ public class HomeFragment extends Fragment {
 
         PagerSnapHelper snapHelper = new PagerSnapHelper();
         snapHelper.attachToRecyclerView(binding.recycler);
+
+        userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+
         list = Stash.getArrayList(Constants.HOME, TopItems.class);
         if (list.isEmpty()) {
             Log.d(TAG, "onCreateView: GET");
             getList();
         } else {
-            dialog.show();
+            loadingBar.show();
             Log.d(TAG, "onCreateView: ELSE");
             fetchID(list.get(0).list.get(0));
             getAllVods();
@@ -105,8 +133,33 @@ public class HomeFragment extends Fragment {
         return binding.getRoot();
     }
 
+    private void testingVod() throws UnsupportedEncodingException {
+        Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+        Log.d(TAG, "testingVod: " + ApiLinks.vodAll());
+        Call<List<VodModel>> call = api.getAllVods(ApiLinks.vodAll());
+        call.enqueue(new Callback<List<VodModel>>() {
+            @Override
+            public void onResponse(Call<List<VodModel>> call, Response<List<VodModel>> response) {
+                Log.d(TAG, "onResponse: " + response.toString());
+                if (response.isSuccessful()) {
+                    List<VodModel> vods = response.body();
+                    Log.d(TAG, "onResponse: " + vods.size());
+                } else {
+                    int statusCode = response.code();
+                    Log.d(TAG, "onResponse: Error code : " + statusCode);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<VodModel>> call, Throwable t) {
+                t.printStackTrace();
+                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
+            }
+        });
+    }
+
     private void getList() {
-        dialog.show();
+        loadingBar.show();
         String url = Constants.topFILM;
 
         new Thread(() -> {
@@ -181,7 +234,7 @@ public class HomeFragment extends Fragment {
             } catch (JSONException e) {
                 e.printStackTrace();
                 requireActivity().runOnUiThread(() -> {
-                    dialog.dismiss();
+                    loadingBar.dismiss();
                     if (snackbar != null) {
                         snackbar.dismiss();
                         Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
@@ -260,7 +313,7 @@ public class HomeFragment extends Fragment {
             } catch (JSONException e) {
                 e.printStackTrace();
                 requireActivity().runOnUiThread(() -> {
-                    dialog.dismiss();
+                    loadingBar.dismiss();
                     if (snackbar != null) {
                         snackbar.dismiss();
                         Toast.makeText(mContext, e.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
@@ -325,7 +378,7 @@ public class HomeFragment extends Fragment {
                 getDetails(tmdb_id, Constants.lang_fr, model);
             } catch (JSONException e) {
                 e.printStackTrace();
-                dialog.dismiss();
+                loadingBar.dismiss();
             }
         }).start();
     }
@@ -496,24 +549,27 @@ public class HomeFragment extends Fragment {
                     }
                     String path = logos.getJSONObject(logoIndex).getString("file_path");
                     Log.d(TAG, "getlogo: " + path);
-
-                    requireActivity().runOnUiThread(() -> {
-                        binding.name.setVisibility(View.GONE);
-                        try {
-                            Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            binding.name.setVisibility(View.GONE);
+                            try {
+                                Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
                 } else {
-                    requireActivity().runOnUiThread(() -> {
-                        binding.name.setVisibility(View.VISIBLE);
-                        try {
-                            Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            binding.name.setVisibility(View.VISIBLE);
+                            try {
+                                Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
                 }
 
                 for (int i = 0; i < videos.length(); i++) {
@@ -528,7 +584,7 @@ public class HomeFragment extends Fragment {
                 requireActivity().runOnUiThread(() -> setUI());
             } catch (JSONException e) {
                 e.printStackTrace();
-                dialog.dismiss();
+                loadingBar.dismiss();
             }
 
         }).start();
@@ -537,7 +593,8 @@ public class HomeFragment extends Fragment {
     private void getBackdrop(int id, String language, MovieModel model) {
         Log.d(TAG, "getBackdrop: ");
         String url;
-        if (model.type.equals(Constants.TYPE_SERIES)) {
+        String[] type = model.type.split(",");
+        if (type[0].equals(Constants.TYPE_SERIES)) {
             url = Constants.getMovieDetails(id, Constants.TYPE_TV, language);
         } else {
             url = Constants.getMovieDetails(id, Constants.TYPE_MOVIE, language);
@@ -601,9 +658,12 @@ public class HomeFragment extends Fragment {
                         banner = images.getJSONObject(index).getString("file_path");
                     }
                     movieModel.banner = banner;
-                    requireActivity().runOnUiThread(() -> {
-                        Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
-                    });
+                    if (isAdded()) {
+                        if (getActivity() != null)
+                        getActivity().runOnUiThread(() -> {
+                            Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
+                        });
+                    }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -612,7 +672,7 @@ public class HomeFragment extends Fragment {
         }).start();
     }
 
-    private static void setUI() {
+    private void setUI() {
         binding.name.setText(movieModel.original_title);
         binding.desc.setText(movieModel.tagline);
         double d = Double.parseDouble(movieModel.vote_average);
@@ -642,11 +702,11 @@ public class HomeFragment extends Fragment {
     }
 
     private void initializeDialog() {
-        dialog = new Dialog(mContext);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.progress_layout);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
+        loadingBar = new Dialog(mContext);
+        loadingBar.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        loadingBar.setContentView(R.layout.progress_layout);
+        loadingBar.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        loadingBar.setCancelable(false);
     }
 
     Snackbar snackbar;
@@ -681,175 +741,143 @@ public class HomeFragment extends Fragment {
     }
 
     public void getAllVods() {
-        Log.d(TAG, "getAllVods: ");
-        String url = ApiLinks.getVod();
-
-        new Thread(() -> {
-            URL google = null;
-            try {
-                google = new URL(url);
-            } catch (final MalformedURLException e) {
-                e.printStackTrace();
-            }
-            BufferedReader in = null;
-            try {
-                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String input = null;
-            StringBuffer stringBuffer = new StringBuffer();
-            while (true) {
-                try {
-                    if ((input = in != null ? in.readLine() : null) == null) break;
-                } catch (final IOException e) {
-                    e.printStackTrace();
+        loadingBar.show();
+        Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+        Call<List<VodModel>> call = api.getAllVods(ApiLinks.vodAll());
+        call.enqueue(new Callback<List<VodModel>>() {
+            @Override
+            public void onResponse(Call<List<VodModel>> call, Response<List<VodModel>> response) {
+                if (response.isSuccessful()) {
+                    List<VodModel> vods = response.body();
+                    Log.d(TAG, "onResponse: " + vods.size());
+                    vods.sort(Comparator.comparing(vodModel -> Long.parseLong(vodModel.added)));
+                    Collections.reverse(vods);
+                    ArrayList<MovieModel> vodList = vods.stream()
+                            .map(model -> new MovieModel(
+                                    model.num,
+                                    model.stream_id,
+                                    0,
+                                    model.container_extension,
+                                    model.name,
+                                    "",
+                                    model.added,
+                                    "",
+                                    "",
+                                    model.stream_icon,
+                                    "",
+                                    "",
+                                    Constants.TYPE_MOVIE + "," + Constants.RECENTS,
+                                    false
+                            )).collect(Collectors.toCollection(ArrayList::new));
+                    list.add(new TopItems("Tous les films", vodList));
+                    requireActivity().runOnUiThread(() -> {
+                        adapter = new HomeParentAdapter(mContext, list, selected);
+                        binding.recycler.setAdapter(adapter);
+                        getAllStreams();
+                    });
+                } else {
+                    int statusCode = response.code();
+                    Log.d(TAG, "onResponse: Error code : " + statusCode);
                 }
-                stringBuffer.append(input);
-            }
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String htmlData = stringBuffer.toString();
-            try {
-                JSONArray response = new JSONArray(htmlData);
-                ArrayList<MovieModel> vodList = new ArrayList<>();
-                for (int i = 0; i < response.length(); i++) {
-                    JSONObject object = response.getJSONObject(i);
-                    MovieModel model = new MovieModel();
-                    model.id = object.getInt("num");
-                    model.streamID = object.getInt("stream_id");
-                    model.original_title = object.getString("name");
-                    model.banner = object.getString("stream_icon");
-                    model.type = Constants.TYPE_MOVIE + "," + Constants.RECENTS;
-                    model.release_date = object.getString("added");
-                    model.extension = object.getString("container_extension");
-                    vodList.add(model);
-                }
-                Log.d(TAG, "getAllVods: size " + vodList.size());
-                vodList.sort(Comparator.comparing(vodModel -> Long.parseLong(vodModel.release_date)));
-                Collections.reverse(vodList);
-                list.add(new TopItems("Tous les films", vodList));
-                requireActivity().runOnUiThread(() -> {
-                    adapter = new HomeParentAdapter(mContext, list, selected);
-                    binding.recycler.setAdapter(adapter);
-                    getAllStreams();
-                });
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
 
-        }).start();
+            @Override
+            public void onFailure(Call<List<VodModel>> call, Throwable t) {
+                t.printStackTrace();
+                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
+            }
+        });
     }
 
     public void getAllStreams() {
         Log.d(TAG, "getAllStreams: ");
-        String url = ApiLinks.getSeries();
-        new Thread(() -> {
-            URL google = null;
-            try {
-                google = new URL(url);
-            } catch (final MalformedURLException e) {
-                e.printStackTrace();
-            }
-            BufferedReader in = null;
-            try {
-                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String input = null;
-            StringBuffer stringBuffer = new StringBuffer();
-            while (true) {
-                try {
-                    if ((input = in != null ? in.readLine() : null) == null) break;
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
-                stringBuffer.append(input);
-            }
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            String htmlData = stringBuffer.toString();
-            Log.d(TAG, "getVodRecursive: " + htmlData);
 
-            try {
-                JSONArray response = new JSONArray(htmlData);
-                ArrayList<MovieModel> seriesList = new ArrayList<>();
-                for (int i = 0; i < response.length(); i++) {
-                    JSONObject object = response.getJSONObject(i);
-                    MovieModel model = new MovieModel();
-                    model.id = object.getInt("num");
-                    model.series_id = object.getInt("series_id");
-                    model.original_title = object.getString("name");
-                    model.banner = object.getString("cover");
-                    model.overview = object.getString("plot");
-                    model.type = Constants.TYPE_SERIES + "," + Constants.RECENTS;
-                    model.release_date = object.getString("last_modified");
-                    seriesList.add(model);
-                }
-                seriesList.sort(Comparator.comparing(seriesModel -> Long.parseLong(seriesModel.release_date)));
-                Collections.reverse(seriesList);
+        Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+        Call<List<SeriesModel>> call = api.getAllSeries(ApiLinks.seriesAll());
+        call.enqueue(new Callback<List<SeriesModel>>() {
+            @Override
+            public void onResponse(Call<List<SeriesModel>> call, Response<List<SeriesModel>> response) {
+                if (response.isSuccessful()) {
+                    List<SeriesModel> series = response.body();
+                    Log.d(TAG, "onResponse: " + series.size());
+                    series.sort(Comparator.comparing(seriesModel -> Long.parseLong(seriesModel.last_modified)));
+                    Collections.reverse(series);
+                    ArrayList<MovieModel> seriesList = series.stream()
+                            .map(model -> new MovieModel(
+                                    model.num,
+                                    0,
+                                    model.series_id,
+                                    "",
+                                    model.name,
+                                    "",
+                                    model.last_modified,
+                                    "",
+                                    "",
+                                    model.cover,
+                                    "",
+                                    "",
+                                    Constants.TYPE_MOVIE + "," + Constants.RECENTS,
+                                    false
+                            )).collect(Collectors.toCollection(ArrayList::new));
 
-                list.add(new TopItems("Toutes les séries", seriesList));
 
-                UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-                ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);
-                if (!fvrt.isEmpty()) {
-                    ArrayList<MovieModel> fvrtList = new ArrayList<>();
-                    for (FavoriteModel channelsModel : fvrt) {
-                        if (!channelsModel.type.equals("live")) {
-                            MovieModel model = new MovieModel();
-                            model.type = channelsModel.type;
-                            model.banner = channelsModel.image;
-                            model.series_id = channelsModel.series_id;
-                            model.extension = channelsModel.extension;
-                            model.original_title = channelsModel.name;
-                            fvrtList.add(model);
+                    list.add(new TopItems("Toutes les séries", seriesList));
+
+                    UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+                    ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);
+                    if (!fvrt.isEmpty()) {
+                        ArrayList<MovieModel> fvrtList = new ArrayList<>();
+                        for (FavoriteModel channelsModel : fvrt) {
+                            if (!channelsModel.type.equals("live")) {
+                                MovieModel model = new MovieModel();
+                                model.type = channelsModel.type;
+                                model.banner = channelsModel.image;
+                                model.series_id = channelsModel.series_id;
+                                model.extension = channelsModel.extension;
+                                model.original_title = channelsModel.name;
+                                fvrtList.add(model);
+                            }
                         }
+                        list.add(new TopItems("Favoris", fvrtList));
                     }
-                    list.add(new TopItems("Favoris", fvrtList));
-                }
-                ArrayList<FavoriteModel> films = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
-                ArrayList<MovieModel> fvrtList = new ArrayList<>();
-                for (FavoriteModel channelsModel : films) {
-                    MovieModel model = new MovieModel();
-                    model.type = channelsModel.type;
-                    model.banner = channelsModel.image;
-                    model.original_title = channelsModel.name;
-                    model.streamID = channelsModel.stream_id;
-                    fvrtList.add(model);
-                }
-                if (!fvrtList.isEmpty()) {
-                    Collections.reverse(fvrtList);
-                    list.add(0, new TopItems("Reprendre la lecture", fvrtList));
-                }
-
-                requireActivity().runOnUiThread(() -> {
-                    dialog.dismiss();
-                    if (snackbar != null) {
-                        snackbar.dismiss();
-                        snackbar = null;
-                        Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                    ArrayList<FavoriteModel> films = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
+                    ArrayList<MovieModel> fvrtList = new ArrayList<>();
+                    for (FavoriteModel channelsModel : films) {
+                        MovieModel model = new MovieModel();
+                        model.type = channelsModel.type;
+                        model.banner = channelsModel.image;
+                        model.original_title = channelsModel.name;
+                        model.streamID = channelsModel.stream_id;
+                        fvrtList.add(model);
                     }
-                    adapter = new HomeParentAdapter(mContext, list, selected);
-                    binding.recycler.setAdapter(adapter);
-                });
+                    if (!fvrtList.isEmpty()) {
+                        Collections.reverse(fvrtList);
+                        list.add(0, new TopItems("Reprendre la lecture", fvrtList));
+                    }
 
-            } catch (JSONException e) {
-                e.printStackTrace();
+                    requireActivity().runOnUiThread(() -> {
+                        loadingBar.dismiss();
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            snackbar = null;
+                            Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                        }
+                        adapter = new HomeParentAdapter(mContext, list, selected);
+                        binding.recycler.setAdapter(adapter);
+                    });
+
+                } else {
+                    int statusCode = response.code();
+                    Log.d(TAG, "onResponse: Error code : " + statusCode);
+                }
             }
 
-        }).start();
+            @Override
+            public void onFailure(Call<List<SeriesModel>> call, Throwable t) {
+                t.printStackTrace();
+                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
+            }
+        });
     }
 
     @Override
