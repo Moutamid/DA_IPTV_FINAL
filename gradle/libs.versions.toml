@@ -1,5 +1,6 @@
 [versions]
 agp = "8.4.2"
+circleimageview = "3.1.0"
 glide = "4.16.0"
 jaxbApi = "2.3.1"
 junit = "4.13.2"
@@ -21,6 +22,7 @@ translateapi = "1.1"
 volley = "1.2.1"
 
 [libraries]
+circleimageview = { module = "de.hdodenhof:circleimageview", version.ref = "circleimageview" }
 compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glide" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
 converter-jaxb = { module = "com.squareup.retrofit2:converter-jaxb", version.ref = "retrofit" }

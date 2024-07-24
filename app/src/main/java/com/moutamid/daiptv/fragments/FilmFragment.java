@@ -607,10 +607,10 @@ public class FilmFragment extends Fragment {
                 if (response.isSuccessful()) {
                     List<VodModel> vods = response.body();
                     Log.d(TAG, "onResponse: " + vods.size());
-
                     vods.sort(Comparator.comparing(vodModel -> Long.parseLong(vodModel.added)));
                     Collections.reverse(vods);
-                    listAll.add(1, new FilmsModel("Resents", "Récemment ajoutés", (ArrayList<VodModel>) vods));
+                    ArrayList<VodModel> firstFiftyVods = new ArrayList<>(vods.subList(0, Math.min(vods.size(), 50)));
+                    listAll.add(1, new FilmsModel("Resents", "Récemment ajoutés", firstFiftyVods));
                     if (isAdded() && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             dialog.dismiss();

@@ -139,6 +139,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/details"
             android:nextFocusUp="@id/Accueil"
+            android:layout_marginTop="10dp"
             tools:listitem="@layout/parent_item" />
 
     </RelativeLayout>

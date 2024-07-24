@@ -40,11 +40,11 @@ dependencies {
     implementation(libs.simple.xml)
     implementation(libs.converter.jaxb)
     implementation(libs.jaxb.api)
+    implementation(libs.okhttp)
     implementation(libs.converter.simplexml)
     implementation(libs.converter.gson)
 
-    implementation(libs.okhttp)
-
+    implementation(libs.circleimageview)
 
     implementation(libs.glide)
     annotationProcessor(libs.compiler)

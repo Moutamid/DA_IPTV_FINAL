@@ -230,14 +230,15 @@ public class SeriesFragment extends Fragment {
                     series.sort(Comparator.comparing(seriesModel -> Long.parseLong(seriesModel.last_modified)));
                     Collections.reverse(series);
                     listAll.add(1, new TVModel("Resents", "Récemment ajoutés", (ArrayList<SeriesModel>) series));
-                    requireActivity().runOnUiThread(() -> {
-                        dialog.dismiss();
-                        if (snackbar != null) {
-                            snackbar.dismiss();
-                        }
-                        parentAdapter.notifyItemInserted(1);
-                    });
-
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            dialog.dismiss();
+                            if (snackbar != null) {
+                                snackbar.dismiss();
+                            }
+                            parentAdapter.notifyItemInserted(1);
+                        });
+                    }
                 } else {
                     int statusCode = response.code();
                     Log.d(TAG, "onResponse: Error code : " + statusCode);

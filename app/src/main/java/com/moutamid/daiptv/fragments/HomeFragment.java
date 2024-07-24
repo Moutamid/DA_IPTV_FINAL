@@ -659,10 +659,11 @@ public class HomeFragment extends Fragment {
                     }
                     movieModel.banner = banner;
                     if (isAdded()) {
-                        if (getActivity() != null)
-                        getActivity().runOnUiThread(() -> {
-                            Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
-                        });
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
+                            });
+                        }
                     }
                 }
             } catch (JSONException e) {
@@ -753,6 +754,7 @@ public class HomeFragment extends Fragment {
                     vods.sort(Comparator.comparing(vodModel -> Long.parseLong(vodModel.added)));
                     Collections.reverse(vods);
                     ArrayList<MovieModel> vodList = vods.stream()
+                            .limit(50)
                             .map(model -> new MovieModel(
                                     model.num,
                                     model.stream_id,
@@ -769,7 +771,7 @@ public class HomeFragment extends Fragment {
                                     Constants.TYPE_MOVIE + "," + Constants.RECENTS,
                                     false
                             )).collect(Collectors.toCollection(ArrayList::new));
-                    list.add(new TopItems("Tous les films", vodList));
+                    list.add(new TopItems("Derniers films ajoutés", vodList));
                     requireActivity().runOnUiThread(() -> {
                         adapter = new HomeParentAdapter(mContext, list, selected);
                         binding.recycler.setAdapter(adapter);
@@ -803,6 +805,7 @@ public class HomeFragment extends Fragment {
                     series.sort(Comparator.comparing(seriesModel -> Long.parseLong(seriesModel.last_modified)));
                     Collections.reverse(series);
                     ArrayList<MovieModel> seriesList = series.stream()
+                            .limit(50)
                             .map(model -> new MovieModel(
                                     model.num,
                                     0,
@@ -816,12 +819,11 @@ public class HomeFragment extends Fragment {
                                     model.cover,
                                     "",
                                     "",
-                                    Constants.TYPE_MOVIE + "," + Constants.RECENTS,
+                                    Constants.TYPE_SERIES + "," + Constants.RECENTS,
                                     false
                             )).collect(Collectors.toCollection(ArrayList::new));
 
-
-                    list.add(new TopItems("Toutes les séries", seriesList));
+                    list.add(new TopItems("Dernières séries ajoutées", seriesList));
 
                     UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
                     ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);

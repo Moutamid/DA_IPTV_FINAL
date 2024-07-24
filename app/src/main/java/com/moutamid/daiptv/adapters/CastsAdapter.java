@@ -17,6 +17,8 @@ import com.moutamid.daiptv.utilis.Constants;
 
 import java.util.ArrayList;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+
 public class CastsAdapter extends RecyclerView.Adapter<CastsAdapter.ParentVH> {
 
     Context context;
@@ -47,7 +49,7 @@ public class CastsAdapter extends RecyclerView.Adapter<CastsAdapter.ParentVH> {
     }
 
     public class ParentVH extends RecyclerView.ViewHolder{
-        ImageView image;
+        CircleImageView image;
         TextView title,name;
         public ParentVH(@NonNull View itemView) {
             super(itemView);

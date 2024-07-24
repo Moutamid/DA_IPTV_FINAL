@@ -126,6 +126,8 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
         }).placeholder(R.color.grey2).into(holder.image);
 
         holder.banner.setOnLongClickListener(v -> {
+            Log.d(TAG, "onFocusChange: NAME " + model.original_title);
+
             FavoriteModel favoriteModel = new FavoriteModel();
             favoriteModel.id = UUID.randomUUID().toString();
             favoriteModel.image = model.banner;

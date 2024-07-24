@@ -137,6 +137,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@id/details"
+            android:layout_marginTop="10dp"
             android:nextFocusUp="@id/series"
             tools:listitem="@layout/parent_item" />
 
