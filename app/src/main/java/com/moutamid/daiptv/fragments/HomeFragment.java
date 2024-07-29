@@ -801,7 +801,7 @@ public class HomeFragment extends Fragment {
             public void onResponse(Call<List<SeriesModel>> call, Response<List<SeriesModel>> response) {
                 if (response.isSuccessful()) {
                     List<SeriesModel> series = response.body();
-                    Log.d(TAG, "onResponse: " + series.size());
+                    Log.d(TAG, "onResponse: series " + series.size());
                     series.sort(Comparator.comparing(seriesModel -> Long.parseLong(seriesModel.last_modified)));
                     Collections.reverse(series);
                     ArrayList<MovieModel> seriesList = series.stream()

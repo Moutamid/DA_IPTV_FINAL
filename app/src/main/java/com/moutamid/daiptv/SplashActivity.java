@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.fxn.stash.Stash;
+import com.moutamid.daiptv.activities.LoadingScreenActivity;
 import com.moutamid.daiptv.activities.LoginActivity;
 import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.utilis.Constants;
@@ -20,7 +21,7 @@ public class SplashActivity extends BaseActivity {
         new Handler().postDelayed(() -> {
             if (Constants.checkInternet(SplashActivity.this)){
                 UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-                if (userModel!=null){
+                if (userModel!=null) {
                     startActivity(new Intent(SplashActivity.this, MainActivity.class));
                     finish();
                 } else {

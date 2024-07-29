@@ -73,8 +73,9 @@ public class LoginActivity extends BaseActivity {
                                             Stash.put(Constants.USER, userModel);
                                             Stash.put(Constants.USER_LIST, userList);
 
-                                            startActivity(new Intent(this, MainActivity.class));
+                                            startActivity(new Intent(this, LoadingScreenActivity.class));
                                             finish();
+
 //                                            if (addProfile) {
 //                                                startActivity(new Intent(this, MainActivity.class));
 //                                                finish();
@@ -92,7 +93,7 @@ public class LoginActivity extends BaseActivity {
                                 Stash.put(Constants.USER, userModel);
                                 Stash.put(Constants.USER_LIST, userList);
 
-                                startActivity(new Intent(this, MainActivity.class));
+                                startActivity(new Intent(this, LoadingScreenActivity.class));
                                 finish();
 //                                            if (addProfile) {
 //                                                startActivity(new Intent(this, MainActivity.class));

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
+    android:background="@drawable/gradient"
     tools:context=".activities.LoginActivity">
 
     <TextView
@@ -17,7 +17,7 @@
         android:text="Da IPTV"
         android:textAllCaps="true"
         android:textColor="@color/red"
-        android:textSize="20dp"
+        android:textSize="30dp"
         android:textStyle="bold" />
 
     <androidx.core.widget.NestedScrollView
@@ -30,6 +30,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
+            android:layout_marginHorizontal="130dp"
             android:orientation="vertical"
             android:padding="15dp">
 
@@ -41,10 +42,10 @@
                 android:hint="Username"
                 android:textColorHint="@color/grey2"
                 app:boxBackgroundColor="@color/grey"
-                app:boxCornerRadiusBottomEnd="8dp"
-                app:boxCornerRadiusBottomStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
-                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusBottomEnd="26dp"
+                app:boxCornerRadiusBottomStart="26dp"
+                app:boxCornerRadiusTopEnd="26dp"
+                app:boxCornerRadiusTopStart="26dp"
                 app:boxStrokeWidth="0dp"
                 app:boxStrokeWidthFocused="0dp"
                 app:hintTextColor="@color/red">
@@ -67,10 +68,10 @@
                 android:hint="Password"
                 android:textColorHint="@color/grey2"
                 app:boxBackgroundColor="@color/grey"
-                app:boxCornerRadiusBottomEnd="8dp"
-                app:boxCornerRadiusBottomStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
-                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusBottomEnd="26dp"
+                app:boxCornerRadiusBottomStart="26dp"
+                app:boxCornerRadiusTopEnd="26dp"
+                app:boxCornerRadiusTopStart="26dp"
                 app:boxStrokeWidth="0dp"
                 app:boxStrokeWidthFocused="0dp"
                 app:hintTextColor="@color/red"
@@ -97,10 +98,10 @@
                 app:helperTextTextColor="@color/grey2"
                 android:textColorHint="@color/grey2"
                 app:boxBackgroundColor="@color/grey"
-                app:boxCornerRadiusBottomEnd="8dp"
-                app:boxCornerRadiusBottomStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
-                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusBottomEnd="26dp"
+                app:boxCornerRadiusBottomStart="26dp"
+                app:boxCornerRadiusTopEnd="26dp"
+                app:boxCornerRadiusTopStart="26dp"
                 app:boxStrokeWidth="0dp"
                 app:boxStrokeWidthFocused="0dp"
                 app:hintTextColor="@color/red"
@@ -122,7 +123,7 @@
                 android:layout_marginTop="10dp"
                 android:clickable="true"
                 app:cardBackgroundColor="@color/transparent"
-                app:cardCornerRadius="8dp"
+                app:cardCornerRadius="26dp"
                 app:cardElevation="0dp"
                 app:strokeColor="@color/grey2"
                 app:strokeWidth="1dp">
@@ -132,7 +133,7 @@
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:padding="10dp"
-                    android:text="Se connecter"
+                    android:text="Valider"
                     android:textColor="@color/grey2"
                     android:textSize="18dp" />
 
@@ -144,7 +145,7 @@
                 android:text="@string/terms"
                 android:layout_marginTop="8dp"
                 android:textColor="@color/grey2"
-                android:textSize="14dp" />
+                android:textSize="12dp" />
 
         </LinearLayout>
 
