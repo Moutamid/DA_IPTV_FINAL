@@ -38,6 +38,8 @@
                 android:id="@+id/logo"
                 android:layout_width="match_parent"
                 android:layout_height="70dp"
+                android:scaleType="fitStart"
+                tools:src="@drawable/logo_text"
                 android:layout_marginBottom="8dp" />
 
             <com.google.android.material.card.MaterialCardView
