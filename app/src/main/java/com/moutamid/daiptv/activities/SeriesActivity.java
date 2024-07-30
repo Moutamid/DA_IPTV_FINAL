@@ -3,15 +3,24 @@ package com.moutamid.daiptv.activities;
 import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.view.Window;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.fxn.stash.Stash;
 import com.moutamid.daiptv.BaseActivity;
 import com.moutamid.daiptv.R;
@@ -40,6 +49,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class SeriesActivity extends BaseActivity {
     private static final String TAG = "SeriesActivity";
@@ -73,6 +84,31 @@ public class SeriesActivity extends BaseActivity {
 
         binding.episodeRC.setLayoutManager(new LinearLayoutManager(this));
         binding.episodeRC.setHasFixedSize(false);
+
+        String IMAGE = getIntent().getStringExtra("IMAGE");
+        String BACKDROP = getIntent().getStringExtra("BACKDROP");
+
+
+        if (IMAGE != null) {
+            Glide.with(this).load(IMAGE).listener(new RequestListener<Drawable>() {
+                @Override
+                public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
+                    binding.logo.setVisibility(View.GONE);
+                    return false;
+                }
+
+                @Override
+                public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                    return false;
+                }
+            }).into(binding.logo);
+
+            Glide.with(this)
+                    .load(BACKDROP)
+                    .transform(new CenterCrop(), new BlurTransformation(25, 3))
+                    .placeholder(R.color.black)
+                    .into(binding.blurredBackground);
+        }
 
         initializeDialog();
 

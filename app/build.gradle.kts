@@ -48,6 +48,7 @@ dependencies {
 
     implementation(libs.glide)
     annotationProcessor(libs.compiler)
+    implementation (libs.glide.transformations)
     implementation(libs.okhttp3.integration)
     implementation(libs.translateapi)
 

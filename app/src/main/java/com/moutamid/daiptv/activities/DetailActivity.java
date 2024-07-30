@@ -6,6 +6,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.view.Window;
 import android.widget.Toast;
 
@@ -314,9 +315,11 @@ public class DetailActivity extends BaseActivity {
                 JSONArray videos = response.getJSONObject("videos").getJSONArray("results");
                 JSONArray images = response.getJSONObject("images").getJSONArray("backdrops");
                 JSONArray credits = response.getJSONObject("credits").getJSONArray("cast");
+                JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
 
-                int index = -1;
-                if (images.length() > 1) {
+                int index = -1, logoIndex = -1;
+
+                if (images.length() > 0) {
                     String[] preferredLanguages = {"null", "fr", "en"};
                     for (String lang : preferredLanguages) {
                         for (int i = 0; i < images.length(); i++) {
@@ -336,6 +339,47 @@ public class DetailActivity extends BaseActivity {
                         banner = images.getJSONObject(index).getString("file_path");
                     }
                     movieModel.banner = banner;
+
+                    if (logos.length() > 0) {
+                        for (String lang : preferredLanguages) {
+                            for (int i = 0; i < logos.length(); i++) {
+                                JSONObject object = logos.getJSONObject(i);
+                                String isoLang = object.getString("iso_639_1");
+                                if (isoLang.equalsIgnoreCase(lang)) {
+                                    logoIndex = i;
+                                    break;
+                                }
+                            }
+                            if (logoIndex != -1) {
+                                break;
+                            }
+                        }
+                        String path;
+                        if (logoIndex != -1) {
+                            path = logos.getJSONObject(logoIndex).getString("file_path");
+                        } else {
+                            path = "";
+                        }
+                        Log.d(TAG, "getlogo: " + path);
+                        runOnUiThread(() -> {
+                            binding.name.setVisibility(View.GONE);
+                            try {
+                                Glide.with(DetailActivity.this).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    } else {
+                        runOnUiThread(() -> {
+                            binding.name.setVisibility(View.VISIBLE);
+                            try {
+                                Glide.with(DetailActivity.this).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
+
                 } else getBackdrop(id, "");
 
                 for (int i = 0; i < videos.length(); i++) {
@@ -410,8 +454,52 @@ public class DetailActivity extends BaseActivity {
             try {
                 JSONObject jsonObject = new JSONObject(htmlData);
                 JSONArray images = jsonObject.getJSONObject("images").getJSONArray("backdrops");
-                int index = -1, logoIndex = 0;
-                if (images.length() > 1) {
+                int index = -1, logoIndex = -1;
+
+                JSONArray logos = jsonObject.getJSONObject("images").getJSONArray("logos");
+                if (logos.length() > 0) {
+                    String[] preferredLanguages = {"null", "fr", "en"};
+                    for (String lang : preferredLanguages) {
+                        for (int i = 0; i < logos.length(); i++) {
+                            JSONObject object = logos.getJSONObject(i);
+                            String isoLang = object.getString("iso_639_1");
+                            if (isoLang.equalsIgnoreCase(lang)) {
+                                logoIndex = i;
+                                break;
+                            }
+                        }
+                        if (logoIndex != -1) {
+                            break;
+                        }
+                    }
+                    String path;
+                    if (logoIndex != -1) {
+                        path = logos.getJSONObject(logoIndex).getString("file_path");
+                    } else {
+                        path = "";
+                    }
+
+                    Log.d(TAG, "getlogo: " + path);
+                    runOnUiThread(() -> {
+                        binding.name.setVisibility(View.GONE);
+                        try {
+                            Glide.with(DetailActivity.this).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                } else {
+                    runOnUiThread(() -> {
+                        binding.name.setVisibility(View.VISIBLE);
+                        try {
+                            Glide.with(DetailActivity.this).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                }
+
+                if (images.length() > 0) {
                     String[] preferredLanguages = {"null", "fr", "en"};
                     for (String lang : preferredLanguages) {
                         for (int i = 0; i < images.length(); i++) {

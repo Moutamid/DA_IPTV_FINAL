@@ -509,8 +509,8 @@ public class HomeFragment extends Fragment {
                 JSONArray videos = response.getJSONObject("videos").getJSONArray("results");
                 JSONArray images = response.getJSONObject("images").getJSONArray("backdrops");
 
-                int index = -1, logoIndex = 0;
-                if (images.length() > 1) {
+                int index = -1, logoIndex = -1;
+                if (images.length() > 0) {
                     String[] preferredLanguages = {"null", "fr", "en"};
                     for (String lang : preferredLanguages) {
                         for (int i = 0; i < images.length(); i++) {
@@ -530,47 +530,56 @@ public class HomeFragment extends Fragment {
                         banner = images.getJSONObject(index).getString("file_path");
                     }
                     movieModel.banner = banner;
+
+                    JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
+                    if (logos.length() > 0) {
+                        for (String lang : preferredLanguages) {
+                            for (int i = 0; i < logos.length(); i++) {
+                                JSONObject object = logos.getJSONObject(i);
+                                String isoLang = object.getString("iso_639_1");
+                                if (isoLang.equalsIgnoreCase(lang)) {
+                                    logoIndex = i;
+                                    break;
+                                }
+                            }
+                            if (logoIndex != -1) {
+                                break;
+                            }
+                        }
+                        String path;
+                        if (logoIndex != -1) {
+                            path = logos.getJSONObject(logoIndex).getString("file_path");
+                        } else {
+                            path = "";
+                        }
+                        Log.d(TAG, "getlogo: " + path);
+                        if (isAdded() && getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                binding.name.setVisibility(View.GONE);
+                                try {
+                                    Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            });
+                        }
+                    } else {
+                        if (isAdded() && getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                binding.name.setVisibility(View.VISIBLE);
+                                try {
+                                    Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            });
+                        }
+                    }
+
                 } else {
                     getBackdrop(id, "", model);
                 }
                 Log.d(TAG, "getDetails: after Back");
-
-                JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
-                if (logos.length() > 1) {
-                    for (int i = 0; i < logos.length(); i++) {
-                        JSONObject object = logos.getJSONObject(i);
-                        String lang = object.getString("iso_639_1");
-                        if (lang.equals("fr") || (logoIndex == 0 && lang.isEmpty())) {
-                            logoIndex = i;
-                            break;
-                        } else if (logoIndex == 0 && lang.equals("en")) {
-                            logoIndex = i;
-                        }
-                    }
-                    String path = logos.getJSONObject(logoIndex).getString("file_path");
-                    Log.d(TAG, "getlogo: " + path);
-                    if (isAdded() && getActivity() != null) {
-                        getActivity().runOnUiThread(() -> {
-                            binding.name.setVisibility(View.GONE);
-                            try {
-                                Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
-                    }
-                } else {
-                    if (isAdded() && getActivity() != null) {
-                        getActivity().runOnUiThread(() -> {
-                            binding.name.setVisibility(View.VISIBLE);
-                            try {
-                                Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
-                    }
-                }
 
                 for (int i = 0; i < videos.length(); i++) {
                     JSONObject object = videos.getJSONObject(i);
@@ -637,8 +646,56 @@ public class HomeFragment extends Fragment {
             try {
                 JSONObject jsonObject = new JSONObject(htmlData);
                 JSONArray images = jsonObject.getJSONObject("images").getJSONArray("backdrops");
-                int index = -1, logoIndex = 0;
-                if (images.length() > 1) {
+                int index = -1, logoIndex = -1;
+
+                JSONArray logos = jsonObject.getJSONObject("images").getJSONArray("logos");
+                if (logos.length() > 0) {
+                    String[] preferredLanguages = {"null", "fr", "en"};
+                    for (String lang : preferredLanguages) {
+                        for (int i = 0; i < logos.length(); i++) {
+                            JSONObject object = logos.getJSONObject(i);
+                            String isoLang = object.getString("iso_639_1");
+                            if (isoLang.equalsIgnoreCase(lang)) {
+                                logoIndex = i;
+                                break;
+                            }
+                        }
+                        if (logoIndex != -1) {
+                            break;
+                        }
+                    }
+                    String path;
+                    if (logoIndex != -1) {
+                        path = logos.getJSONObject(logoIndex).getString("file_path");
+                    } else {
+                        path = "";
+                    }
+
+                    Log.d(TAG, "getlogo: " + path);
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            binding.name.setVisibility(View.GONE);
+                            try {
+                                Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
+                } else {
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            binding.name.setVisibility(View.VISIBLE);
+                            try {
+                                Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
+                }
+
+                if (images.length() > 0) {
                     String[] preferredLanguages = {"null", "fr", "en"};
                     for (String lang : preferredLanguages) {
                         for (int i = 0; i < images.length(); i++) {

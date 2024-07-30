@@ -297,6 +297,7 @@ public class FilmFragment extends Fragment {
             try {
                 JSONObject response = new JSONObject(htmlData);
                 movieModel = new MovieModel();
+                movieModel.tagline = response.getString("tagline");
                 try {
                     movieModel.original_title = response.getString("title");
                 } catch (Exception e) {
@@ -309,11 +310,10 @@ public class FilmFragment extends Fragment {
                 }
                 movieModel.overview = response.getString("overview");
 
-                if (movieModel.overview.isEmpty() && !language.isEmpty())
+                if (movieModel.tagline.isEmpty() && !language.isEmpty())
                     getDetails(id, "", model);
 
-                movieModel.isFrench = !movieModel.overview.isEmpty();
-                movieModel.tagline = response.getString("tagline");
+                movieModel.isFrench = !movieModel.tagline.isEmpty();
                 movieModel.vote_average = String.valueOf(response.getDouble("vote_average"));
                 if (response.getJSONArray("genres").length() > 0)
                     movieModel.genres = response.getJSONArray("genres").getJSONObject(0).getString("name");
@@ -322,8 +322,8 @@ public class FilmFragment extends Fragment {
                 JSONArray videos = response.getJSONObject("videos").getJSONArray("results");
                 JSONArray images = response.getJSONObject("images").getJSONArray("backdrops");
 
-                int index = -1, logoIndex = 0;
-                if (images.length() > 1) {
+                int index = -1, logoIndex = -1;
+                if (images.length() > 0) {
                     String[] preferredLanguages = {"null", "fr", "en"};
                     for (String lang : preferredLanguages) {
                         for (int i = 0; i < images.length(); i++) {
@@ -343,47 +343,56 @@ public class FilmFragment extends Fragment {
                         banner = images.getJSONObject(index).getString("file_path");
                     }
                     movieModel.banner = banner;
+
+                    JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
+                    if (logos.length() > 0) {
+                        for (String lang : preferredLanguages) {
+                            for (int i = 0; i < logos.length(); i++) {
+                                JSONObject object = logos.getJSONObject(i);
+                                String isoLang = object.getString("iso_639_1");
+                                if (isoLang.equalsIgnoreCase(lang)) {
+                                    logoIndex = i;
+                                    break;
+                                }
+                            }
+                            if (logoIndex != -1) {
+                                break;
+                            }
+                        }
+                        String path;
+                        if (logoIndex != -1) {
+                            path = logos.getJSONObject(logoIndex).getString("file_path");
+                        } else {
+                            path = "";
+                        }
+                        Log.d(TAG, "getlogo: " + path);
+                        if (isAdded() && getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                binding.name.setVisibility(View.GONE);
+                                try {
+                                    Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            });
+                        }
+                    } else {
+                        if (isAdded() && getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                binding.name.setVisibility(View.VISIBLE);
+                                try {
+                                    Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            });
+                        }
+                    }
+
                 } else {
                     getBackdrop(id, "", model);
                 }
                 Log.d(TAG, "getDetails: after Back");
-
-                JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
-                if (logos.length() > 1) {
-                    for (int i = 0; i < logos.length(); i++) {
-                        JSONObject object = logos.getJSONObject(i);
-                        String lang = object.getString("iso_639_1");
-                        if (lang.equals("fr") || (logoIndex == 0 && lang.isEmpty())) {
-                            logoIndex = i;
-                            break;
-                        } else if (logoIndex == 0 && lang.equals("en")) {
-                            logoIndex = i;
-                        }
-                    }
-                    String path = logos.getJSONObject(logoIndex).getString("file_path");
-                    Log.d(TAG, "getlogo: " + path);
-                    if (isAdded() && getActivity() != null) {
-                        getActivity().runOnUiThread(() -> {
-                            binding.name.setVisibility(View.GONE);
-                            try {
-                                Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
-                    }
-                } else {
-                    if (isAdded() && getActivity() != null) {
-                        getActivity().runOnUiThread(() -> {
-                            binding.name.setVisibility(View.VISIBLE);
-                            try {
-                                Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
-                    }
-                }
 
                 for (int i = 0; i < videos.length(); i++) {
                     JSONObject object = videos.getJSONObject(i);
@@ -451,8 +460,57 @@ public class FilmFragment extends Fragment {
             try {
                 JSONObject jsonObject = new JSONObject(htmlData);
                 JSONArray images = jsonObject.getJSONObject("images").getJSONArray("backdrops");
-                int index = -1, logoIndex = 0;
-                if (images.length() > 1) {
+                int index = -1, logoIndex = -1;
+
+                JSONArray logos = jsonObject.getJSONObject("images").getJSONArray("logos");
+                if (logos.length() > 0) {
+                    String[] preferredLanguages = {"null", "fr", "en"};
+                    for (String lang : preferredLanguages) {
+                        for (int i = 0; i < logos.length(); i++) {
+                            JSONObject object = logos.getJSONObject(i);
+                            String isoLang = object.getString("iso_639_1");
+                            if (isoLang.equalsIgnoreCase(lang)) {
+                                logoIndex = i;
+                                break;
+                            }
+                        }
+                        if (logoIndex != -1) {
+                            break;
+                        }
+                    }
+                    String path;
+                    if (logoIndex != -1) {
+                        path = logos.getJSONObject(logoIndex).getString("file_path");
+                    } else {
+                        path = "";
+                    }
+
+                    Log.d(TAG, "getlogo: " + path);
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            binding.name.setVisibility(View.GONE);
+                            try {
+                                Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
+                } else {
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            binding.name.setVisibility(View.VISIBLE);
+                            try {
+                                Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
+                }
+
+
+                if (images.length() > 0) {
                     String[] preferredLanguages = {"null", "fr", "en"};
                     for (String lang : preferredLanguages) {
                         for (int i = 0; i < images.length(); i++) {
@@ -495,6 +553,23 @@ public class FilmFragment extends Fragment {
 
             SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
             SimpleDateFormat outputFormat = new SimpleDateFormat("MMMM yyyy", Locale.FRANCE);
+
+            if (movieModel.isFrench) {
+                TranslateAPI translateAPI = new TranslateAPI(
+                        Language.AUTO_DETECT, Language.FRENCH, movieModel.tagline
+                );
+                translateAPI.setTranslateListener(new TranslateAPI.TranslateListener() {
+                    @Override
+                    public void onSuccess(String translatedText) {
+                        binding.desc.setText(translatedText);
+                    }
+
+                    @Override
+                    public void onFailure(String ErrorText) {
+
+                    }
+                });
+            }
 
             try {
                 Date date = inputFormat.parse(movieModel.release_date);

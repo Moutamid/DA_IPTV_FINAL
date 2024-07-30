@@ -281,6 +281,7 @@ public class LoadingScreenActivity extends AppCompatActivity {
             public void onResponse(Call<List<VodModel>> call, Response<List<VodModel>> response) {
                 if (response.isSuccessful()) {
                     List<VodModel> list = response.body();
+                    list.forEach(vodModel -> vodModel.stream_type = Constants.TYPE_MOVIE);
                     list.sort(Comparator.comparingLong(vodModel -> Long.parseLong(vodModel.added)));
                     Collections.reverse(list);
                     FilmsModel model = new FilmsModel(items.category_id, items.category_name, (ArrayList<VodModel>) list);
@@ -353,10 +354,13 @@ public class LoadingScreenActivity extends AppCompatActivity {
             public void onResponse(Call<List<SeriesModel>> call, Response<List<SeriesModel>> response) {
                 if (response.isSuccessful()) {
                     List<SeriesModel> list = response.body();
-                    list.sort(Comparator.comparingLong(vodModel -> Long.parseLong(vodModel.last_modified)));
-                    Collections.reverse(list);
-                    TVModel model = new TVModel(items.category_id, items.category_name, (ArrayList<SeriesModel>) list);
-                    listAll.set(k, model);
+                    if (list != null) {
+                        list.forEach(series -> series.stream_type = Constants.TYPE_SERIES);
+                        list.sort(Comparator.comparingLong(vodModel -> Long.parseLong(vodModel.last_modified)));
+                        Collections.reverse(list);
+                        TVModel model = new TVModel(items.category_id, items.category_name, (ArrayList<SeriesModel>) list);
+                        listAll.set(k, model);
+                    }
                     if (k == listAll.size() - 1) {
                         ArrayList<SeriesModel> topRated = Stash.getArrayList(Constants.TOP_SERIES, SeriesModel.class);
                         listAll.add(0,new TVModel(Constants.topRated, "Top Series", topRated));
@@ -422,6 +426,13 @@ public class LoadingScreenActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     List<ChannelsModel> list = response.body();
                     Stash.put(Constants.CHANNELS_ALL, list);
+
+                    List<ChannelsModel> filteredList = list.stream()
+                            .filter(channel -> channel.tv_archive == 1)
+                            .collect(Collectors.toList());
+
+                    Stash.put(Constants.RECENT_CHANNELS_SERVER, filteredList);
+
                     startActivity(new Intent(LoadingScreenActivity.this, MainActivity.class));
                     finish();
                 } else {

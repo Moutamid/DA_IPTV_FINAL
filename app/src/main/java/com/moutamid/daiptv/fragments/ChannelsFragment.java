@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -121,6 +122,11 @@ public class ChannelsFragment extends Fragment {
                             if (allList.isEmpty()) {
                                 showAllItems();
                             } else {
+                                List<ChannelsModel> filteredList = allList.stream()
+                                        .filter(channel -> channel.tv_archive == 1)
+                                        .collect(Collectors.toList());
+                                Log.d(TAG, "showButtons: " + filteredList.size());
+                                Stash.put(Constants.RECENT_CHANNELS_SERVER, filteredList);
                                 adapter = new ChannelsAdapter(mContext, allList);
                                 binding.channelsRC.setAdapter(adapter);
                                 selectedButton.setText("All - " + allList.size());
@@ -316,6 +322,13 @@ public class ChannelsFragment extends Fragment {
                 if (response.isSuccessful()) {
                     List<ChannelsModel> list = response.body();
                     Stash.put(Constants.CHANNELS_ALL, list);
+
+                    List<ChannelsModel> filteredList = list.stream()
+                            .filter(channel -> channel.tv_archive == 1)
+                            .collect(Collectors.toList());
+
+                    Stash.put(Constants.RECENT_CHANNELS_SERVER, filteredList);
+
                     requireActivity().runOnUiThread(() -> {
                         adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list);
                         binding.channelsRC.setAdapter(adapter);
@@ -359,13 +372,8 @@ public class ChannelsFragment extends Fragment {
             @Override
             public void onResponse(Call<List<ChannelsModel>> call, Response<List<ChannelsModel>> response) {
                 if (response.isSuccessful()) {
-                    ArrayList<ChannelsModel> channelsList = new ArrayList<>();
                     List<ChannelsModel> list = response.body();
-                    ChannelsModel model = list.stream().filter(channelsModel -> channelsModel.stream_id == 9629).findFirst().orElse(null);
-                    if (model != null) {
-                        channelsList.add(model);
-                        Stash.put(Constants.RECENT_CHANNELS_SERVER, channelsList);
-                    }
+
                     requireActivity().runOnUiThread(() -> {
                         dialog.dismiss();
                         if (snackbar != null) {

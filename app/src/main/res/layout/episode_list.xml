@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    app:cardBackgroundColor="@color/black"
+    app:cardBackgroundColor="@color/black_bg_trans"
     app:strokeWidth="0dp"
     app:cardElevation="0dp"
     android:layout_width="match_parent"
+    android:layout_marginTop="5dp"
     android:layout_height="wrap_content">
 
     <LinearLayout

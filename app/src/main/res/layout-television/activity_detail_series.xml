@@ -38,9 +38,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="15dp"
+                android:visibility="invisible"
                 app:cardBackgroundColor="@color/black_bg_trans"
                 app:cardCornerRadius="12dp"
-                android:visibility="invisible"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
 
@@ -88,9 +88,9 @@
                             android:id="@+id/name"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            tools:text="Synopsis"
                             android:textColor="@color/white"
-                            android:textSize="22sp" />
+                            android:textSize="22sp"
+                            tools:text="Synopsis" />
 
                         <TextView
                             android:id="@+id/desc"
@@ -110,8 +110,8 @@
                     android:id="@+id/others"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
                     android:layout_marginStart="10dp"
+                    android:layout_marginTop="6dp"
                     android:orientation="horizontal">
 
                     <TextView
@@ -169,6 +169,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_marginHorizontal="25dp"
                 android:layout_marginBottom="0dp"
+                android:layout_marginTop="80dp"
                 android:gravity="center"
                 android:orientation="horizontal">
 
@@ -181,8 +182,8 @@
                     android:backgroundTint="@color/black_bg_trans"
                     android:padding="12dp"
                     android:text="Episodes"
-                    app:cornerRadius="12dp"
                     android:textSize="13sp"
+                    app:cornerRadius="26dp"
                     app:icon="@drawable/play_2_focus"
                     app:iconSize="26dp"
                     app:strokeColor="@color/grey2"
@@ -194,14 +195,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
-                    android:textSize="13sp"
                     android:backgroundTint="@color/black_bg_trans"
                     android:padding="12dp"
                     android:text="Bande Annonce"
-                    app:cornerRadius="12dp"
+                    android:textSize="13sp"
+                    app:cornerRadius="26dp"
                     app:icon="@drawable/youtube_focus"
-                    app:iconTint="@null"
                     app:iconSize="26dp"
+                    app:iconTint="@null"
                     app:strokeColor="@color/grey2"
                     app:strokeWidth="1dp" />
 
@@ -209,11 +210,11 @@
                     android:id="@+id/play"
                     android:layout_width="100dp"
                     android:layout_height="100dp"
+                    android:layout_marginHorizontal="12dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:focusableInTouchMode="true"
                     android:focusedByDefault="true"
-                    android:layout_marginHorizontal="12dp"
                     android:src="@drawable/play_focus" />
 
                 <com.google.android.material.button.MaterialButton
@@ -223,9 +224,9 @@
                     android:layout_weight="1"
                     android:backgroundTint="@color/black_bg_trans"
                     android:padding="12dp"
-                    android:textSize="13sp"
                     android:text="Ajouter aux Favoris"
-                    app:cornerRadius="12dp"
+                    android:textSize="13sp"
+                    app:cornerRadius="26dp"
                     app:icon="@drawable/heart_focus"
                     app:iconSize="26dp"
                     app:strokeColor="@color/grey2"
@@ -240,7 +241,7 @@
                     android:backgroundTint="@color/black_bg_trans"
                     android:padding="12dp"
                     android:text="Lecteur Externe"
-                    app:cornerRadius="12dp"
+                    app:cornerRadius="26dp"
                     app:icon="@drawable/video_focus"
                     app:iconPadding="12dp"
                     app:iconSize="26dp"
@@ -253,15 +254,15 @@
                 android:id="@+id/resume"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_below="@id/linearLayout"
+                android:layout_centerHorizontal="true"
                 android:backgroundTint="@color/black_bg_trans"
                 android:padding="12dp"
                 android:text="Reprendre la lecture"
-                app:cornerRadius="12dp"
-                android:layout_centerHorizontal="true"
-                android:layout_below="@id/linearLayout"
+                android:textSize="13sp"
+                app:cornerRadius="26dp"
                 app:icon="@drawable/resume"
                 app:iconSize="26dp"
-                android:textSize="13sp"
                 app:strokeColor="@color/grey2"
                 app:strokeWidth="1dp" />
 

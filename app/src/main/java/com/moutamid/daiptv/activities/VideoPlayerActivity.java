@@ -251,7 +251,7 @@ public class VideoPlayerActivity extends BaseActivity {
                 System.out.println("Error: Media duration is invalid.");
                 return;
             }
-            boolean isPastTenMinutes = currentPosition > (10 * 60 * 1000);
+            boolean isPastTenMinutes = currentPosition > 60000;
             if (isPastTenMinutes) {
                 if (!type.equals(Constants.TYPE_CHANNEL)) {
                     ArrayList<FavoriteModel> list = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
