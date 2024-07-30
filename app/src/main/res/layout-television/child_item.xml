@@ -22,13 +22,13 @@
 
         <ImageView
             android:id="@+id/image"
-            android:layout_width="100dp"
-            android:layout_height="170dp"
+            android:layout_width="80dp"
+            android:layout_height="140dp"
             android:scaleType="fitXY" />
 
         <TextView
-            android:layout_width="100dp"
-            android:layout_height="170dp"
+            android:layout_width="80dp"
+            android:layout_height="140dp"
             android:text="@string/lorem"
             android:gravity="center"
             android:visibility="gone"

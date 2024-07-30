@@ -286,8 +286,8 @@
                     app:strokeWidth="2dp">
 
                     <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
                         android:src="@drawable/profile" />
 
                 </com.google.android.material.card.MaterialCardView>
@@ -304,8 +304,8 @@
 
                 <ImageButton
                     android:id="@+id/reload"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:src="@drawable/sync"
                     android:focusable="true"
                     android:focusableInTouchMode="true"

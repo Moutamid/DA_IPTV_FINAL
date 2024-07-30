@@ -22,6 +22,6 @@
         android:layout_below="@id/name"
         android:orientation="horizontal"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        tools:listitem="@layout/child_item" />
+        tools:listitem="@layout/top_items_home" />
 
 </RelativeLayout>
