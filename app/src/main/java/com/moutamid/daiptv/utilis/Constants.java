@@ -40,6 +40,8 @@ public class Constants {
     public static final String HOME = "HOME";
     public static final String CHANNELS = "CHANNELS";
     public static final String CHANNELS_ALL = "CHANNELS_ALL";
+    public static final String SERVER_FILM = "SERVER_FILM";
+    public static final String SERVER_TV = "SERVER_TV";
     public static final String USER = "USER";
     public static final String RECENT_CHANNELS = "RECENT_CHANNELS";
     public static final String RECENT_CHANNELS_SERVER = "RECENT_CHANNELS_SERVER";

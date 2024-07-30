@@ -127,10 +127,83 @@ public class HomeFragment extends Fragment {
             loadingBar.show();
             Log.d(TAG, "onCreateView: ELSE");
             fetchID(list.get(0).list.get(0));
-            getAllVods();
+
+            long time = Stash.getLong(Constants.IS_TODAY, 0);
+            LocalDate date;
+            if (time != 0) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    date = Instant.ofEpochMilli(time)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
+                    LocalDate today = LocalDate.now();
+                    boolean isToday = date.equals(today);
+                    Log.d(TAG, "onCreate: ISTODAY " + isToday);
+                    if (!isToday) {
+                        getAllVods();
+                    } else {
+                        checkData();
+                    }
+                }
+            } else {
+                getAllVods();
+            }
         }
 
         return binding.getRoot();
+    }
+
+    private void checkData() {
+        ArrayList<MovieModel> seriesList = Stash.getArrayList(Constants.SERVER_TV, MovieModel.class);
+        ArrayList<MovieModel> moviesList = Stash.getArrayList(Constants.SERVER_FILM, MovieModel.class);
+        if (!seriesList.isEmpty() && !moviesList.isEmpty()) {
+            list.add(new TopItems("Derniers films ajoutés", moviesList));
+            list.add(new TopItems("Dernières séries ajoutées", seriesList));
+
+            UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+            ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);
+            if (!fvrt.isEmpty()) {
+                ArrayList<MovieModel> fvrtList = new ArrayList<>();
+                for (FavoriteModel channelsModel : fvrt) {
+                    if (!channelsModel.type.equals("live")) {
+                        MovieModel model = new MovieModel();
+                        model.type = channelsModel.type;
+                        model.banner = channelsModel.image;
+                        model.series_id = channelsModel.series_id;
+                        model.extension = channelsModel.extension;
+                        model.original_title = channelsModel.name;
+                        fvrtList.add(model);
+                    }
+                }
+                list.add(new TopItems("Favoris", fvrtList));
+            }
+            ArrayList<FavoriteModel> films = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
+            ArrayList<MovieModel> fvrtList = new ArrayList<>();
+            for (FavoriteModel channelsModel : films) {
+                MovieModel model = new MovieModel();
+                model.type = channelsModel.type;
+                model.banner = channelsModel.image;
+                model.original_title = channelsModel.name;
+                model.streamID = channelsModel.stream_id;
+                fvrtList.add(model);
+            }
+            if (!fvrtList.isEmpty()) {
+                Collections.reverse(fvrtList);
+                list.add(0, new TopItems("Reprendre la lecture", fvrtList));
+            }
+
+            requireActivity().runOnUiThread(() -> {
+                loadingBar.dismiss();
+                if (snackbar != null) {
+                    snackbar.dismiss();
+                    snackbar = null;
+                    Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                }
+                adapter = new HomeParentAdapter(mContext, list, selected);
+                binding.recycler.setAdapter(adapter);
+            });
+        } else {
+            getAllVods();
+        }
     }
 
     private void testingVod() throws UnsupportedEncodingException {
@@ -829,6 +902,7 @@ public class HomeFragment extends Fragment {
                                     false
                             )).collect(Collectors.toCollection(ArrayList::new));
                     list.add(new TopItems("Derniers films ajoutés", vodList));
+                    Stash.put(Constants.SERVER_FILM, vodList);
                     requireActivity().runOnUiThread(() -> {
                         adapter = new HomeParentAdapter(mContext, list, selected);
                         binding.recycler.setAdapter(adapter);
@@ -880,6 +954,7 @@ public class HomeFragment extends Fragment {
                                     false
                             )).collect(Collectors.toCollection(ArrayList::new));
 
+                    Stash.put(Constants.SERVER_TV, seriesList);
                     list.add(new TopItems("Dernières séries ajoutées", seriesList));
 
                     UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
