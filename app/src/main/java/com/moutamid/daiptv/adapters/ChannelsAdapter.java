@@ -19,6 +19,7 @@ import com.google.android.material.card.MaterialCardView;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.activities.VideoPlayerActivity;
 import com.moutamid.daiptv.database.AppDatabase;
+import com.moutamid.daiptv.fragments.ChannelsFragment;
 import com.moutamid.daiptv.models.ChannelsModel;
 import com.moutamid.daiptv.models.EPGModel;
 import com.moutamid.daiptv.models.FavoriteModel;
@@ -34,10 +35,12 @@ import java.util.UUID;
 public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.ChannelVH> {
     Context context;
     ArrayList<ChannelsModel> list;
+    ChannelsFragment.ChannelsListener listener;
 
-    public ChannelsAdapter(Context context, ArrayList<ChannelsModel> list) {
+    public ChannelsAdapter(Context context, ArrayList<ChannelsModel> list, ChannelsFragment.ChannelsListener listener) {
         this.context = context;
         this.list = list;
+        this.listener = listener;
     }
 
     @NonNull
@@ -70,26 +73,30 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
         }
 
         holder.itemView.setOnClickListener(v -> {
-            UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-            String link = userModel.url + userModel.username + "/" + userModel.password + "/" + model.stream_id;
-            Log.d(TAG, "onBindViewHolder: " + link);
-            ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.RECENT_CHANNELS, ChannelsModel.class);
-            boolean check = false;
-            for (ChannelsModel recent : channelsList) {
-                if (recent.stream_id == model.stream_id) {
-                    check = true;
-                    break;
+            if (model.tv_archive == 0) {
+                UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+                String link = userModel.url + userModel.username + "/" + userModel.password + "/" + model.stream_id;
+                Log.d(TAG, "onBindViewHolder: " + link);
+                ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.RECENT_CHANNELS, ChannelsModel.class);
+                boolean check = false;
+                for (ChannelsModel recent : channelsList) {
+                    if (recent.stream_id == model.stream_id) {
+                        check = true;
+                        break;
+                    }
                 }
+                if (!check) {
+                    channelsList.add(model);
+                    Stash.put(Constants.RECENT_CHANNELS, channelsList);
+                }
+                context.startActivity(new Intent(context, VideoPlayerActivity.class)
+                        .putExtra("url", link)
+                        .putExtra("channel_id", model.epg_channel_id)
+                        .putExtra("type", Constants.TYPE_CHANNEL)
+                        .putExtra("name", model.name));
+            } else {
+                listener.getEpg(model);
             }
-            if (!check) {
-                channelsList.add(model);
-                Stash.put(Constants.RECENT_CHANNELS, channelsList);
-            }
-            context.startActivity(new Intent(context, VideoPlayerActivity.class)
-                    .putExtra("url", link)
-                    .putExtra("channel_id", model.epg_channel_id)
-                    .putExtra("type", Constants.TYPE_CHANNEL)
-                    .putExtra("name", model.name));
         });
 
         holder.itemView.setOnLongClickListener(v -> {

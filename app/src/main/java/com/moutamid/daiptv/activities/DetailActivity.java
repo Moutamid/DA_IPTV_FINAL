@@ -155,6 +155,7 @@ public class DetailActivity extends BaseActivity {
             String name = Constants.regexName(model.name);
             Log.d(TAG, "fetchID: " + name);
             String url = Constants.getMovieData(name, Constants.extractYear(model.name), Constants.TYPE_MOVIE);
+            Log.d(TAG, "fetchID: " + url);
             getFromTmdb(url);
         }
     }

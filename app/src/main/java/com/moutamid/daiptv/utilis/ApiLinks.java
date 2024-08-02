@@ -13,7 +13,7 @@ public class ApiLinks {
     public static final String get_series = "&action=get_series";
     public static final String get_series_info = "&action=get_series_info";
     public static final String get_vod_info = "&action=get_vod_info";
-
+    public static final String get_simple_data_table = "&action=get_simple_data_table";
     public static String base() {
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
         return userModel.url;
@@ -64,5 +64,8 @@ public class ApiLinks {
     }
     public static String getVodInfoByID(String id) {
         return baseUrl() + get_vod_info + "&vod_id=" + id;
+    }
+    public static String getDataTable(String id) {
+        return baseUrl() + get_simple_data_table + "&stream_id=" + id;
     }
 }

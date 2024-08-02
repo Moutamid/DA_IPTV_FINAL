@@ -10,23 +10,29 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.fxn.stash.Stash;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.ChannelsAdapter;
+import com.moutamid.daiptv.adapters.CurrentPrograms;
 import com.moutamid.daiptv.databinding.FragmentChannelsBinding;
 import com.moutamid.daiptv.models.CategoryModel;
 import com.moutamid.daiptv.models.ChannelsModel;
+import com.moutamid.daiptv.models.EpgListings;
 import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.retrofit.Api;
+import com.moutamid.daiptv.models.EpgResponse;
 import com.moutamid.daiptv.retrofit.RetrofitClientInstance;
 import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
@@ -51,6 +57,73 @@ public class ChannelsFragment extends Fragment {
     private static final String TAG = "ChannelsFragment";
     Map<String, String> channels;
     private Context mContext;
+
+    public interface ChannelsListener {
+        void getEpg(ChannelsModel model);
+    }
+
+    ChannelsListener listener = new ChannelsListener() {
+        @Override
+        public void getEpg(ChannelsModel model) {
+            getAllEpgs(model);
+        }
+    };
+
+    private void getAllEpgs(ChannelsModel model) {
+        Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+        String url = ApiLinks.getDataTable(String.valueOf(model.stream_id));
+        Log.d("EPG", "getAllEpgs: " + url);
+        Call<EpgResponse> call = api.getEpgListings(url);
+        call.enqueue(new Callback<EpgResponse>() {
+            @Override
+            public void onResponse(Call<EpgResponse> call, Response<EpgResponse> response) {
+                if (response.isSuccessful()) {
+                    List<EpgListings> epgListings = response.body().getEpgListings();
+                    Log.d("EPG", "onResponse: SIZE " + epgListings.size());
+                    List<EpgListings> filteredList = epgListings.stream()
+                            .filter(channel -> channel.now_playing == 1)
+                            .collect(Collectors.toList());
+                    Log.d("EPG", "filteredList: " + filteredList.size());
+                    showCurrentPrograms(filteredList, model);
+                } else {
+                    showCurrentPrograms(new ArrayList<>(), model);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<EpgResponse> call, Throwable t) {
+                t.printStackTrace();
+                Log.d("EPG", "onFailure: " + t.getLocalizedMessage());
+                showCurrentPrograms(new ArrayList<>(), model);
+            }
+        });
+    }
+
+    private void showCurrentPrograms(List<EpgListings> filteredList, ChannelsModel model) {
+        Dialog currentProgram = new Dialog(requireContext());
+        currentProgram.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        currentProgram.setContentView(R.layout.current_programs);
+        currentProgram.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        currentProgram.setCancelable(true);
+        currentProgram.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        currentProgram.show();
+        RecyclerView current = currentProgram.findViewById(R.id.currentPrograms);
+        TextView nothing = currentProgram.findViewById(R.id.nothing);
+
+        current.setLayoutManager(new LinearLayoutManager(mContext));
+        current.setHasFixedSize(false);
+
+        if (filteredList.isEmpty()) {
+            nothing.setVisibility(View.VISIBLE);
+            current.setVisibility(View.GONE);
+        } else {
+            nothing.setVisibility(View.GONE);
+            current.setVisibility(View.VISIBLE);
+        }
+
+        CurrentPrograms programs = new CurrentPrograms(mContext, filteredList, model);
+        current.setAdapter(programs);
+    }
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -127,7 +200,7 @@ public class ChannelsFragment extends Fragment {
                                         .collect(Collectors.toList());
                                 Log.d(TAG, "showButtons: " + filteredList.size());
                                 Stash.put(Constants.RECENT_CHANNELS_SERVER, filteredList);
-                                adapter = new ChannelsAdapter(mContext, allList);
+                                adapter = new ChannelsAdapter(mContext, allList, null);
                                 binding.channelsRC.setAdapter(adapter);
                                 selectedButton.setText("All - " + allList.size());
                             }
@@ -153,7 +226,7 @@ public class ChannelsFragment extends Fragment {
         setButtonText(list, 4);
 
         ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.CHANNELS_ALL, ChannelsModel.class);
-        adapter = new ChannelsAdapter(mContext, channelsList);
+        adapter = new ChannelsAdapter(mContext, channelsList, null);
         binding.channelsRC.setAdapter(adapter);
     }
 
@@ -306,7 +379,7 @@ public class ChannelsFragment extends Fragment {
     private void showRecentsServer() {
         ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.RECENT_CHANNELS_SERVER, ChannelsModel.class);
         Collections.reverse(channelsList);
-        adapter = new ChannelsAdapter(mContext, channelsList);
+        adapter = new ChannelsAdapter(mContext, channelsList, listener);
         binding.channelsRC.setAdapter(adapter);
         selectedButton.setText("Rejouer - " + channelsList.size());
     }
@@ -330,7 +403,7 @@ public class ChannelsFragment extends Fragment {
                     Stash.put(Constants.RECENT_CHANNELS_SERVER, filteredList);
 
                     requireActivity().runOnUiThread(() -> {
-                        adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list);
+                        adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list, null);
                         binding.channelsRC.setAdapter(adapter);
                         dialog.dismiss();
                         selectedButton.setText("All" + " - " + list.size());
@@ -381,7 +454,7 @@ public class ChannelsFragment extends Fragment {
                             snackbar = null;
                             Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
                         }
-                        adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list);
+                        adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list, null);
                         binding.channelsRC.setAdapter(adapter);
                         String[] n = splitString(name);
                         selectedButton.setText(n[0] + " - " + list.size());
@@ -434,7 +507,7 @@ public class ChannelsFragment extends Fragment {
                 channelsList.add(model);
             }
         }
-        adapter = new ChannelsAdapter(mContext, channelsList);
+        adapter = new ChannelsAdapter(mContext, channelsList, null);
         binding.channelsRC.setAdapter(adapter);
         selectedButton.setText("Favoris - " + channelsList.size());
     }
@@ -442,7 +515,7 @@ public class ChannelsFragment extends Fragment {
     private void showRecentChannels() {
         ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.RECENT_CHANNELS, ChannelsModel.class);
         Collections.reverse(channelsList);
-        adapter = new ChannelsAdapter(mContext, channelsList);
+        adapter = new ChannelsAdapter(mContext, channelsList, null);
         binding.channelsRC.setAdapter(adapter);
         selectedButton.setText("Chaînes récentes - " + channelsList.size());
     }

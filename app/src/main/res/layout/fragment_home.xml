@@ -37,6 +37,10 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp" />
+
                 <ImageView
                     android:id="@+id/logo"
                     android:layout_width="match_parent"
@@ -51,6 +55,7 @@
                     app:cardBackgroundColor="@color/black_bg_trans"
                     app:strokeColor="@color/grey2"
                     app:cardCornerRadius="8dp"
+                    android:visibility="gone"
                     app:cardElevation="0dp"
                     app:strokeWidth="1dp">
 

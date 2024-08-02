@@ -64,17 +64,17 @@
                         android:maxLines="1"
                         android:layout_marginVertical="3dp"
                         android:textColor="@color/white"
-                        android:textSize="22sp" />
+                        android:textSize="16sp" />
 
                     <TextView
                         android:id="@+id/desc"
-                        android:layout_width="match_parent"
+                        android:layout_width="300dp"
                         android:layout_height="wrap_content"
                         android:textColor="@color/white2"
-                        android:textSize="18sp"
+                        android:textSize="13sp"
                         android:scrollHorizontally="true"
                         android:ellipsize="end"
-                        android:maxLines="2"
+                        android:maxLines="1"
                         tools:text="@string/lorem" />
 
                 </LinearLayout>
@@ -96,7 +96,7 @@
                     android:gravity="center"
                     android:padding="12dp"
                     android:textColor="@color/white"
-                    android:textSize="14sp"
+                    android:textSize="12sp"
                     tools:text="January 16" />
 
                 <com.google.android.material.button.MaterialButton
@@ -111,10 +111,10 @@
                     android:enabled="false"
                     android:focusableInTouchMode="false"
                     android:textColor="@color/white"
-                    android:textSize="14sp"
+                    android:textSize="12sp"
                     app:cornerRadius="8dp"
                     app:icon="@drawable/tmdb_logo"
-                    app:iconSize="20dp"
+                    app:iconSize="16dp"
                     app:iconTint="@null"
                     app:strokeColor="@color/grey2"
                     app:strokeWidth="1dp"
@@ -128,7 +128,7 @@
                     android:gravity="center"
                     android:padding="12dp"
                     android:textColor="@color/white"
-                    android:textSize="14sp"
+                    android:textSize="12sp"
                     tools:text="Duree Film" />
 
             </LinearLayout>

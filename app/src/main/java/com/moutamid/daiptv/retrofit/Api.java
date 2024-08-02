@@ -2,8 +2,10 @@ package com.moutamid.daiptv.retrofit;
 
 import com.moutamid.daiptv.models.CategoryModel;
 import com.moutamid.daiptv.models.ChannelsModel;
+import com.moutamid.daiptv.models.EpgListings;
 import com.moutamid.daiptv.models.SeriesModel;
 import com.moutamid.daiptv.models.VodModel;
+import com.moutamid.daiptv.models.EpgResponse;
 import com.moutamid.daiptv.utilis.ApiLinks;
 
 import org.w3c.dom.Document;
@@ -33,5 +35,6 @@ public interface Api {
     Call<List<ChannelsModel>> getChannels(@Url String url);
     @GET()
     Call<List<CategoryModel>> getChannelsCategory(@Url String url);
-
+    @GET()
+    Call<EpgResponse> getEpgListings(@Url String url);
 }

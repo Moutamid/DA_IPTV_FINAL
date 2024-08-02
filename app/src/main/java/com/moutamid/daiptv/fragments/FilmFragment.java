@@ -27,8 +27,11 @@ import com.moutamid.daiptv.adapters.FilmParentAdapter;
 import com.moutamid.daiptv.databinding.FragmentFilmBinding;
 import com.moutamid.daiptv.listener.ItemSelectedFilm;
 import com.moutamid.daiptv.models.CategoryModel;
+import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.FilmsModel;
 import com.moutamid.daiptv.models.MovieModel;
+import com.moutamid.daiptv.models.TopItems;
+import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.models.VodModel;
 import com.moutamid.daiptv.retrofit.Api;
 import com.moutamid.daiptv.retrofit.RetrofitClientInstance;
@@ -112,10 +115,49 @@ public class FilmFragment extends Fragment {
         if (film.isEmpty()) {
             listAll = new ArrayList<>();
             listAll.add(new FilmsModel(Constants.topRated, "Top Films", topRated));
+
+            UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+            ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);
+            if (!fvrt.isEmpty()) {
+                ArrayList<VodModel> fvrtList = new ArrayList<>();
+                for (FavoriteModel channelsModel : fvrt) {
+                    if (channelsModel.type.equals(Constants.TYPE_MOVIE)) {
+                        VodModel model = new VodModel();
+                        model.stream_type = channelsModel.type;
+                        model.stream_icon = channelsModel.image;
+                        model.category_id = channelsModel.category_id;
+                        model.stream_id = channelsModel.stream_id;
+                        model.container_extension = channelsModel.extension;
+                        model.name = channelsModel.name;
+                        fvrtList.add(model);
+                    }
+                }
+                listAll.add(new FilmsModel("Favoris", "Favoris", fvrtList));
+            }
             getCategory();
         } else {
             listAll = new ArrayList<>();
             listAll.addAll(film);
+
+            UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+            ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);
+            if (!fvrt.isEmpty()) {
+                ArrayList<VodModel> fvrtList = new ArrayList<>();
+                for (FavoriteModel channelsModel : fvrt) {
+                    if (channelsModel.type.equals(Constants.TYPE_MOVIE)) {
+                        VodModel model = new VodModel();
+                        model.stream_type = channelsModel.type;
+                        model.stream_icon = channelsModel.image;
+                        model.category_id = channelsModel.category_id;
+                        model.stream_id = channelsModel.stream_id;
+                        model.container_extension = channelsModel.extension;
+                        model.name = channelsModel.name;
+                        fvrtList.add(model);
+                    }
+                }
+                listAll.add(1, new FilmsModel("Favoris", "Favoris", fvrtList));
+            }
+
             parentAdapter = new FilmParentAdapter(mContext, listAll, selectedFilm);
             binding.recycler.setAdapter(parentAdapter);
             getAllVods();
@@ -359,18 +401,17 @@ public class FilmFragment extends Fragment {
                                 break;
                             }
                         }
-                        String path;
                         if (logoIndex != -1) {
-                            path = logos.getJSONObject(logoIndex).getString("file_path");
+                            logo = logos.getJSONObject(logoIndex).getString("file_path");
                         } else {
-                            path = "";
+                            logo = "";
                         }
-                        Log.d(TAG, "getlogo: " + path);
+                        Log.d(TAG, "getlogo: " + logo);
                         if (isAdded() && getActivity() != null) {
                             getActivity().runOnUiThread(() -> {
                                 binding.name.setVisibility(View.GONE);
                                 try {
-                                    Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                                    Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -478,19 +519,18 @@ public class FilmFragment extends Fragment {
                             break;
                         }
                     }
-                    String path;
                     if (logoIndex != -1) {
-                        path = logos.getJSONObject(logoIndex).getString("file_path");
+                        logo = logos.getJSONObject(logoIndex).getString("file_path");
                     } else {
-                        path = "";
+                        logo = "";
                     }
 
-                    Log.d(TAG, "getlogo: " + path);
+                    Log.d(TAG, "getlogo: " + logo);
                     if (isAdded() && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             binding.name.setVisibility(View.GONE);
                             try {
-                                Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                                Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -543,6 +583,8 @@ public class FilmFragment extends Fragment {
         }).start();
     }
 
+    String logo = "";
+
     private void setUI() {
         try {
             binding.name.setText(movieModel.original_title);
@@ -550,6 +592,19 @@ public class FilmFragment extends Fragment {
             double d = Double.parseDouble(movieModel.vote_average);
             binding.tmdbRating.setText(String.format("%.1f", d));
             binding.filmType.setText(movieModel.genres);
+
+            if ((!logo.isEmpty() && movieModel.tagline.isEmpty()) || movieModel.original_title.isEmpty()) {
+                Log.d(TAG, "setUI: HIDE");
+                binding.synopsis.setVisibility(View.GONE);
+            } else {
+                binding.synopsis.setVisibility(View.VISIBLE);
+            }
+
+            if (movieModel.tagline.isEmpty()) {
+                binding.desc.setVisibility(View.GONE);
+            } else {
+                binding.desc.setVisibility(View.VISIBLE);
+            }
 
             SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
             SimpleDateFormat outputFormat = new SimpleDateFormat("MMMM yyyy", Locale.FRANCE);
@@ -685,11 +740,11 @@ public class FilmFragment extends Fragment {
                     vods.sort(Comparator.comparing(vodModel -> Long.parseLong(vodModel.added)));
                     Collections.reverse(vods);
                     ArrayList<VodModel> firstFiftyVods = new ArrayList<>(vods.subList(0, Math.min(vods.size(), 50)));
-                    listAll.add(1, new FilmsModel("Resents", "Récemment ajoutés", firstFiftyVods));
+                    listAll.add(2, new FilmsModel("Resents", "Récemment ajoutés", firstFiftyVods));
                     if (isAdded() && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             dialog.dismiss();
-                            parentAdapter.notifyItemInserted(1);
+                            parentAdapter.notifyItemInserted(2);
                         });
                     }
                 } else {

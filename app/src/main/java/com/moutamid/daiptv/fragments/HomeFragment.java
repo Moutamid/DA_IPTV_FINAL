@@ -117,38 +117,6 @@ public class HomeFragment extends Fragment {
         PagerSnapHelper snapHelper = new PagerSnapHelper();
         snapHelper.attachToRecyclerView(binding.recycler);
 
-        userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-
-        list = Stash.getArrayList(Constants.HOME, TopItems.class);
-        if (list.isEmpty()) {
-            Log.d(TAG, "onCreateView: GET");
-            getList();
-        } else {
-            loadingBar.show();
-            Log.d(TAG, "onCreateView: ELSE");
-            fetchID(list.get(0).list.get(0));
-
-            long time = Stash.getLong(Constants.IS_TODAY, 0);
-            LocalDate date;
-            if (time != 0) {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    date = Instant.ofEpochMilli(time)
-                            .atZone(ZoneId.systemDefault())
-                            .toLocalDate();
-                    LocalDate today = LocalDate.now();
-                    boolean isToday = date.equals(today);
-                    Log.d(TAG, "onCreate: ISTODAY " + isToday);
-                    if (!isToday) {
-                        getAllVods();
-                    } else {
-                        checkData();
-                    }
-                }
-            } else {
-                getAllVods();
-            }
-        }
-
         return binding.getRoot();
     }
 
@@ -171,6 +139,7 @@ public class HomeFragment extends Fragment {
                         model.series_id = channelsModel.series_id;
                         model.extension = channelsModel.extension;
                         model.original_title = channelsModel.name;
+                        model.streamID = channelsModel.stream_id;
                         fvrtList.add(model);
                     }
                 }
@@ -188,7 +157,7 @@ public class HomeFragment extends Fragment {
             }
             if (!fvrtList.isEmpty()) {
                 Collections.reverse(fvrtList);
-                list.add(0, new TopItems("Reprendre la lecture", fvrtList));
+                list.add(2, new TopItems("Reprendre la lecture", fvrtList));
             }
 
             requireActivity().runOnUiThread(() -> {
@@ -619,18 +588,17 @@ public class HomeFragment extends Fragment {
                                 break;
                             }
                         }
-                        String path;
                         if (logoIndex != -1) {
-                            path = logos.getJSONObject(logoIndex).getString("file_path");
+                            logo = logos.getJSONObject(logoIndex).getString("file_path");
                         } else {
-                            path = "";
+                            logo = "";
                         }
-                        Log.d(TAG, "getlogo: " + path);
+                        Log.d(TAG, "getlogo: " + logo);
                         if (isAdded() && getActivity() != null) {
                             getActivity().runOnUiThread(() -> {
                                 binding.name.setVisibility(View.GONE);
                                 try {
-                                    Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                                    Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -671,6 +639,8 @@ public class HomeFragment extends Fragment {
 
         }).start();
     }
+
+    String logo = "";
 
     private void getBackdrop(int id, String language, MovieModel model) {
         Log.d(TAG, "getBackdrop: ");
@@ -737,19 +707,18 @@ public class HomeFragment extends Fragment {
                             break;
                         }
                     }
-                    String path;
                     if (logoIndex != -1) {
-                        path = logos.getJSONObject(logoIndex).getString("file_path");
+                        logo = logos.getJSONObject(logoIndex).getString("file_path");
                     } else {
-                        path = "";
+                        logo = "";
                     }
 
-                    Log.d(TAG, "getlogo: " + path);
+                    Log.d(TAG, "getlogo: " + logo);
                     if (isAdded() && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             binding.name.setVisibility(View.GONE);
                             try {
-                                Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                                Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -810,6 +779,24 @@ public class HomeFragment extends Fragment {
         binding.tmdbRating.setText(String.format("%.1f", d));
         binding.filmType.setText(movieModel.genres);
 
+        Log.d(TAG, "setUI: original_title " + movieModel.original_title.isEmpty());
+        Log.d(TAG, "setUI: tagline " + movieModel.tagline.isEmpty());
+        Log.d(TAG, "setUI: logo " + logo.isEmpty());
+        Log.d(TAG, "setUI: logo " + logo);
+
+        if ((!logo.isEmpty() && movieModel.tagline.isEmpty()) || movieModel.original_title.isEmpty()) {
+            Log.d(TAG, "setUI: HIDE");
+            binding.synopsis.setVisibility(View.GONE);
+        } else {
+            binding.synopsis.setVisibility(View.VISIBLE);
+        }
+
+        if (movieModel.tagline.isEmpty()) {
+            binding.desc.setVisibility(View.GONE);
+        } else {
+            binding.desc.setVisibility(View.VISIBLE);
+        }
+
         SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         SimpleDateFormat outputFormat = new SimpleDateFormat("MMMM yyyy", Locale.FRANCE);
 
@@ -822,6 +809,7 @@ public class HomeFragment extends Fragment {
             e.printStackTrace();
         }
         Log.d(TAG, "setUI: " + Constants.getImageLink(movieModel.banner));
+        Log.d(TAG, "setUI: " + Constants.getImageLink(logo));
         Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
     }
 
@@ -829,7 +817,40 @@ public class HomeFragment extends Fragment {
     public void onResume() {
         super.onResume();
         Stash.put(Constants.SELECTED_PAGE, "Home");
-        refreshFavoris();
+
+        userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+
+        list = Stash.getArrayList(Constants.HOME, TopItems.class);
+        if (list.isEmpty()) {
+            Log.d(TAG, "onCreateView: GET");
+            getList();
+        } else {
+            loadingBar.show();
+            Log.d(TAG, "onCreateView: ELSE");
+            fetchID(list.get(0).list.get(0));
+
+            long time = Stash.getLong(Constants.IS_TODAY, 0);
+            LocalDate date;
+            if (time != 0) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    date = Instant.ofEpochMilli(time)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
+                    LocalDate today = LocalDate.now();
+                    boolean isToday = date.equals(today);
+                    Log.d(TAG, "onCreate: ISTODAY " + isToday);
+                    if (!isToday) {
+                        getAllVods();
+                    } else {
+                        checkData();
+                    }
+                }
+            } else {
+                getAllVods();
+            }
+        }
+
+//        refreshFavoris();
     }
 
     private void initializeDialog() {
@@ -861,6 +882,7 @@ public class HomeFragment extends Fragment {
                     model.type = channelsModel.type;
                     model.banner = channelsModel.image;
                     model.series_id = channelsModel.series_id;
+                    model.streamID = channelsModel.stream_id;
                     model.extension = channelsModel.extension;
                     model.original_title = channelsModel.name;
                     fvrtList.add(model);

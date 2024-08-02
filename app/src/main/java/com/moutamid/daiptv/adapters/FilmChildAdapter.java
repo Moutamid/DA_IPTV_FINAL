@@ -90,6 +90,9 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
         });
 
         holder.bannerFilms.setOnLongClickListener(v -> {
+
+            Log.d(TAG, "onBindViewHolder: " + model.stream_id);
+
             FavoriteModel favoriteModel = new FavoriteModel();
             favoriteModel.id = UUID.randomUUID().toString();
             favoriteModel.image = model.stream_icon;
@@ -102,10 +105,19 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
             return true;
         });
 
+
         holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
                 holder.bannerFilms.requestFocus();
                 Log.d("Constants", "onBindViewHolder: " + model.added);
+//                itemSelected.selected(model);
+            }
+        });
+
+        holder.bannerFilms.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+//                holder.bannerFilms.requestFocus();
+//                Log.d("Constants", "onBindViewHolder: " + model.added);
                 itemSelected.selected(model);
             }
         });
