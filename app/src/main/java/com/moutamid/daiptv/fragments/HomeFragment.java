@@ -1008,7 +1008,7 @@ public class HomeFragment extends Fragment {
                     }
                     if (!fvrtList.isEmpty()) {
                         Collections.reverse(fvrtList);
-                        list.add(0, new TopItems("Reprendre la lecture", fvrtList));
+                        list.add(2, new TopItems("Reprendre la lecture", fvrtList));
                     }
 
                     requireActivity().runOnUiThread(() -> {

@@ -437,19 +437,18 @@ public class SeriesFragment extends Fragment {
                                 break;
                             }
                         }
-                        String path;
                         if (logoIndex != -1) {
-                            path = logos.getJSONObject(logoIndex).getString("file_path");
+                            logo = logos.getJSONObject(logoIndex).getString("file_path");
                         } else {
-                            path = "";
+                            logo = "";
                         }
 
-                        Log.d(TAG, "getlogo: " + path);
+                        Log.d(TAG, "getlogo: " + logo);
                         if (isAdded() && getActivity() != null) {
                             getActivity().runOnUiThread(() -> {
                                 binding.name.setVisibility(View.GONE);
                                 try {
-                                    Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                                    Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -555,18 +554,17 @@ public class SeriesFragment extends Fragment {
                             break;
                         }
                     }
-                    String path;
                     if (logoIndex != -1) {
-                        path = logos.getJSONObject(logoIndex).getString("file_path");
+                        logo = logos.getJSONObject(logoIndex).getString("file_path");
                     } else {
-                        path = "";
+                        logo = "";
                     }
-                    Log.d(TAG, "getlogo: " + path);
+                    Log.d(TAG, "getlogo: " + logo);
                     if (isAdded() && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             binding.name.setVisibility(View.GONE);
                             try {
-                                Glide.with(mContext).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                                Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -618,6 +616,7 @@ public class SeriesFragment extends Fragment {
 
         }).start();
     }
+    String logo = "";
 
     private void setUI() {
         try {
@@ -629,6 +628,19 @@ public class SeriesFragment extends Fragment {
 
             SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
             SimpleDateFormat outputFormat = new SimpleDateFormat("MMMM yyyy", Locale.FRANCE);
+
+            if ((!logo.isEmpty() && movieModel.tagline.isEmpty()) || movieModel.original_title.isEmpty()) {
+                Log.d(TAG, "setUI: HIDE");
+                binding.synopsis.setVisibility(View.GONE);
+            } else {
+                binding.synopsis.setVisibility(View.VISIBLE);
+            }
+
+            if (movieModel.tagline.isEmpty()) {
+                binding.desc.setVisibility(View.GONE);
+            } else {
+                binding.desc.setVisibility(View.VISIBLE);
+            }
 
             if (movieModel.isFrench) {
                 TranslateAPI translateAPI = new TranslateAPI(
