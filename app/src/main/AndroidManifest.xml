@@ -11,27 +11,31 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" /> <!-- <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <!-- <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> -->
     <!-- <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" /> -->
     <!-- <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> -->
     <!-- <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /> -->
     <!-- <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" /> -->
+
     <queries>
         <intent>
             <action android:name="android.support.customtabs.action.CustomTabsService" />
         </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
-
             <category android:name="android.intent.category.BROWSABLE" />
-
             <data android:scheme="https" />
         </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
-
             <category android:name="android.intent.category.BROWSABLE" />
-
             <data android:scheme="http" />
         </intent>
     </queries>
@@ -121,6 +125,19 @@
         <meta-data
             android:name="android.support.leanback.appbanner"
             android:resource="@drawable/logo" />
+
+        <receiver
+            android:name=".utilis.BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name=".utilis.MyAlarmReceiver" android:enabled="true"
+            android:exported="true"
+            android:permission="TODO" />
     </application>
 
 </manifest>

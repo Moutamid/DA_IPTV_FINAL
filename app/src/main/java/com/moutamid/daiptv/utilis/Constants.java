@@ -238,51 +238,51 @@ public class Constants {
 
     public static String regexName(String name) {
         name = name.replace("VOTSFR", "");
-        name = name.replace("VOTS", "");
-        name = name.replace("VOT", "");
-        name = name.replace("H.265", "");
+        name = name.replace(" VOTS ", "");
+        name = name.replace(" VOT ", "");
+        name = name.replace(" H.265 ", "");
         name = name.replace("|PT| ", "");
         name = name.replace("PT| ", "");
-        name = name.replace("PT", "");
+        name = name.replace(" PT ", "");
         name = name.replace("|IN| ", "");
         name = name.replace("IN| ", "");
-        name = name.replace("IN", "");
+        name = name.replace(" IN ", "");
         name = name.replace("|IT| ", "");
         name = name.replace("IT| ", "");
-        name = name.replace("IT", "");
+        name = name.replace(" IT ", "");
         name = name.replace("|FR| ", "");
         name = name.replace("FR| ", "");
-        name = name.replace("FR", "");
+        name = name.replace(" FR ", "");
         name = name.replace("|AR| ", "");
         name = name.replace("AR| ", "");
-        name = name.replace("AR", "");
+        name = name.replace(" AR ", "");
         name = name.replace("|EN| ", "");
         name = name.replace("EN| ", "");
-        name = name.replace("EN", "");
+        name = name.replace(" EN ", "");
         name = name.replace("|ES| ", "");
         name = name.replace("ES| ", "");
-        name = name.replace("ES", "");
+        name = name.replace(" ES ", "");
         name = name.replace("|BE| ", "");
         name = name.replace("BE| ", "");
-        name = name.replace("BE", "");
+        name = name.replace(" BE ", "");
         name = name.replace("|DE| ", "");
         name = name.replace("DE| ", "");
-        name = name.replace("DE", "");
+        name = name.replace(" DE ", "");
         name = name.replace("|PK| ", "");
         name = name.replace("PK| ", "");
-        name = name.replace("PK", "");
+        name = name.replace(" PK ", "");
         name = name.replace("|RO| ", "");
         name = name.replace("RO| ", "");
-        name = name.replace("RO", "");
+        name = name.replace(" RO ", "");
         name = name.replace("|RU| ", "");
         name = name.replace("RU| ", "");
-        name = name.replace("RU", "");
+        name = name.replace(" RU ", "");
         name = name.replace("|BR| ", "");
         name = name.replace("BR| ", "");
-        name = name.replace("BR", "");
+        name = name.replace(" BR ", "");
         name = name.replace("|UFC| ", "");
         name = name.replace("UFC| ", "");
-        name = name.replace("UFC", "");
+        name = name.replace(" UFC ", "");
         name = name.replace(".mkv", "");
         name = name.replaceAll("\\(\\d{4}\\)", "");
         name = name.replaceAll("\\| \\d{4} \\|", "");
@@ -336,7 +336,7 @@ public class Constants {
                     sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                     year = sdf.format(date);
                 } catch (Exception ee) {
-                    Log.d(TAG, "extractYear: ERROR ERROR " + ee.getLocalizedMessage());
+                    Log.d(TAG, "extractYear: ERROR " + ee.getLocalizedMessage());
                     try {
                         LocalDate date = null;
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {

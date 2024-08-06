@@ -631,7 +631,7 @@ public class HomeFragment extends Fragment {
                         break;
                     }
                 }
-                requireActivity().runOnUiThread(() -> setUI());
+                requireActivity().runOnUiThread(() -> { if(isAdded()) setUI();});
             } catch (JSONException e) {
                 e.printStackTrace();
                 loadingBar.dismiss();

@@ -14,6 +14,7 @@ public class ApiLinks {
     public static final String get_series_info = "&action=get_series_info";
     public static final String get_vod_info = "&action=get_vod_info";
     public static final String get_simple_data_table = "&action=get_simple_data_table";
+
     public static String base() {
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
         return userModel.url;
@@ -40,15 +41,19 @@ public class ApiLinks {
     public static String vodCategory() {
         return basePath() + get_vod_categories;
     }
+
     public static String seriesCategory() {
         return basePath() + get_series_categories;
     }
+
     public static String getVodByID(String id) {
         return basePath() + get_vod_streams + "&category_id=" + id;
     }
+
     public static String getSeriesByID(String id) {
         return basePath() + get_series + "&category_id=" + id;
     }
+
     public static String getLiveCategories() {
         return basePath() + get_live_categories;
     }
@@ -56,15 +61,19 @@ public class ApiLinks {
     public static String getLiveStreams() {
         return basePath() + get_live_streams;
     }
+
     public static String getLiveStreamsByID(String id) {
         return basePath() + get_live_streams + "&category_id=" + id;
     }
+
     public static String getSeriesInfoByID(String id) {
         return baseUrl() + get_series_info + "&series_id=" + id;
     }
+
     public static String getVodInfoByID(String id) {
         return baseUrl() + get_vod_info + "&vod_id=" + id;
     }
+
     public static String getDataTable(String id) {
         return baseUrl() + get_simple_data_table + "&stream_id=" + id;
     }

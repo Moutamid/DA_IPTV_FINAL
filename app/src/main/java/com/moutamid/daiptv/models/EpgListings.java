@@ -9,8 +9,8 @@ public class EpgListings {
     public String end;
     public String description;
     public String channel_id;
-    public long start_timestamp;
-    public long stop_timestamp;
+    public String start_timestamp;
+    public String stop_timestamp;
     public int now_playing;
     public int has_archive;
 

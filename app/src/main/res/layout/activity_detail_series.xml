@@ -73,7 +73,7 @@
                     android:id="@+id/synopsis"
                     android:layout_width="400dp"
                     android:layout_height="wrap_content"
-                    app:cardBackgroundColor="@color/transparent"
+                    app:cardBackgroundColor="@color/black_bg_trans"
                     app:cardCornerRadius="8dp"
                     app:cardElevation="0dp"
                     app:strokeColor="@color/transparent"
@@ -143,7 +143,7 @@
                         app:iconSize="20dp"
                         app:iconTint="@null"
                         app:strokeColor="@color/grey2"
-                        app:strokeWidth="1dp"
+                        app:strokeWidth="0dp"
                         tools:text="8.1" />
 
                     <TextView

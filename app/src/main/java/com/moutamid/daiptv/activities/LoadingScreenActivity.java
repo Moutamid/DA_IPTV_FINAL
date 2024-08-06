@@ -1,51 +1,80 @@
 package com.moutamid.daiptv.activities;
 
+import android.annotation.SuppressLint;
+import android.app.AlarmManager;
+import android.app.Dialog;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.Window;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.fxn.stash.Stash;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.moutamid.daiptv.MainActivity;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.ChannelsAdapter;
 import com.moutamid.daiptv.adapters.FilmParentAdapter;
 import com.moutamid.daiptv.adapters.SeriesParentAdapter;
+import com.moutamid.daiptv.database.AppDatabase;
 import com.moutamid.daiptv.databinding.ActivityLoadingScreenBinding;
 import com.moutamid.daiptv.models.CategoryModel;
 import com.moutamid.daiptv.models.ChannelsModel;
+import com.moutamid.daiptv.models.EPGModel;
 import com.moutamid.daiptv.models.FilmsModel;
 import com.moutamid.daiptv.models.MovieModel;
 import com.moutamid.daiptv.models.SeriesModel;
 import com.moutamid.daiptv.models.TVModel;
 import com.moutamid.daiptv.models.TopItems;
+import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.models.VodModel;
 import com.moutamid.daiptv.retrofit.Api;
 import com.moutamid.daiptv.retrofit.RetrofitClientInstance;
 import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
+import com.moutamid.daiptv.utilis.MyAlarmReceiver;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -58,12 +87,15 @@ public class LoadingScreenActivity extends AppCompatActivity {
     static ArrayList<SeriesModel> seriesChan = new ArrayList<>();
     ArrayList<FilmsModel> filmsAll = new ArrayList<>();
     ArrayList<TVModel> listAll = new ArrayList<>();
+    AppDatabase database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityLoadingScreenBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        database = AppDatabase.getInstance(this);
 
         String[] messages = {
                 "Chargement du contenu .",
@@ -84,7 +116,6 @@ public class LoadingScreenActivity extends AppCompatActivity {
         handler.post(runnable);
 
         getList();
-
     }
 
     private void getList() {
@@ -433,8 +464,25 @@ public class LoadingScreenActivity extends AppCompatActivity {
 
                     Stash.put(Constants.RECENT_CHANNELS_SERVER, filteredList);
 
-                    startActivity(new Intent(LoadingScreenActivity.this, MainActivity.class));
-                    finish();
+                    long time = Stash.getLong(Constants.IS_TODAY, 0);
+                    LocalDate date;
+                    if (time != 0) {
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                            date = Instant.ofEpochMilli(time)
+                                    .atZone(ZoneId.systemDefault())
+                                    .toLocalDate();
+                            LocalDate today = LocalDate.now();
+                            boolean isToday = date.equals(today);
+                            Log.d(TAG, "onCreate: ISTODAY " + isToday);
+                            if (!isToday) {
+                                database.epgDAO().Delete();
+                            }
+                        }
+                    } else {
+                        database.epgDAO().Delete();
+                    }
+
+                    getEpg();
                 } else {
                     Toast.makeText(LoadingScreenActivity.this, "Error :", Toast.LENGTH_SHORT).show();
                 }
@@ -444,6 +492,74 @@ public class LoadingScreenActivity extends AppCompatActivity {
             public void onFailure(Call<List<ChannelsModel>> call, Throwable t) {
                 t.printStackTrace();
                 Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
+            }
+        });
+    }
+
+    private void getEpg() {
+        Log.d("TAGGER", "get: LOADING");
+        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+        String url = ApiLinks.base() + "xmltv.php?username=" + userModel.username + "&password=" + userModel.password;
+
+        OkHttpClient client = new OkHttpClient();
+
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        client.newCall(request).enqueue(new okhttp3.Callback() {
+            @Override
+            public void onFailure(okhttp3.Call call, IOException e) {
+                e.printStackTrace();
+                // Handle failure
+            }
+
+            @Override
+            public void onResponse(okhttp3.Call call, okhttp3.Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                }
+
+                String xmlContent = response.body().string();
+
+                try {
+                    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                    DocumentBuilder builder = factory.newDocumentBuilder();
+                    Document document = builder.parse(new InputSource(new StringReader(xmlContent)));
+
+                    // Get the root element
+                    Element root = document.getDocumentElement();
+                    // Get a NodeList of programme elements
+                    NodeList programmeList = root.getElementsByTagName("programme");
+                    Log.d(TAG, "programmeList: " + programmeList.getLength());
+
+                    for (int i = 0; i < programmeList.getLength(); i++) {
+                        Node programmeNode = programmeList.item(i);
+                        if (programmeNode.getNodeType() == Node.ELEMENT_NODE) {
+                            Element programmeElement = (Element) programmeNode;
+
+                            // Get attributes
+                            String start = programmeElement.getAttribute("start");
+                            String stop = programmeElement.getAttribute("stop");
+                            String channel = programmeElement.getAttribute("channel");
+
+                            // Get child elements
+                            String title = programmeElement.getElementsByTagName("title").item(0).getTextContent();
+
+                            EPGModel epgModel = new EPGModel(start, stop, channel, title);
+                            database.epgDAO().insert(epgModel);
+                        }
+
+                        if (i == programmeList.getLength() - 1) {
+                            Stash.put(Constants.IS_TODAY, System.currentTimeMillis());
+                            startActivity(new Intent(LoadingScreenActivity.this, MainActivity.class));
+                            finish();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // Handle parsing error
+                }
             }
         });
     }

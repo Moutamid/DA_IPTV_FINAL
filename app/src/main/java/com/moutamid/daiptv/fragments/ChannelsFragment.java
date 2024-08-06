@@ -149,7 +149,7 @@ public class ChannelsFragment extends Fragment {
 
         ArrayList<CategoryModel> list = Stash.getArrayList(Constants.CHANNELS, CategoryModel.class);
         Log.d(TAG, "onCreateView: " + list.size());
-        if (list.isEmpty()) addButton();
+        if (list.isEmpty()) addButton(false);
         else {
             showButtons(list);
             switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
@@ -159,6 +159,7 @@ public class ChannelsFragment extends Fragment {
 
     private void showButtons(ArrayList<CategoryModel> list) {
         channels = new HashMap<>();
+        selectedButton = null;
         ArrayList<ChannelsModel> channelsList1 = Stash.getArrayList(Constants.CHANNELS_ALL, ChannelsModel.class);
         for (CategoryModel model : list) {
             if (!model.category_name.isEmpty()) {
@@ -186,7 +187,7 @@ public class ChannelsFragment extends Fragment {
                     selectedGroup = model.category_name;
                     if (selectedButton != null) {
                         selectedButton.setStrokeColorResource(R.color.transparent);
-                    }
+                    } else Log.d(TAG, "showButtons: SELECTED BUTTON NULL");
                     button.setStrokeColorResource(R.color.red);
                     selectedButton = button;
                     switch (selectedGroup) {
@@ -279,8 +280,9 @@ public class ChannelsFragment extends Fragment {
 
     private MaterialButton selectedButton = null;
 
-    private void addButton() {
+    private void addButton(boolean b) {
         dialog.show();
+        selectedButton = null;
         ArrayList<CategoryModel> list = new ArrayList<>();
         list.add(0, new CategoryModel("recent_played", "Chaînes récentes", 0));
         list.add(1, new CategoryModel("recent", "Rejouer", 0));
@@ -296,6 +298,7 @@ public class ChannelsFragment extends Fragment {
                     list.addAll(response.body());
                     channels = new HashMap<>();
                     requireActivity().runOnUiThread(() -> {
+                        binding.sidePanel.removeAllViews();
                         for (CategoryModel model : list) {
                             if (!model.category_name.isEmpty()) {
                                 channels.put(model.category_name.trim(), model.category_id);
@@ -310,10 +313,18 @@ public class ChannelsFragment extends Fragment {
                                 button.setStrokeColorResource(R.color.transparent);
                                 button.setStrokeWidth(2);
 
-                                if (selectedButton == null && button.getText().toString().equals("FRANCE FHD | TV")) {
-                                    button.setStrokeColorResource(R.color.red);
-                                    selectedButton = button;
-                                    selectedButton.requestFocus();
+                                if (b) {
+                                    if (selectedButton == null && button.getText().toString().equals("All")) {
+                                        button.setStrokeColorResource(R.color.red);
+                                        selectedButton = button;
+                                        selectedButton.requestFocus();
+                                    }
+                                } else {
+                                    if (selectedButton == null && button.getText().toString().equals("FRANCE FHD | TV")) {
+                                        button.setStrokeColorResource(R.color.red);
+                                        selectedButton = button;
+                                        selectedButton.requestFocus();
+                                    }
                                 }
                                 button.setOnClickListener(v -> {
                                     isAll = false;
@@ -325,7 +336,19 @@ public class ChannelsFragment extends Fragment {
                                     selectedButton = button;
                                     switch (selectedGroup) {
                                         case "All":
-                                            showAllItems();
+                                            ArrayList<ChannelsModel> allList = Stash.getArrayList(Constants.CHANNELS_ALL, ChannelsModel.class);
+                                            if (allList.isEmpty()) {
+                                                showAllItems();
+                                            } else {
+                                                List<ChannelsModel> filteredList = allList.stream()
+                                                        .filter(channel -> channel.tv_archive == 1)
+                                                        .collect(Collectors.toList());
+                                                Log.d(TAG, "showButtons: " + filteredList.size());
+                                                Stash.put(Constants.RECENT_CHANNELS_SERVER, filteredList);
+                                                adapter = new ChannelsAdapter(mContext, allList, null);
+                                                binding.channelsRC.setAdapter(adapter);
+                                                selectedButton.setText("All - " + allList.size());
+                                            }
                                             break;
                                         case "Rejouer":
                                             showRecentsServer();
@@ -344,7 +367,11 @@ public class ChannelsFragment extends Fragment {
                             }
                         }
                         Stash.put(Constants.CHANNELS, list);
-                        switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
+                        if (b) {
+                            showAllItems();
+                        } else {
+                            switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
+                        }
                         setButtonText(list, 4);
                         dialog.dismiss();
                     });
@@ -403,6 +430,11 @@ public class ChannelsFragment extends Fragment {
                     Stash.put(Constants.RECENT_CHANNELS_SERVER, filteredList);
 
                     requireActivity().runOnUiThread(() -> {
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            snackbar = null;
+                            Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                        }
                         adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list, null);
                         binding.channelsRC.setAdapter(adapter);
                         dialog.dismiss();
@@ -539,6 +571,6 @@ public class ChannelsFragment extends Fragment {
     public void refreshList() {
         snackbar = Snackbar.make(binding.getRoot(), "la playlist est rafraîchissante", Snackbar.LENGTH_INDEFINITE);
         snackbar.show();
-        addButton();
+        addButton(true);
     }
 }

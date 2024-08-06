@@ -1,6 +1,9 @@
 package com.moutamid.daiptv;
 
+import android.app.AlarmManager;
 import android.app.Dialog;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
@@ -55,6 +58,7 @@ import com.moutamid.daiptv.retrofit.RetrofitClientInstance;
 import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
 import com.moutamid.daiptv.utilis.Features;
+import com.moutamid.daiptv.utilis.MyAlarmReceiver;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -67,8 +71,10 @@ import java.io.StringReader;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -189,148 +195,20 @@ public class MainActivity extends BaseActivity {
             getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, new RechercheFragment()).commit();
         });
 
-        long time = Stash.getLong(Constants.IS_TODAY, 0);
-        LocalDate date;
-        if (time != 0) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                date = Instant.ofEpochMilli(time)
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate();
-                LocalDate today = LocalDate.now();
-                boolean isToday = date.equals(today);
-                Log.d(TAG, "onCreate: ISTODAY " + isToday);
-                if (!isToday) {
-                    database.epgDAO().Delete();
-                }
-            }
-        } else {
-            database.epgDAO().Delete();
-        }
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, MyAlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, new Random().nextInt(100), intent, PendingIntent.FLAG_IMMUTABLE);
 
-        List<EPGModel> epg = database.epgDAO().getEPG();
-        if (epg.isEmpty()) {
-            getEpg();
-        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.add(Calendar.SECOND, 10);
+//        calendar.set(Calendar.HOUR_OF_DAY, 1);
+//        calendar.set(Calendar.MINUTE, 0);
+
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
     }
 
     private static final String TAG = "MainActivity";
-
-
-    Snackbar snackbarEpg;
-
-    private void getEpg() {
-        Dialog dialog = new Dialog(this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.progress_layout);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        dialog.setCancelable(false);
-        dialog.show();
-
-        snackbarEpg = Snackbar.make(binding.getRoot(), "Loading EPG ....", Snackbar.LENGTH_INDEFINITE);
-        snackbarEpg.show();
-
-        Log.d("TAGGER", "get: LOADING");
-        String url = ApiLinks.base() + "xmltv.php?username=" + userModel.username + "&password=" + userModel.password;
-//        Api api = RetrofitClientInstance.getRetrofitInstanceXml().create(Api.class);
-//        Call<EpgResponse> call = api.getEpgData(url);
-//        call.enqueue(new Callback<EpgResponse>() {
-//            @Override
-//            public void onResponse(Call<EpgResponse> call, Response<EpgResponse> response) {
-//                Log.d(TAG, "onResponse: " + response.toString());
-//                if (response.isSuccessful() && response.body() != null) {
-//                    List<EpgResponse.Programme> programmes = response.body().getProgrammes();
-//                    Log.d(TAG, "programmeList: " + programmes.size());
-//                    for (EpgResponse.Programme programme : programmes) {
-//                        String start = programme.getStart();
-//                        String stop = programme.getStop();
-//                        String channel = programme.getChannel();
-//                        String title = programme.getTitle();
-//                        EPGModel epgModel = new EPGModel(start, stop, channel, title);
-//                        database.epgDAO().insert(epgModel);
-//                    }
-//                    dialog.dismiss();
-//                    snackbarEpg.dismiss();
-//                    Stash.put(Constants.IS_TODAY, System.currentTimeMillis());
-//                } else {
-//                    int statusCode = response.code();
-//                    Log.d(TAG, "onResponse: Error code : " + statusCode);
-//                }
-//            }
-//
-//            @Override
-//            public void onFailure(Call<EpgResponse> call, Throwable t) {
-//                dialog.dismiss();
-//                snackbarEpg.dismiss();
-//                t.printStackTrace();
-//                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
-//            }
-//        });
-
-        OkHttpClient client = new OkHttpClient();
-
-        Request request = new Request.Builder()
-                .url(url)
-                .build();
-
-        client.newCall(request).enqueue(new okhttp3.Callback() {
-            @Override
-            public void onFailure(okhttp3.Call call, IOException e) {
-                e.printStackTrace();
-                // Handle failure
-            }
-
-            @Override
-            public void onResponse(okhttp3.Call call, Response response) throws IOException {
-                if (!response.isSuccessful()) {
-                    throw new IOException("Unexpected code " + response);
-                }
-
-                String xmlContent = response.body().string();
-
-                try {
-                    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                    DocumentBuilder builder = factory.newDocumentBuilder();
-                    Document document = builder.parse(new InputSource(new StringReader(xmlContent)));
-
-                    // Get the root element
-                    Element root = document.getDocumentElement();
-                    // Get a NodeList of programme elements
-                    NodeList programmeList = root.getElementsByTagName("programme");
-                    Log.d(TAG, "programmeList: " + programmeList.getLength());
-
-                    for (int i = 0; i < programmeList.getLength(); i++) {
-                        Node programmeNode = programmeList.item(i);
-                        if (programmeNode.getNodeType() == Node.ELEMENT_NODE) {
-                            Element programmeElement = (Element) programmeNode;
-
-                            // Get attributes
-                            String start = programmeElement.getAttribute("start");
-                            String stop = programmeElement.getAttribute("stop");
-                            String channel = programmeElement.getAttribute("channel");
-
-                            // Get child elements
-                            String title = programmeElement.getElementsByTagName("title").item(0).getTextContent();
-
-                            EPGModel epgModel = new EPGModel(start, stop, channel, title);
-                            database.epgDAO().insert(epgModel);
-                        }
-
-                        if (i == programmeList.getLength() - 1) {
-                            dialog.dismiss();
-                            snackbarEpg.dismiss();
-                            Stash.put(Constants.IS_TODAY, System.currentTimeMillis());
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    // Handle parsing error
-                }
-            }
-        });
-
-
-    }
-
 
     @Override
     protected void onResume() {

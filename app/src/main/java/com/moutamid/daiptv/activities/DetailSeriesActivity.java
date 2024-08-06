@@ -15,6 +15,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.bumptech.glide.Glide;
 import com.fxn.stash.Stash;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.moutamid.daiptv.BaseActivity;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.CastsAdapter;
@@ -238,6 +239,11 @@ public class DetailSeriesActivity extends BaseActivity {
                     dialog.dismiss();
                     Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
                     Toast.makeText(this, "Film introuvable dans l'API.", Toast.LENGTH_SHORT).show();
+
+                    new MaterialAlertDialogBuilder(this)
+                            .setMessage("Aucune série trouvée pour le nom : \"" + name + "\"")
+                            .setNegativeButton("Fermer", (dialog1, which) -> dialog1.dismiss())
+                            .show();
                 });
             }
         }).start();
@@ -546,8 +552,13 @@ public class DetailSeriesActivity extends BaseActivity {
         Glide.with(this).load(Constants.getImageLink(movieModel.banner)).into(binding.banner);
 
         binding.trailer.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(movieModel.trailer));
-            startActivity(intent);
+            Log.d(TAG, "setUI: " + movieModel.trailer);
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(movieModel.trailer));
+                startActivity(intent);
+            } catch (Exception e) {
+                Toast.makeText(this, "Aucune application trouvée pour ouvrir ce lien", Toast.LENGTH_SHORT).show();
+            }
         });
 
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);

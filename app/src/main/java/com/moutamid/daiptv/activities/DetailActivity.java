@@ -552,8 +552,13 @@ public class DetailActivity extends BaseActivity {
         Glide.with(this).load(Constants.getImageLink(movieModel.banner)).into(binding.banner);
 
         binding.trailer.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(movieModel.trailer));
-            startActivity(intent);
+            Log.d(TAG, "setUI: " + movieModel.trailer);
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(movieModel.trailer));
+                startActivity(intent);
+            } catch (Exception e) {
+                Toast.makeText(this, "Aucune application trouvée pour ouvrir ce lien", Toast.LENGTH_SHORT).show();
+            }
         });
 
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);

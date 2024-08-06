@@ -45,7 +45,7 @@ public class CurrentPrograms extends RecyclerView.Adapter<CurrentPrograms.Progra
     @Override
     public void onBindViewHolder(@NonNull ProgramVh holder, int position) {
         EpgListings epg = list.get(holder.getAbsoluteAdapterPosition());
-        byte[] decodedBytes = null;
+        byte[] decodedBytes;
         String decodedString;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             decodedBytes = Base64.getDecoder().decode(epg.title);
@@ -57,7 +57,9 @@ public class CurrentPrograms extends RecyclerView.Adapter<CurrentPrograms.Progra
 
         holder.itemView.setOnClickListener(v -> {
             UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-            String link = userModel.url + userModel.username + "/" + userModel.password + "/" + epg.id;
+            // Uri.parse(account.getHost() + "timeshift/" + account.getUsername() + "/" + account.getPassword() + "/" + duration + "/" + start + "/" + ReplayAdapter.this.channel_id + ".m3u8");
+            long duration = Long.parseLong(epg.stop_timestamp) - Long.parseLong(epg.start_timestamp);
+            String link = userModel.url + "timeshift/" + userModel.username + "/" + userModel.password + "/" + duration + "/" + epg.start_timestamp + "/" + model.stream_id + ".m3u8";
             Log.d(TAG, "onBindViewHolder: " + link);
             ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.RECENT_CHANNELS, ChannelsModel.class);
             boolean check = false;

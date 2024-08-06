@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.PagerSnapHelper;
 
 import com.bumptech.glide.Glide;
 import com.fxn.stash.Stash;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.mannan.translateapi.Language;
 import com.mannan.translateapi.TranslateAPI;
@@ -324,6 +325,13 @@ public class SeriesFragment extends Fragment {
                     JSONObject object = array.getJSONObject(0);
                     id = object.getInt("id");
                     getDetails(id, Constants.lang_fr, model);
+                } else {
+                    requireActivity().runOnUiThread(() -> {
+                        new MaterialAlertDialogBuilder(requireContext())
+                                .setMessage("Aucune série trouvée pour le nom : \"" + name + "\"")
+                                .setNegativeButton("Fermer", (dialog1, which) -> dialog1.dismiss())
+                                .show();
+                    });
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
