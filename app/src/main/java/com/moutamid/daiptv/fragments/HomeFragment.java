@@ -16,21 +16,14 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
 import com.fxn.stash.Stash;
 import com.google.android.material.snackbar.Snackbar;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.HomeParentAdapter;
-import com.moutamid.daiptv.database.AppDatabase;
 import com.moutamid.daiptv.databinding.FragmentHomeBinding;
 import com.moutamid.daiptv.listener.ItemSelectedHome;
-import com.moutamid.daiptv.models.EPGModel;
 import com.moutamid.daiptv.models.FavoriteModel;
-import com.moutamid.daiptv.models.FilmsModel;
 import com.moutamid.daiptv.models.MovieModel;
 import com.moutamid.daiptv.models.SeriesModel;
 import com.moutamid.daiptv.models.TopItems;
@@ -44,16 +37,10 @@ import com.moutamid.daiptv.utilis.Constants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -69,9 +56,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -631,7 +615,12 @@ public class HomeFragment extends Fragment {
                         break;
                     }
                 }
-                requireActivity().runOnUiThread(() -> { if(isAdded()) setUI();});
+
+                if (getActivity() != null && isAdded()) {
+                    getActivity().runOnUiThread(() -> {
+                        if (isAdded()) setUI();
+                    });
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
                 loadingBar.dismiss();

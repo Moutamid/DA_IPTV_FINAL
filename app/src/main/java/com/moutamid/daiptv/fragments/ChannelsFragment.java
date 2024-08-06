@@ -29,10 +29,10 @@ import com.moutamid.daiptv.databinding.FragmentChannelsBinding;
 import com.moutamid.daiptv.models.CategoryModel;
 import com.moutamid.daiptv.models.ChannelsModel;
 import com.moutamid.daiptv.models.EpgListings;
+import com.moutamid.daiptv.models.EpgResponse;
 import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.retrofit.Api;
-import com.moutamid.daiptv.models.EpgResponse;
 import com.moutamid.daiptv.retrofit.RetrofitClientInstance;
 import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
@@ -376,13 +376,14 @@ public class ChannelsFragment extends Fragment {
                         dialog.dismiss();
                     });
                 } else {
-                    requireActivity().runOnUiThread(() -> {
-                        dialog.dismiss();
-                        if (snackbar != null) {
-                            snackbar.dismiss();
-                            Toast.makeText(mContext, "Error code : " + response.code(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    if (getActivity() != null && isAdded())
+                        getActivity().runOnUiThread(() -> {
+                            dialog.dismiss();
+                            if (snackbar != null) {
+                                snackbar.dismiss();
+                                Toast.makeText(mContext, "Error code : " + response.code(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     int statusCode = response.code();
                     Log.d(TAG, "onResponse: Error code : " + statusCode);
                 }
@@ -392,13 +393,14 @@ public class ChannelsFragment extends Fragment {
             public void onFailure(Call<List<CategoryModel>> call, Throwable t) {
                 t.printStackTrace();
                 Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
-                requireActivity().runOnUiThread(() -> {
-                    dialog.dismiss();
-                    if (snackbar != null) {
-                        snackbar.dismiss();
-                        Toast.makeText(mContext, "Error : " + t.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
+                if (getActivity() != null && isAdded())
+                    getActivity().runOnUiThread(() -> {
+                        dialog.dismiss();
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            Toast.makeText(mContext, "Error : " + t.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
             }
         });
     }
@@ -429,25 +431,28 @@ public class ChannelsFragment extends Fragment {
 
                     Stash.put(Constants.RECENT_CHANNELS_SERVER, filteredList);
 
-                    requireActivity().runOnUiThread(() -> {
-                        if (snackbar != null) {
-                            snackbar.dismiss();
-                            snackbar = null;
-                            Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
-                        }
-                        adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list, null);
-                        binding.channelsRC.setAdapter(adapter);
-                        dialog.dismiss();
-                        selectedButton.setText("All" + " - " + list.size());
-                    });
+                    if (getActivity() != null && isAdded()) {
+                        getActivity().runOnUiThread(() -> {
+                            if (snackbar != null) {
+                                snackbar.dismiss();
+                                snackbar = null;
+                                Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                            }
+                            adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list, null);
+                            binding.channelsRC.setAdapter(adapter);
+                            dialog.dismiss();
+                            selectedButton.setText("All" + " - " + list.size());
+                        });
+                    }
                 } else {
-                    requireActivity().runOnUiThread(() -> {
-                        dialog.dismiss();
-                        if (snackbar != null) {
-                            snackbar.dismiss();
-                            Toast.makeText(mContext, "Error Code : " + response.code(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    if (getActivity() != null && isAdded())
+                        getActivity().runOnUiThread(() -> {
+                            dialog.dismiss();
+                            if (snackbar != null) {
+                                snackbar.dismiss();
+                                Toast.makeText(mContext, "Error Code : " + response.code(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
                 }
             }
 
@@ -455,13 +460,14 @@ public class ChannelsFragment extends Fragment {
             public void onFailure(Call<List<ChannelsModel>> call, Throwable t) {
                 t.printStackTrace();
                 Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
-                requireActivity().runOnUiThread(() -> {
-                    dialog.dismiss();
-                    if (snackbar != null) {
-                        snackbar.dismiss();
-                        Toast.makeText(mContext, t.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                if (getActivity() != null && isAdded())
+                    getActivity().runOnUiThread(() -> {
+                        dialog.dismiss();
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            Toast.makeText(mContext, t.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                        }
+                    });
             }
         });
     }
@@ -479,18 +485,20 @@ public class ChannelsFragment extends Fragment {
                 if (response.isSuccessful()) {
                     List<ChannelsModel> list = response.body();
 
-                    requireActivity().runOnUiThread(() -> {
-                        dialog.dismiss();
-                        if (snackbar != null) {
-                            snackbar.dismiss();
-                            snackbar = null;
-                            Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
-                        }
-                        adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list, null);
-                        binding.channelsRC.setAdapter(adapter);
-                        String[] n = splitString(name);
-                        selectedButton.setText(n[0] + " - " + list.size());
-                    });
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            dialog.dismiss();
+                            if (snackbar != null) {
+                                snackbar.dismiss();
+                                snackbar = null;
+                                Toast.makeText(mContext, "Actualisation terminée ! Profitez de votre playlist mise à jour.", Toast.LENGTH_SHORT).show();
+                            }
+                            adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list, null);
+                            binding.channelsRC.setAdapter(adapter);
+                            String[] n = splitString(name);
+                            selectedButton.setText(n[0] + " - " + list.size());
+                        });
+                    }
                 }
             }
 
@@ -498,13 +506,14 @@ public class ChannelsFragment extends Fragment {
             public void onFailure(Call<List<ChannelsModel>> call, Throwable t) {
                 t.printStackTrace();
                 Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
-                requireActivity().runOnUiThread(() -> {
-                    dialog.dismiss();
-                    if (snackbar != null) {
-                        snackbar.dismiss();
-                        Toast.makeText(mContext, t.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                if (getActivity() != null && isAdded())
+                    getActivity().runOnUiThread(() -> {
+                        dialog.dismiss();
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                            Toast.makeText(mContext, t.getLocalizedMessage() + "", Toast.LENGTH_SHORT).show();
+                        }
+                    });
             }
         });
     }

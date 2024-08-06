@@ -444,8 +444,10 @@ public class FilmFragment extends Fragment {
                         break;
                     }
                 }
-                if (isAdded() && getActivity() != null) {
-                    getActivity().runOnUiThread(() -> setUI());
+                if (getActivity() != null && isAdded()) {
+                    getActivity().runOnUiThread(() -> {
+                        if (isAdded()) setUI();
+                    });
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
