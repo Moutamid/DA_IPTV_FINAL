@@ -17,7 +17,7 @@
         android:clickable="true"
         android:focusable="true"
         app:strokeWidth="3dp"
-        android:nextFocusUp="@id/searchET"
+        android:nextFocusUp="@id/Accueil"
         app:strokeColor="@color/stroke"
         android:focusableInTouchMode="true"
         app:cardBackgroundColor="@color/grey"

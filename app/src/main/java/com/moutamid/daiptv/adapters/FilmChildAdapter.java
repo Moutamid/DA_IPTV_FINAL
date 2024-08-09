@@ -31,6 +31,7 @@ import com.moutamid.daiptv.utilis.Constants;
 
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.ChildVH> {
 
@@ -60,7 +61,16 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
         }
 
         try {
-            String link = model.stream_icon.startsWith("/") ? Constants.getImageLink(model.stream_icon) : model.stream_icon.trim();
+
+            String link;
+            if (Pattern.compile(Constants.URL_REGEX).matcher(model.stream_icon.trim()).matches()) {
+                link = model.stream_icon.trim();
+            } else {
+                link = Constants.getImageLink(model.stream_icon.trim());
+            }
+
+           // String link = model.stream_icon.startsWith("/") ? Constants.getImageLink(model.stream_icon) : model.stream_icon.trim();
+
             Glide.with(context).load(link).listener(new RequestListener<Drawable>() {
                 @Override
                 public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object object, @NonNull Target<Drawable> target, boolean isFirstResource) {

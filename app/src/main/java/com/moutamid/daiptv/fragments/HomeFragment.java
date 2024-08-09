@@ -800,6 +800,7 @@ public class HomeFragment extends Fragment {
         Log.d(TAG, "setUI: " + Constants.getImageLink(movieModel.banner));
         Log.d(TAG, "setUI: " + Constants.getImageLink(logo));
         Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
+        Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
     }
 
     @Override

@@ -20,6 +20,7 @@ import com.moutamid.daiptv.BaseActivity;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.CastsAdapter;
 import com.moutamid.daiptv.databinding.ActivityDetailSeriesBinding;
+import com.moutamid.daiptv.fragments.HomeFragment;
 import com.moutamid.daiptv.models.CastModel;
 import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.MovieModel;
@@ -98,18 +99,43 @@ public class DetailSeriesActivity extends BaseActivity {
             favoriteModel.series_id = model.series_id;
             favoriteModel.category_id = model.category_id;
             favoriteModel.type = model.stream_type;
-            new AddFavoriteDialog(this, favoriteModel, check -> {
-                if (check) {
-                    UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-                    ArrayList<FavoriteModel> filmsList = Stash.getArrayList(userModel.id, FavoriteModel.class);
-                    boolean b = filmsList.stream().anyMatch(favorite -> favorite.stream_id == Integer.parseInt(infoModel.id));
-                    if (b) {
-                        binding.add.setText("Retirer des favoris");
-                    } else {
-                        binding.add.setText("Ajouter aux favoris");
-                    }
+
+            UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+            ArrayList<FavoriteModel> list = Stash.getArrayList(userModel.id, FavoriteModel.class);
+            boolean check = list.stream().anyMatch(favorite -> favorite.stream_id == favoriteModel.stream_id);
+
+            if (!check) {
+                list.add(favoriteModel);
+                Log.d(TAG, "show: " + favoriteModel.stream_id);
+                Log.d(TAG, "show: ADDED");
+                Stash.put(userModel.id, list);
+                Toast.makeText(this, "Ajouté à la liste des favoris", Toast.LENGTH_SHORT).show();
+                binding.add.setText("Retirer des favoris");
+            } else {
+                int index = list.stream()
+                        .filter(favorite -> favorite.stream_id == favoriteModel.stream_id)
+                        .findFirst()
+                        .map(list::indexOf)
+                        .orElse(-1);
+                if (index != -1) {
+                    list.remove(index);
                 }
-            }).show();
+                Stash.put(userModel.id, list);
+                binding.add.setText("Ajouter aux favoris");
+                Toast.makeText(this, "Supprimé de la liste des favoris", Toast.LENGTH_SHORT).show();
+            }
+//            new AddFavoriteDialog(this, favoriteModel, check -> {
+//                if (check) {
+//                    UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+//                    ArrayList<FavoriteModel> filmsList = Stash.getArrayList(userModel.id, FavoriteModel.class);
+//                    boolean b = filmsList.stream().anyMatch(favorite -> favorite.stream_id == Integer.parseInt(infoModel.id));
+//                    if (b) {
+//                        binding.add.setText("Retirer des favoris");
+//                    } else {
+//                        binding.add.setText("Ajouter aux favoris");
+//                    }
+//                }
+//            }).show();
         });
 
 

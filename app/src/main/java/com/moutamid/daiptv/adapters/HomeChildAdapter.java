@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,6 +37,7 @@ import com.moutamid.daiptv.utilis.Constants;
 
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.MovieVH> {
     private static final String TAG = "HomeChildAdapter";
@@ -97,14 +99,17 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
             });
         }
 
-
         String link;
+        if (Pattern.compile(Constants.URL_REGEX).matcher(model.banner).matches()) {
+            link = model.banner;
+        } else {
+            link = Constants.getImageLink(model.banner);
+        }
+
         if (reprendreLaLecture) {
             holder.name.setText(model.original_title);
-            link = Constants.getImageLink(model.banner);
+           // link = Constants.getImageLink(model.banner);
             Log.d(TAG, "onBindViewHolder: " + link);
-        } else {
-            link = model.type.equals(Constants.TYPE_SERIES) && favoris ? model.banner : Constants.getImageLink(model.banner);
         }
         Glide.with(context).load(link).listener(new RequestListener<Drawable>() {
             @Override
@@ -127,6 +132,9 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
 
         holder.banner.setOnLongClickListener(v -> {
             Log.d(TAG, "onFocusChange: NAME " + model.original_title);
+            Log.d(TAG, "onFocusChange: banner " + model.banner);
+            Log.d(TAG, "onFocusChange: banner " + model.type);
+            Log.d(TAG, "onFocusChange: banner " + link);
 
             FavoriteModel favoriteModel = new FavoriteModel();
             favoriteModel.id = UUID.randomUUID().toString();

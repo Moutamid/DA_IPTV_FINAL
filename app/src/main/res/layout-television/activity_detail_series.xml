@@ -274,6 +274,7 @@
                 android:layout_below="@id/resume"
                 android:padding="15dp"
                 android:text="Acteurs"
+                android:layout_marginTop="10dp"
                 android:textColor="@color/white"
                 android:textSize="18sp" />
 

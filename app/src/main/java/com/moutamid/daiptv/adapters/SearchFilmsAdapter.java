@@ -22,6 +22,7 @@ import com.moutamid.daiptv.utilis.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class SearchFilmsAdapter extends RecyclerView.Adapter<SearchFilmsAdapter.SearchVH> {
 
@@ -44,7 +45,13 @@ public class SearchFilmsAdapter extends RecyclerView.Adapter<SearchFilmsAdapter.
     public void onBindViewHolder(@NonNull SearchVH holder, int position) {
         VodModel model = list.get(holder.getAdapterPosition());
         try {
-            String link = model.stream_icon.startsWith("/") ? Constants.getImageLink(model.stream_icon) : model.stream_icon.trim();
+            String link;
+            if (Pattern.compile(Constants.URL_REGEX).matcher(model.stream_icon.trim()).matches()) {
+                link = model.stream_icon.trim();
+            } else {
+                link = Constants.getImageLink(model.stream_icon.trim());
+            }
+
             Glide.with(context).load(link).placeholder(R.color.transparent).into(holder.image);
 
             holder.itemView.setOnClickListener(v -> {

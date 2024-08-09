@@ -30,6 +30,7 @@ import com.moutamid.daiptv.utilis.Constants;
 
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.ChildVH> {
 
@@ -57,7 +58,16 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
     public void onBindViewHolder(@NonNull ChildVH holder, int position) {
         SeriesModel model = list.get(holder.getAdapterPosition());
         try {
-            String link = model.cover.startsWith("/") ? Constants.getImageLink(model.cover) : model.cover.trim();
+
+            String link;
+            if (Pattern.compile(Constants.URL_REGEX).matcher(model.cover.trim()).matches()) {
+                link = model.cover.trim();
+            } else {
+                link = Constants.getImageLink(model.cover.trim());
+            }
+
+           // String link = model.cover.startsWith("/") ? Constants.getImageLink(model.cover) : model.cover.trim();
+
             Glide.with(context).load(link).listener(new RequestListener<Drawable>() {
                 @Override
                 public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object object, @NonNull Target<Drawable> target, boolean isFirstResource) {

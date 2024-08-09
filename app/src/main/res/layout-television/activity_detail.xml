@@ -252,7 +252,7 @@
                 android:padding="15dp"
                 android:text="Acteurs"
                 android:layout_below="@id/linearLayout"
-                android:layout_marginTop="15dp"
+                android:layout_marginTop="20dp"
                 android:textColor="@color/white"
                 android:textSize="18sp" />
 

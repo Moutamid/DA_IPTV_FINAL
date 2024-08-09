@@ -1,13 +1,11 @@
 package com.moutamid.daiptv;
 
 import android.app.AlarmManager;
-import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
@@ -17,27 +15,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.PopupWindow;
 import android.widget.TextView;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.fxn.stash.Stash;
 import com.google.android.gms.security.ProviderInstaller;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.snackbar.Snackbar;
 import com.moutamid.daiptv.activities.EditProfileActivity;
 import com.moutamid.daiptv.activities.ManageProfileActivity;
 import com.moutamid.daiptv.activities.MyListActivity;
@@ -48,39 +31,15 @@ import com.moutamid.daiptv.fragments.FilmFragment;
 import com.moutamid.daiptv.fragments.HomeFragment;
 import com.moutamid.daiptv.fragments.RechercheFragment;
 import com.moutamid.daiptv.fragments.SeriesFragment;
-import com.moutamid.daiptv.models.EPGModel;
-import com.moutamid.daiptv.models.TopItems;
 import com.moutamid.daiptv.models.UserModel;
-import com.moutamid.daiptv.models.VodModel;
-import com.moutamid.daiptv.retrofit.Api;
-import com.moutamid.daiptv.retrofit.EpgResponse;
-import com.moutamid.daiptv.retrofit.RetrofitClientInstance;
-import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
 import com.moutamid.daiptv.utilis.Features;
 import com.moutamid.daiptv.utilis.MyAlarmReceiver;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.List;
 import java.util.Random;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import retrofit2.Call;
-import retrofit2.Callback;
 public class MainActivity extends BaseActivity {
     ActivityMainBinding binding;
     UserModel userModel;
@@ -254,6 +213,7 @@ public class MainActivity extends BaseActivity {
                         binding.indicatorFilms.setVisibility(View.GONE);
                         binding.indicatorSeries.setVisibility(View.GONE);
                         binding.indicatorRecherche.setVisibility(View.GONE);
+                        Log.d(TAG, "onFocusChange: CHANNEL");
                         getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, channelsFragment).commit();
                     }
                 }
@@ -271,6 +231,7 @@ public class MainActivity extends BaseActivity {
                         binding.indicatorFilms.setVisibility(View.VISIBLE);
                         binding.indicatorSeries.setVisibility(View.GONE);
                         binding.indicatorRecherche.setVisibility(View.GONE);
+                        Log.d(TAG, "onFocusChange: FILM");
                         getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, filmFragment).commit();
                     }
                 }

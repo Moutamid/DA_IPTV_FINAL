@@ -28,7 +28,7 @@
         app:strokeWidth="3dp"
         android:layout_marginStart="-10dp"
         android:layout_toRightOf="@id/count"
-        android:nextFocusUp="@id/series"
+        android:nextFocusUp="@id/Films"
         app:strokeColor="@color/stroke"
         android:focusableInTouchMode="true"
         app:cardBackgroundColor="@color/grey"

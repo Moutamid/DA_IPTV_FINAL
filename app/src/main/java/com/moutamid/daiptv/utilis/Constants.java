@@ -71,6 +71,8 @@ public class Constants {
     public static final String movieDetails = "https://api.themoviedb.org/3/";
     public static final String episodeDetails = "https://api.themoviedb.org/3/tv/";
 
+    public static final String URL_REGEX = "^((https?|ftp)://)?(([a-zA-Z0-9\\-\\.]+)\\.([a-zA-Z]{2,4}))(\\:[0-9]{1,5})?(/.*)?$";
+
     public static String getImageLink(String path) {
         return imageLink + path;
     }

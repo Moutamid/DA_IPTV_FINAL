@@ -54,7 +54,7 @@ public class ChannelsFragment extends Fragment {
     String selectedGroup = "";
     ChannelsAdapter adapter;
     Dialog dialog;
-    private static final String TAG = "ChannelsFragment";
+    private static final String TAG = "MainActivity";
     Map<String, String> channels;
     private Context mContext;
 
@@ -129,6 +129,7 @@ public class ChannelsFragment extends Fragment {
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.mContext = context;
+        Log.d(TAG, "onAttach: ");
     }
 
     @Override
@@ -144,15 +145,15 @@ public class ChannelsFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentChannelsBinding.inflate(getLayoutInflater(), container, false);
-
         initializeDialog();
-
         ArrayList<CategoryModel> list = Stash.getArrayList(Constants.CHANNELS, CategoryModel.class);
         Log.d(TAG, "onCreateView: " + list.size());
         if (list.isEmpty()) addButton(false);
         else {
             showButtons(list);
+            Log.d(TAG, "onCreateView: after show");
             switchGroup(channels.get("FRANCE FHD | TV"), "FRANCE FHD | TV");
+            Log.d(TAG, "onCreateView: after switch");
         }
         return binding.getRoot();
     }
@@ -160,8 +161,10 @@ public class ChannelsFragment extends Fragment {
     private void showButtons(ArrayList<CategoryModel> list) {
         channels = new HashMap<>();
         selectedButton = null;
+        Log.d(TAG, "showButtons   list:  " + list.size());
         ArrayList<ChannelsModel> channelsList1 = Stash.getArrayList(Constants.CHANNELS_ALL, ChannelsModel.class);
         for (CategoryModel model : list) {
+            Log.d(TAG, "showButtons: " + model.category_name);
             if (!model.category_name.isEmpty()) {
                 channels.put(model.category_name.trim(), model.category_id);
                 MaterialButton button = new MaterialButton(mContext);
@@ -241,6 +244,7 @@ public class ChannelsFragment extends Fragment {
             } else {
                 url = ApiLinks.getLiveStreamsByID(buttons.get(buttonCount).category_id);
             }
+            Log.d(TAG, "setButtonText: URL " + url);
             Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
             Call<List<ChannelsModel>> call = api.getChannels(url);
             call.enqueue(new Callback<List<ChannelsModel>>() {
@@ -248,8 +252,12 @@ public class ChannelsFragment extends Fragment {
                 public void onResponse(Call<List<ChannelsModel>> call, Response<List<ChannelsModel>> response) {
                     if (response.isSuccessful()) {
                         List<ChannelsModel> list = response.body();
-                        Log.d(TAG, "onResponse: Size " + list.size());
+                        Log.d(TAG, "onResponse: Size THIS " + list.size());
+                        Log.d(TAG, "isAdded: " + isAdded());
+                        Log.d(TAG, "getActivity: " + (getActivity() != null));
+
                         if (isAdded() && getActivity() != null) {
+                            Log.d(TAG, "onResponse: ADDED");
                             getActivity().runOnUiThread(() -> {
                                 for (int i = 0; i < binding.sidePanel.getChildCount(); i++) {
                                     View view = binding.sidePanel.getChildAt(i);
@@ -474,18 +482,20 @@ public class ChannelsFragment extends Fragment {
 
     private void switchGroup(String id, String name) {
         dialog.show();
-        ArrayList<ChannelsModel> list = new ArrayList<>();
         String url = ApiLinks.getLiveStreamsByID(id);
-
+        Log.d(TAG, "switchGroup: ");
+        Log.d(TAG, "switchGroup: url  " + url);
         Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
         Call<List<ChannelsModel>> call = api.getChannels(url);
         call.enqueue(new Callback<List<ChannelsModel>>() {
             @Override
             public void onResponse(Call<List<ChannelsModel>> call, Response<List<ChannelsModel>> response) {
                 if (response.isSuccessful()) {
+                    Log.d(TAG, "onResponse: switchGroup ");
                     List<ChannelsModel> list = response.body();
-
-                    if (getActivity() != null) {
+                    Log.d(TAG, "onResponse: switchGroup " + list.size());
+                    if (getActivity() != null && isAdded()) {
+                        Log.d(TAG, "onResponse: ADDED");
                         getActivity().runOnUiThread(() -> {
                             dialog.dismiss();
                             if (snackbar != null) {
