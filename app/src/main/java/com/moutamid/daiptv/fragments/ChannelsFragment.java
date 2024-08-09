@@ -183,7 +183,6 @@ public class ChannelsFragment extends Fragment {
                 if (selectedButton == null && button.getText().toString().trim().equals("FRANCE FHD | TV")) {
                     button.setStrokeColorResource(R.color.red);
                     selectedButton = button;
-                    selectedButton.requestFocus();
                 }
                 button.setOnClickListener(v -> {
                     isAll = false;
@@ -283,6 +282,12 @@ public class ChannelsFragment extends Fragment {
                     Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
                 }
             });
+        } else {
+            if (isAdded() && getActivity() != null) {
+                if (selectedButton != null) {
+                    selectedButton.requestFocus();
+                }
+            }
         }
     }
 

@@ -44,11 +44,16 @@ public class MainActivity extends BaseActivity {
     ActivityMainBinding binding;
     UserModel userModel;
     HomeFragment homeFragment;
-    ChannelsFragment channelsFragment;
+   // ChannelsFragment channelsFragment;
     FilmFragment filmFragment;
     SeriesFragment seriesFragment;
-
     AppDatabase database;
+
+    enum CURRENT_CHANNEL {
+        HOME, CHANNELS, FILMS, SERIES, SEARCH
+    }
+
+    CURRENT_CHANNEL currentChannel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +67,8 @@ public class MainActivity extends BaseActivity {
         database = AppDatabase.getInstance(this);
 
         updateAndroidSecurityProvider();
+
+        currentChannel = CURRENT_CHANNEL.HOME;
 
         new Thread(() -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
@@ -99,7 +106,7 @@ public class MainActivity extends BaseActivity {
         binding.ancher.setOnClickListener(this::showMenu);
 
         homeFragment = new HomeFragment();
-        channelsFragment = new ChannelsFragment();
+       // channelsFragment = new ChannelsFragment();
         filmFragment = new FilmFragment();
         seriesFragment = new SeriesFragment();
 
@@ -116,6 +123,7 @@ public class MainActivity extends BaseActivity {
             binding.indicatorSeries.setVisibility(View.GONE);
             binding.indicatorRecherche.setVisibility(View.GONE);
             getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, homeFragment).commit();
+            currentChannel = CURRENT_CHANNEL.HOME;
         });
         binding.Chaines.setOnClickListener(v -> {
             Constants.checkFeature(MainActivity.this, Features.CHANNELS);
@@ -124,7 +132,8 @@ public class MainActivity extends BaseActivity {
             binding.indicatorFilms.setVisibility(View.GONE);
             binding.indicatorSeries.setVisibility(View.GONE);
             binding.indicatorRecherche.setVisibility(View.GONE);
-            getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, channelsFragment).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, new ChannelsFragment()).commit();
+            currentChannel = CURRENT_CHANNEL.CHANNELS;
         });
         binding.Films.setOnClickListener(v -> {
             Constants.checkFeature(MainActivity.this, Features.FILMS);
@@ -134,6 +143,7 @@ public class MainActivity extends BaseActivity {
             binding.indicatorSeries.setVisibility(View.GONE);
             binding.indicatorRecherche.setVisibility(View.GONE);
             getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, filmFragment).commit();
+            currentChannel = CURRENT_CHANNEL.FILMS;
         });
         binding.series.setOnClickListener(v -> {
             Constants.checkFeature(MainActivity.this, Features.SERIES);
@@ -143,6 +153,7 @@ public class MainActivity extends BaseActivity {
             binding.indicatorSeries.setVisibility(View.VISIBLE);
             binding.indicatorRecherche.setVisibility(View.GONE);
             getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, seriesFragment).commit();
+            currentChannel = CURRENT_CHANNEL.SERIES;
         });
         binding.Recherche.setOnClickListener(v -> {
             Constants.checkFeature(MainActivity.this, Features.RECHERCHE);
@@ -152,6 +163,7 @@ public class MainActivity extends BaseActivity {
             binding.indicatorSeries.setVisibility(View.GONE);
             binding.indicatorRecherche.setVisibility(View.VISIBLE);
             getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, new RechercheFragment()).commit();
+            currentChannel = CURRENT_CHANNEL.SEARCH;
         });
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
@@ -175,8 +187,9 @@ public class MainActivity extends BaseActivity {
         binding.Accueil.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
+                Log.d("onFocusChange1", "onFocusChange1: home " + hasFocus);
                 if (hasFocus) {
-                    if (!Stash.getString(Constants.SELECTED_PAGE, "Home").equals("Home")) {
+                    if (currentChannel != CURRENT_CHANNEL.HOME) {
                         Constants.checkFeature(MainActivity.this, Features.HOME);
                         binding.indicatorAccueil.setVisibility(View.VISIBLE);
                         binding.indicatorChaines.setVisibility(View.GONE);
@@ -184,6 +197,7 @@ public class MainActivity extends BaseActivity {
                         binding.indicatorSeries.setVisibility(View.GONE);
                         binding.indicatorRecherche.setVisibility(View.GONE);
                         getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, homeFragment).commit();
+                        currentChannel = CURRENT_CHANNEL.HOME;
                     }
                 }
             }
@@ -193,7 +207,7 @@ public class MainActivity extends BaseActivity {
             if (Stash.getString(Constants.SELECTED_PAGE, "Home").equals("Home")) {
                 homeFragment.refreshList();
             } else if (Stash.getString(Constants.SELECTED_PAGE, "Home").equals("Channels")) {
-                channelsFragment.refreshList();
+                new ChannelsFragment().refreshList();
             } else if (Stash.getString(Constants.SELECTED_PAGE, "Home").equals("Film")) {
                 filmFragment.refreshList();
             } else if (Stash.getString(Constants.SELECTED_PAGE, "Home").equals("Series")) {
@@ -205,8 +219,10 @@ public class MainActivity extends BaseActivity {
         binding.Chaines.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
+                Log.d("onFocusChange1", "onFocusChange1: channels " + hasFocus);
+                Log.d("onFocusChange1", "onFocusChange1: channels " + Stash.getString(Constants.SELECTED_PAGE, "Home"));
                 if (hasFocus) {
-                    if (!Stash.getString(Constants.SELECTED_PAGE, "Home").equals("Channels")) {
+                    if (currentChannel != CURRENT_CHANNEL.CHANNELS) {
                         Constants.checkFeature(MainActivity.this, Features.CHANNELS);
                         binding.indicatorAccueil.setVisibility(View.GONE);
                         binding.indicatorChaines.setVisibility(View.VISIBLE);
@@ -214,7 +230,8 @@ public class MainActivity extends BaseActivity {
                         binding.indicatorSeries.setVisibility(View.GONE);
                         binding.indicatorRecherche.setVisibility(View.GONE);
                         Log.d(TAG, "onFocusChange: CHANNEL");
-                        getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, channelsFragment).commit();
+                        getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, new ChannelsFragment()).commit();
+                        currentChannel = CURRENT_CHANNEL.CHANNELS;
                     }
                 }
             }
@@ -223,8 +240,9 @@ public class MainActivity extends BaseActivity {
         binding.Films.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
+                Log.d("onFocusChange1", "onFocusChange1: film " + hasFocus);
                 if (hasFocus) {
-                    if (!Stash.getString(Constants.SELECTED_PAGE, "Home").equals("Film")) {
+                    if (currentChannel != CURRENT_CHANNEL.FILMS) {
                         Constants.checkFeature(MainActivity.this, Features.FILMS);
                         binding.indicatorAccueil.setVisibility(View.GONE);
                         binding.indicatorChaines.setVisibility(View.GONE);
@@ -233,6 +251,7 @@ public class MainActivity extends BaseActivity {
                         binding.indicatorRecherche.setVisibility(View.GONE);
                         Log.d(TAG, "onFocusChange: FILM");
                         getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, filmFragment).commit();
+                        currentChannel = CURRENT_CHANNEL.FILMS;
                     }
                 }
             }
@@ -241,8 +260,9 @@ public class MainActivity extends BaseActivity {
         binding.series.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
+                Log.d("onFocusChange1", "onFocusChange1: series " + hasFocus);
                 if (hasFocus) {
-                    if (!Stash.getString(Constants.SELECTED_PAGE, "Home").equals("Series")) {
+                    if (currentChannel != CURRENT_CHANNEL.SERIES) {
                         Constants.checkFeature(MainActivity.this, Features.SERIES);
                         binding.indicatorAccueil.setVisibility(View.GONE);
                         binding.indicatorChaines.setVisibility(View.GONE);
@@ -250,6 +270,7 @@ public class MainActivity extends BaseActivity {
                         binding.indicatorSeries.setVisibility(View.VISIBLE);
                         binding.indicatorRecherche.setVisibility(View.GONE);
                         getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, seriesFragment).commit();
+                        currentChannel = CURRENT_CHANNEL.SERIES;
                     }
                 }
             }
@@ -258,8 +279,9 @@ public class MainActivity extends BaseActivity {
         binding.Recherche.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
+                Log.d("onFocusChange1", "onFocusChange1: search " + hasFocus);
                 if (hasFocus) {
-                    if (!Stash.getString(Constants.SELECTED_PAGE, "Home").equals("Recherche")) {
+                    if (currentChannel != CURRENT_CHANNEL.SEARCH) {
                         Constants.checkFeature(MainActivity.this, Features.RECHERCHE);
                         binding.indicatorAccueil.setVisibility(View.GONE);
                         binding.indicatorChaines.setVisibility(View.GONE);
@@ -267,6 +289,7 @@ public class MainActivity extends BaseActivity {
                         binding.indicatorSeries.setVisibility(View.GONE);
                         binding.indicatorRecherche.setVisibility(View.VISIBLE);
                         getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, new RechercheFragment()).commit();
+                        currentChannel = CURRENT_CHANNEL.SEARCH;
                     }
                 }
             }
