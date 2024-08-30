@@ -36,7 +36,6 @@ public class AddFavoriteDialog {
         this.listener = listener;
     }
 
-
     public void show() {
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
         ArrayList<FavoriteModel> list = Stash.getArrayList(userModel.id, FavoriteModel.class);

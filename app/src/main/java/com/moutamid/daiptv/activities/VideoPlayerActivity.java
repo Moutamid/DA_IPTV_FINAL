@@ -5,6 +5,7 @@ import static androidx.media3.ui.PlayerView.SHOW_BUFFERING_WHEN_PLAYING;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -63,6 +64,8 @@ public class VideoPlayerActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityVideoPlayerBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         String url = getIntent().getStringExtra("url");
         String name = getIntent().getStringExtra("name");

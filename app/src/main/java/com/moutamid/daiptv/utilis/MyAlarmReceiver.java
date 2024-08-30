@@ -88,7 +88,7 @@ public class MyAlarmReceiver extends BroadcastReceiver {
             @Override
             public void onResponse(okhttp3.Call call, Response response) throws IOException {
                 if (!response.isSuccessful()) {
-                    Log.d(TAG, "onResponse: ERROR");
+                    Log.d(TAG, "onResponse: ERROR " + response.message());
                 }
 
                 String xmlContent = response.body().string();

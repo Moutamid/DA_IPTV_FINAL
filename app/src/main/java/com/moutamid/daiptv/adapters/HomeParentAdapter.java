@@ -1,6 +1,7 @@
 package com.moutamid.daiptv.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +22,7 @@ public class HomeParentAdapter extends RecyclerView.Adapter<HomeParentAdapter.It
     Context context;
     ArrayList<TopItems> list;
     ItemSelectedHome itemSelected;
+    private static final String TAG = "HomeParentAdapter";
 
     public HomeParentAdapter(Context context, ArrayList<TopItems> list, ItemSelectedHome itemSelected) {
         this.context = context;
@@ -38,9 +40,27 @@ public class HomeParentAdapter extends RecyclerView.Adapter<HomeParentAdapter.It
     public void onBindViewHolder(@NonNull ItemVH holder, int position) {
         TopItems model = list.get(holder.getAdapterPosition());
         holder.name.setText(model.name);
+
+        HomeChildAdapter adapter = new HomeChildAdapter(context, model.list, itemSelected, model.name.equals("Favoris"), model.name.equals("Reprendre la lecture"));
+
         holder.childRC.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false));
         holder.childRC.setHasFixedSize(false);
-        HomeChildAdapter adapter = new HomeChildAdapter(context, model.list, itemSelected, model.name.equals("Favoris"), model.name.equals("Reprendre la lecture"));
+
+        holder.childRC.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
+            @Override
+            public void onChildViewAttachedToWindow(@NonNull View view) {
+                Log.d(TAG, "onChildViewAttachedToWindow: " + view.isFocused());
+                if (view.isFocused()) {
+                    holder.childRC.requestChildFocus(view, view);
+                }
+            }
+
+            @Override
+            public void onChildViewDetachedFromWindow(@NonNull View view) {
+
+            }
+        });
+
         holder.childRC.setAdapter(adapter);
     }
 

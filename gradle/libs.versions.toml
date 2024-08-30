@@ -1,5 +1,5 @@
 [versions]
-agp = "8.4.2"
+agp = "8.5.1"
 circleimageview = "3.1.0"
 glide = "4.15.1"
 glideTransformations = "4.3.0"
@@ -18,7 +18,7 @@ playServicesAuth = "21.2.0"
 retrofit = "2.9.0"
 roomRuntime = "2.6.1"
 simpleXml = "2.7.1"
-stash = "1.3.2"
+stash = "1c45b0e5d5"
 translateapi = "1.1"
 volley = "1.2.1"
 
@@ -50,7 +50,7 @@ room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRunti
 simple-xml = { module = "org.simpleframework:simple-xml", version.ref = "simpleXml" }
 translateapi = { module = "com.github.iammannan:TranslateAPI", version.ref = "translateapi" }
 volley = { module = "com.android.volley:volley", version.ref = "volley" }
-stash = { module = "com.fxn769:stash", version.ref = "stash" }
+stash = { module = "com.github.akshay2211:Stash", version.ref = "stash" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

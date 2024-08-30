@@ -33,7 +33,6 @@
             android:textSize="18sp"
             android:id="@+id/episodeNo" />
 
-
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

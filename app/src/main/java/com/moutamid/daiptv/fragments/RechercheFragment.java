@@ -1,5 +1,7 @@
 package com.moutamid.daiptv.fragments;
 
+import static androidx.core.content.ContextCompat.getSystemService;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
@@ -10,9 +12,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.fxn.stash.Stash;
@@ -106,6 +110,20 @@ public class RechercheFragment extends Fragment {
         binding.filmsRC.setAdapter(filmAdapter);
         binding.seriesRC.setAdapter(seriesAdapter);
 
+        binding.searchET.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    // Ensure the keyboard remains open
+                    if (getActivity() != null && isAdded()) {
+                        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.showSoftInput(binding.searchET, InputMethodManager.SHOW_IMPLICIT);
+                    }
+                }
+            }
+        });
+
+
         binding.searchET.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -160,18 +178,26 @@ public class RechercheFragment extends Fragment {
                     filmAdapter = new SearchFilmsAdapter(mContext, new ArrayList<>());
                     seriesAdapter = new SearchSeriesAdapter(mContext, new ArrayList<>());
 
-                    requireActivity().runOnUiThread(() -> {
-                        dialog.dismiss();
-                        binding.chainesRC.setAdapter(channelAdapter);
-                        binding.filmsRC.setAdapter(filmAdapter);
-                        binding.seriesRC.setAdapter(seriesAdapter);
-                    });
+                    if (getActivity() != null && isAdded()) {
+                        requireActivity().runOnUiThread(() -> {
+                            dialog.dismiss();
+                            binding.chainesRC.setAdapter(channelAdapter);
+                            binding.filmsRC.setAdapter(filmAdapter);
+                            binding.seriesRC.setAdapter(seriesAdapter);
+                            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                            imm.showSoftInput(binding.searchET, InputMethodManager.SHOW_IMPLICIT);
+                        });
+                    }
                 }
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-
+                if (getActivity() != null && isAdded()) {
+                    binding.searchET.requestFocus();
+                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.showSoftInput(binding.searchET, InputMethodManager.SHOW_IMPLICIT);
+                }
             }
         });
 
