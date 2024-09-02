@@ -48,6 +48,7 @@ public class LoginActivity extends BaseActivity {
                 String url = binding.url.getEditText().getText().toString() + ":8080/";
                 UserModel userModel = new UserModel(
                         UUID.randomUUID().toString(),
+                        binding.name.getEditText().getText().toString().trim(),
                         binding.username.getEditText().getText().toString().trim(),
                         binding.password.getEditText().getText().toString().trim(),
                         url
@@ -112,6 +113,11 @@ public class LoginActivity extends BaseActivity {
     }
 
     private boolean valid() {
+        if (binding.name.getEditText().getText().toString().isEmpty()) {
+            binding.name.getEditText().setError("Name is empty");
+            binding.name.getEditText().requestFocus();
+            return false;
+        }
         if (binding.username.getEditText().getText().toString().isEmpty()) {
             binding.username.getEditText().setError("Username is empty");
             binding.username.getEditText().requestFocus();

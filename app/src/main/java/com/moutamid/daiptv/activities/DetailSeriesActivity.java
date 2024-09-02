@@ -1,8 +1,11 @@
 package com.moutamid.daiptv.activities;
 
+import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
+
 import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.PictureDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestBuilder;
 import com.fxn.stash.Stash;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.moutamid.daiptv.BaseActivity;
@@ -21,6 +25,7 @@ import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.CastsAdapter;
 import com.moutamid.daiptv.databinding.ActivityDetailSeriesBinding;
 import com.moutamid.daiptv.fragments.HomeFragment;
+import com.moutamid.daiptv.glide.SvgSoftwareLayerSetter;
 import com.moutamid.daiptv.models.CastModel;
 import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.MovieModel;
@@ -392,7 +397,18 @@ public class DetailSeriesActivity extends BaseActivity {
                         runOnUiThread(() -> {
                             binding.name.setVisibility(View.GONE);
                             try {
-                                Glide.with(DetailSeriesActivity.this).load(logo).placeholder(R.color.transparent).into(binding.logo);
+                                String[] type = logo.split("\\.");
+                                if (type[1].equals("svg")) {
+                                    RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
+                                            .as(PictureDrawable.class)
+                                            .placeholder(R.color.transparent)
+                                            .error(R.color.transparent)
+                                            .transition(withCrossFade())
+                                            .listener(new SvgSoftwareLayerSetter());
+                                    requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
+                                } else {
+                                    Glide.with(this).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                }
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -510,7 +526,18 @@ public class DetailSeriesActivity extends BaseActivity {
                     runOnUiThread(() -> {
                         binding.name.setVisibility(View.GONE);
                         try {
-                            Glide.with(DetailSeriesActivity.this).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                            String[] type = path.split("\\.");
+                            if (type[1].equals("svg")) {
+                                RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
+                                        .as(PictureDrawable.class)
+                                        .placeholder(R.color.transparent)
+                                        .error(R.color.transparent)
+                                        .transition(withCrossFade())
+                                        .listener(new SvgSoftwareLayerSetter());
+                                requestBuilder.load(Constants.getImageLink(path)).into(binding.logo);
+                            } else {
+                                Glide.with(this).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                            }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

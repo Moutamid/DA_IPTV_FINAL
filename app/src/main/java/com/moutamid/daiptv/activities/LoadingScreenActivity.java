@@ -120,7 +120,7 @@ public class LoadingScreenActivity extends AppCompatActivity {
 
     private void getList() {
         String url = Constants.topFILM;
-
+        Log.d(TAG, "getList: " + url);
         new Thread(() -> {
             URL google = null;
             try {
@@ -194,7 +194,7 @@ public class LoadingScreenActivity extends AppCompatActivity {
 
     private void getSeries() {
         String url = Constants.topTV;
-
+        Log.d(TAG, "getSeries: " + url);
         new Thread(() -> {
             URL google = null;
             try {
@@ -269,6 +269,9 @@ public class LoadingScreenActivity extends AppCompatActivity {
 
     private void getCategory() {
         Api api = RetrofitClientInstance.getRetrofitInstance().create(Api.class);
+
+        Log.d(TAG, "getCategory: " + ApiLinks.vodCategory());
+
         Call<List<CategoryModel>> call = api.getVodCategory(ApiLinks.vodCategory());
         call.enqueue(new Callback<List<CategoryModel>>() {
             @Override

@@ -1,8 +1,11 @@
 package com.moutamid.daiptv.fragments;
 
+import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.PictureDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,6 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestBuilder;
 import com.fxn.stash.Stash;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
@@ -26,6 +30,7 @@ import com.mannan.translateapi.TranslateAPI;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.SeriesParentAdapter;
 import com.moutamid.daiptv.databinding.FragmentSeriesBinding;
+import com.moutamid.daiptv.glide.SvgSoftwareLayerSetter;
 import com.moutamid.daiptv.listener.ItemSelectedSeries;
 import com.moutamid.daiptv.models.CategoryModel;
 import com.moutamid.daiptv.models.MovieModel;
@@ -456,7 +461,18 @@ public class  SeriesFragment extends Fragment {
                             getActivity().runOnUiThread(() -> {
                                 binding.name.setVisibility(View.GONE);
                                 try {
-                                    Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                    String[] type = logo.split("\\.");
+                                    if (type[1].equals("svg")) {
+                                        RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
+                                                .as(PictureDrawable.class)
+                                                .placeholder(R.color.transparent)
+                                                .error(R.color.transparent)
+                                                .transition(withCrossFade())
+                                                .listener(new SvgSoftwareLayerSetter());
+                                        requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
+                                    } else {
+                                        Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                    }
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -575,7 +591,18 @@ public class  SeriesFragment extends Fragment {
                         getActivity().runOnUiThread(() -> {
                             binding.name.setVisibility(View.GONE);
                             try {
-                                Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                String[] type = logo.split("\\.");
+                                if (type[1].equals("svg")) {
+                                    RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
+                                            .as(PictureDrawable.class)
+                                            .placeholder(R.color.transparent)
+                                            .error(R.color.transparent)
+                                            .transition(withCrossFade())
+                                            .listener(new SvgSoftwareLayerSetter());
+                                    requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
+                                } else {
+                                    Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                }
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }

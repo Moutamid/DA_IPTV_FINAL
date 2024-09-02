@@ -304,7 +304,8 @@ public class MainActivity extends BaseActivity {
         binding.ancher.animate().rotation(270f).setDuration(400).start();
 
         TextView name = customLayout.findViewById(R.id.name);
-        name.setText(userModel.username);
+        String user = userModel.name == null ? userModel.username : userModel.name;
+        name.setText(user);
 
         MaterialButton edit = customLayout.findViewById(R.id.edit);
         MaterialButton list = customLayout.findViewById(R.id.list);

@@ -74,6 +74,7 @@ public class MyAlarmReceiver extends BroadcastReceiver {
         Log.d(TAG, "get: LOADING");
         String url = ApiLinks.base() + "xmltv.php?username=" + userModel.username + "&password=" + userModel.password;
         Log.d(TAG, "getEpg: " + url);
+        Log.d(TAG, "base: " + ApiLinks.base());
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
                 .url(url)

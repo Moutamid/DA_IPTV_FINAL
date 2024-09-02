@@ -46,6 +46,7 @@ dependencies {
 
     implementation(libs.circleimageview)
 
+    implementation("com.caverock:androidsvg-aar:1.4")
     implementation(libs.glide)
     annotationProcessor(libs.compiler)
     implementation (libs.glide.transformations)
