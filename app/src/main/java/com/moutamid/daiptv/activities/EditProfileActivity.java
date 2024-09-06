@@ -33,13 +33,13 @@ public class EditProfileActivity extends BaseActivity {
         binding.name.getEditText().setText(name);
         binding.username.getEditText().setText(userModel.username);
         binding.password.getEditText().setText(userModel.password);
-        binding.url.getEditText().setText(userModel.url.replace(":8080/", ""));
+        binding.url.getEditText().setText(userModel.url);
 
         binding.back.setOnClickListener(v -> onBackPressed());
 
         binding.signin.setOnClickListener(v -> {
             if (valid()) {
-                String url = binding.url.getEditText().getText().toString() + ":8080/";
+                String url = binding.url.getEditText().getText().toString();
                 UserModel userModel = new UserModel(
                         this.userModel.id,
                         binding.name.getEditText().getText().toString(),

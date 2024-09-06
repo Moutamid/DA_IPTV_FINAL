@@ -45,7 +45,7 @@ public class LoginActivity extends BaseActivity {
 
         binding.signin.setOnClickListener(v -> {
             if (valid()) {
-                String url = binding.url.getEditText().getText().toString() + ":8080/";
+                String url = binding.url.getEditText().getText().toString();
                 UserModel userModel = new UserModel(
                         UUID.randomUUID().toString(),
                         binding.name.getEditText().getText().toString().trim(),
@@ -74,16 +74,16 @@ public class LoginActivity extends BaseActivity {
                                             Stash.put(Constants.USER, userModel);
                                             Stash.put(Constants.USER_LIST, userList);
 
-                                            startActivity(new Intent(this, LoadingScreenActivity.class));
-                                            finish();
+//                                            startActivity(new Intent(this, LoadingScreenActivity.class));
+//                                            finish();
 
-//                                            if (addProfile) {
-//                                                startActivity(new Intent(this, MainActivity.class));
-//                                                finish();
-//                                            } else {
-//                                                startActivity(new Intent(this, CreateActivity.class));
-//                                                finish();
-//                                            }
+                                            if (addProfile) {
+                                                startActivity(new Intent(this, MainActivity.class));
+                                                finish();
+                                            } else {
+                                                startActivity(new Intent(this, LoadingScreenActivity.class));
+                                                finish();
+                                            }
                                         }).addOnFailureListener(e -> {
                                             e.printStackTrace();
                                             Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
@@ -94,15 +94,15 @@ public class LoginActivity extends BaseActivity {
                                 Stash.put(Constants.USER, userModel);
                                 Stash.put(Constants.USER_LIST, userList);
 
-                                startActivity(new Intent(this, LoadingScreenActivity.class));
-                                finish();
-//                                            if (addProfile) {
-//                                                startActivity(new Intent(this, MainActivity.class));
-//                                                finish();
-//                                            } else {
-//                                                startActivity(new Intent(this, CreateActivity.class));
-//                                                finish();
-//                                            }
+//                                startActivity(new Intent(this, LoadingScreenActivity.class));
+//                                finish();
+                                if (addProfile) {
+                                    startActivity(new Intent(this, MainActivity.class));
+                                    finish();
+                                } else {
+                                    startActivity(new Intent(this, LoadingScreenActivity.class));
+                                    finish();
+                                }
                             }
                         }).addOnFailureListener(e -> {
                             e.printStackTrace();

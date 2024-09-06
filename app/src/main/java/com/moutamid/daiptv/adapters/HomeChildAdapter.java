@@ -90,6 +90,7 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                         Log.d(TAG, "onFocusChange: Image " + model.banner);
                         Log.d(TAG, "onFocusChange: TYPE " + model.type);
                         Log.d(TAG, "onFocusChange: NAME " + model.original_title);
+                        Log.d(TAG, "onFocusChange: banner " + model.series_id);
                         itemSelected.selected(model);
                         if (reprendreLaLecture) {
                             holder.banner.requestFocus();
@@ -133,8 +134,10 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
         holder.banner.setOnLongClickListener(v -> {
             Log.d(TAG, "onFocusChange: NAME " + model.original_title);
             Log.d(TAG, "onFocusChange: banner " + model.banner);
-            Log.d(TAG, "onFocusChange: banner " + model.type);
-            Log.d(TAG, "onFocusChange: banner " + link);
+            Log.d(TAG, "onFocusChange: type " + model.type);
+            Log.d(TAG, "onFocusChange: series_id " + model.series_id);
+            Log.d(TAG, "onFocusChange: streamID " + model.streamID);
+            Log.d(TAG, "onFocusChange: link " + link);
 
             FavoriteModel favoriteModel = new FavoriteModel();
             favoriteModel.id = UUID.randomUUID().toString();
@@ -144,6 +147,7 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
             favoriteModel.type = model.type;
             favoriteModel.stream_id = model.streamID;
             favoriteModel.series_id = model.series_id;
+            favoriteModel.extension = model.extension;
             new AddFavoriteDialog(context, favoriteModel, true, null).show();
             return true;
         });
@@ -154,7 +158,11 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                 SeriesModel seriesModel = new SeriesModel();
                 seriesModel.name = model.original_title;
                 seriesModel.cover = model.banner;
-                seriesModel.series_id = model.series_id;
+                if (model.series_id == 0) {
+                    seriesModel.series_id = model.streamID;
+                } else {
+                    seriesModel.series_id = model.series_id;
+                }
                 seriesModel.releaseDate = model.release_date;
                 seriesModel.stream_type = Constants.topRated;
                 Stash.put(Constants.PASS_SERIES, seriesModel);

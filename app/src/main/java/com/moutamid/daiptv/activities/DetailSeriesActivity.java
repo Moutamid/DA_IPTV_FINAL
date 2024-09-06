@@ -145,7 +145,9 @@ public class DetailSeriesActivity extends BaseActivity {
 
 
         fetchID();
+
         if (model != null) {
+            Log.d(TAG, "onCreate  model.series_id : " + model.series_id);
             String url = ApiLinks.getSeriesInfoByID(String.valueOf(model.series_id));
             Log.d(TAG, "fetchID: URL  VOG  " + url);
 

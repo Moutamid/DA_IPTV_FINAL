@@ -17,12 +17,12 @@ public class ApiLinks {
 
     public static String base() {
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        return userModel.url;
+        return userModel.url + ":8080/";
     }
 
     public static String baseUrl() {
         UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-        return userModel.url + common + "username=" + userModel.username + "&password=" + userModel.password;
+        return userModel.url + ":8080/" + common + "username=" + userModel.username + "&password=" + userModel.password;
     }
 
     public static String basePath() {

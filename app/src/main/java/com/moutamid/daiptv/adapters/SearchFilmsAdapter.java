@@ -54,10 +54,10 @@ public class SearchFilmsAdapter extends RecyclerView.Adapter<SearchFilmsAdapter.
 
         try {
             String link;
-            if (Pattern.compile(Constants.URL_REGEX).matcher(model.stream_icon.trim()).matches()) {
+            if (Pattern.compile(Constants.URL_REGEX).matcher(model.stream_icon).matches()) {
                 link = model.stream_icon.trim();
             } else {
-                link = Constants.getImageLink(model.stream_icon.trim());
+                link = Constants.getImageLink(model.stream_icon);
             }
 
             // String link = model.stream_icon.startsWith("/") ? Constants.getImageLink(model.stream_icon) : model.stream_icon.trim();

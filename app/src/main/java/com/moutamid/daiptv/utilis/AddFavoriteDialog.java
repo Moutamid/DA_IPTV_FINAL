@@ -42,6 +42,7 @@ public class AddFavoriteDialog {
         boolean check = list.stream().anyMatch(favoriteModel -> favoriteModel.stream_id == model.stream_id);
 
         Log.d(TAG, "show: " + model.stream_id);
+        Log.d(TAG, "show: " + model.extension);
 
         String title = check ? "Supprimer des Favoris" : "Ajouter aux Favoris";
         String messgae = check ? "Souhaitez-vous retirer cet article de votre liste de favoris?" :

@@ -125,7 +125,8 @@ public class FilmFragment extends Fragment {
             if (!fvrt.isEmpty()) {
                 ArrayList<VodModel> fvrtList = new ArrayList<>();
                 for (FavoriteModel channelsModel : fvrt) {
-                    if (channelsModel.type.equals(Constants.TYPE_MOVIE)) {
+                    Log.d("YPPPE", "onCreateView: " + channelsModel.type);
+                    if (channelsModel.type.equals(Constants.TYPE_MOVIE) || channelsModel.type.equals(Constants.TYPE_MOVIE + "," + Constants.RECENTS)) {
                         VodModel model = new VodModel();
                         model.stream_type = channelsModel.type;
                         model.stream_icon = channelsModel.image;
@@ -148,7 +149,8 @@ public class FilmFragment extends Fragment {
             if (!fvrt.isEmpty()) {
                 ArrayList<VodModel> fvrtList = new ArrayList<>();
                 for (FavoriteModel channelsModel : fvrt) {
-                    if (channelsModel.type.equals(Constants.TYPE_MOVIE)) {
+                    Log.d("YPPPE", "onCreateView: " + channelsModel.type);
+                    if (channelsModel.type.equals(Constants.TYPE_MOVIE) || channelsModel.type.equals(Constants.TYPE_MOVIE + "," + Constants.RECENTS)) {
                         VodModel model = new VodModel();
                         model.stream_type = channelsModel.type;
                         model.stream_icon = channelsModel.image;
