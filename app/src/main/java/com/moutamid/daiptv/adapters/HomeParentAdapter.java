@@ -41,25 +41,14 @@ public class HomeParentAdapter extends RecyclerView.Adapter<HomeParentAdapter.It
         TopItems model = list.get(holder.getAdapterPosition());
         holder.name.setText(model.name);
 
-        HomeChildAdapter adapter = new HomeChildAdapter(context, model.list, itemSelected, model.name.equals("Favoris"), model.name.equals("Reprendre la lecture"));
+        HomeChildAdapter adapter = new HomeChildAdapter(context, model.list, itemSelected,
+                model.name.equals("Favoris"), model.name.equals("Reprendre la lecture"),
+                pos -> {
+                    holder.childRC.scrollToPosition(position);
+                });
 
         holder.childRC.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false));
         holder.childRC.setHasFixedSize(false);
-
-        holder.childRC.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
-            @Override
-            public void onChildViewAttachedToWindow(@NonNull View view) {
-                Log.d(TAG, "onChildViewAttachedToWindow: " + view.isFocused());
-                if (view.isFocused()) {
-                    holder.childRC.requestChildFocus(view, view);
-                }
-            }
-
-            @Override
-            public void onChildViewDetachedFromWindow(@NonNull View view) {
-
-            }
-        });
 
         holder.childRC.setAdapter(adapter);
     }

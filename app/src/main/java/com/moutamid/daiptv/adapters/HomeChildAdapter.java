@@ -47,10 +47,17 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
     boolean favoris;
     boolean reprendreLaLecture;
 
-    public HomeChildAdapter(Context context, ArrayList<MovieModel> list, ItemSelectedHome itemSelected, boolean favoris, boolean reprendreLaLecture) {
+    interface ScrollPosition {
+        void scroll(int pos);
+    }
+
+    ScrollPosition scrollPosition;
+
+    public HomeChildAdapter(Context context, ArrayList<MovieModel> list, ItemSelectedHome itemSelected, boolean favoris, boolean reprendreLaLecture, ScrollPosition position) {
         this.context = context;
         this.list = list;
         this.reprendreLaLecture = reprendreLaLecture;
+        this.scrollPosition = position;
         this.favoris = favoris;
         this.itemSelected = itemSelected;
     }
@@ -87,6 +94,9 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
                     if (hasFocus) {
+                        if (holder.getAbsoluteAdapterPosition() == 0 || holder.getAbsoluteAdapterPosition() == list.size() - 1) {
+                            scrollPosition.scroll(holder.getAbsoluteAdapterPosition());
+                        }
                         Log.d(TAG, "onFocusChange: Image " + model.banner);
                         Log.d(TAG, "onFocusChange: TYPE " + model.type);
                         Log.d(TAG, "onFocusChange: NAME " + model.original_title);
@@ -218,6 +228,9 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
                     if (hasFocus) {
+                        if (holder.getAbsoluteAdapterPosition() == 0 || holder.getAbsoluteAdapterPosition() == list.size() - 1) {
+                            scrollPosition.scroll(holder.getAbsoluteAdapterPosition());
+                        }
                         Log.d(TAG, "onFocusChange: Image " + model.banner);
                         Log.d(TAG, "onFocusChange: TYPE " + model.type);
                         Log.d(TAG, "onFocusChange: NAME " + model.original_title);
@@ -231,6 +244,9 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
+                    if (holder.getAbsoluteAdapterPosition() == 0 || holder.getAbsoluteAdapterPosition() == list.size() - 1) {
+                        scrollPosition.scroll(holder.getAbsoluteAdapterPosition());
+                    }
                     Log.d(TAG, "onFocusChange: Image " + model.banner);
                     Log.d(TAG, "onFocusChange: TYPE " + model.type);
                     Log.d(TAG, "onFocusChange: NAME " + model.original_title);

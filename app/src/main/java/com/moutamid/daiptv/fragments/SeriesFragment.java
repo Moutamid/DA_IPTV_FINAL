@@ -20,6 +20,9 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
 import com.fxn.stash.Stash;
@@ -40,6 +43,7 @@ import com.moutamid.daiptv.retrofit.Api;
 import com.moutamid.daiptv.retrofit.RetrofitClientInstance;
 import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
+import com.moutamid.daiptv.utilis.VolleySingleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -102,7 +106,7 @@ public class  SeriesFragment extends Fragment {
         binding = FragmentSeriesBinding.inflate(getLayoutInflater(), container, false);
 
         topRated = Stash.getArrayList(Constants.TOP_SERIES, SeriesModel.class);
-        fetchID(topRated.get(0));
+        fetchID(topRated.get(0), true);
 
         binding.recycler.setLayoutManager(new LinearLayoutManager(mContext));
         binding.recycler.setHasFixedSize(false);
@@ -259,7 +263,6 @@ public class  SeriesFragment extends Fragment {
         });
     }
 
-
     ItemSelectedSeries selectedFilm = model -> {
         if (model != null) {
             if (!model.stream_type.equals(Constants.topRated)) {
@@ -272,7 +275,7 @@ public class  SeriesFragment extends Fragment {
                     public void onSuccess(String translatedText) {
                         Log.d("TRANSJSILS", "onSuccess: " + translatedText);
                         model.name = translatedText;
-                        fetchID(model);
+                        getFromServer(model);
                     }
 
                     @Override
@@ -280,15 +283,57 @@ public class  SeriesFragment extends Fragment {
                         Log.d(TAG, "onFailure: " + ErrorText);
                     }
                 });
-            } else fetchID(model);
+            } else {
+                fetchID(model, true);
+            }
         }
     };
 
-    private void fetchID(SeriesModel model) {
+    private void getFromServer(SeriesModel model) {
+        RequestQueue requestQueue = VolleySingleton.getInstance(requireContext()).getRequestQueue();
+
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET, ApiLinks.getSeriesInfoByID(String.valueOf(model.series_id)), null,
+                response -> {
+                    Log.d(TAG, "getFromServer: " + response);
+                    try {
+                        JSONObject info = response.getJSONObject("info");
+                        movieModel = new MovieModel();
+                        movieModel.tagline = info.getString("plot");
+                        movieModel.original_title = Constants.regexName(info.getString("name"));
+                        movieModel.release_date = info.getString("releaseDate");
+                        movieModel.overview = info.getString("plot");
+
+                        movieModel.isFrench = !movieModel.tagline.isEmpty();
+                        movieModel.vote_average = String.valueOf(info.getInt("rating_5based"));
+                        movieModel.genres = info.getString("genre");
+                        if (info.getJSONArray("backdrop_path").length() > 0) {
+                            movieModel.banner = info.getJSONArray("backdrop_path").getString(0);
+                        } else {
+                            movieModel.banner = "";
+                        }
+                        movieModel.trailer = "https://www.youtube.com/watch?v=" + info.getString("youtube_trailer");
+                        if (getActivity() != null && isAdded()) {
+                            getActivity().runOnUiThread(() -> {
+                                if (isAdded()) setUI();
+                            });
+                        }
+                        fetchID(model, false);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }, error -> {
+            Toast.makeText(mContext, error.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+        }
+        );
+        requestQueue.add(request);
+    }
+
+    private void fetchID(SeriesModel model, boolean saveData) {
+        Log.d(TAG, "fetchID: saved  " + saveData);
         String name = Constants.regexName(model.name);
         String url;
         url = Constants.getMovieData(name, Constants.extractYear(model.name), Constants.TYPE_TV);
-        Log.d("TRANSJSILS", "fetchID: URL  " + url);
 
         new Thread(() -> {
             URL google = null;
@@ -329,14 +374,16 @@ public class  SeriesFragment extends Fragment {
                     int id = 0;
                     JSONObject object = array.getJSONObject(0);
                     id = object.getInt("id");
-                    getDetails(id, Constants.lang_fr, model);
+                    getDetails(id, Constants.lang_fr, model, saveData);
                 } else {
-                    requireActivity().runOnUiThread(() -> {
-                        new MaterialAlertDialogBuilder(requireContext())
-                                .setMessage("Aucune série trouvée pour le nom : \"" + name + "\"")
-                                .setNegativeButton("Fermer", (dialog1, which) -> dialog1.dismiss())
-                                .show();
-                    });
+                    if (saveData) {
+                        requireActivity().runOnUiThread(() -> {
+                            new MaterialAlertDialogBuilder(requireContext())
+                                    .setMessage("Aucune série trouvée pour le nom : \"" + name + "\"")
+                                    .setNegativeButton("Fermer", (dialog1, which) -> dialog1.dismiss())
+                                    .show();
+                        });
+                    }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -348,11 +395,10 @@ public class  SeriesFragment extends Fragment {
 
     MovieModel movieModel;
 
-    private void getDetails(int id, String language, SeriesModel model) {
+    private void getDetails(int id, String language, SeriesModel model, boolean saveData) {
         String url = Constants.getMovieDetails(id, Constants.TYPE_TV, language);
         Log.d("TRANSJSILS", "fetchID: ID  " + id);
         Log.d("TRANSJSILS", "fetchID: URL  " + url);
-
         new Thread(() -> {
             URL google = null;
             try {
@@ -387,76 +433,94 @@ public class  SeriesFragment extends Fragment {
 
             try {
                 JSONObject response = new JSONObject(htmlData);
-                movieModel = new MovieModel();
-                movieModel.tagline = response.getString("tagline");
-                try {
-                    movieModel.original_title = response.getString("title");
-                } catch (Exception e) {
-                    movieModel.original_title = response.getString("name");
-                }
-                try {
-                    movieModel.release_date = response.getString("release_date");
-                } catch (Exception e) {
-                    movieModel.release_date = response.getString("first_air_date");
-                }
-                movieModel.overview = response.getString("overview");
-                Log.d(TAG, "getDetails: " + movieModel.overview);
-                if (movieModel.tagline.isEmpty() && !language.isEmpty())
-                    getDetails(id, "", model);
+                String[] preferredLanguages = {"null", "fr", "en"};
 
-                movieModel.isFrench = !movieModel.tagline.isEmpty();
-                movieModel.vote_average = String.valueOf(response.getDouble("vote_average"));
-                if (response.getJSONArray("genres").length() > 0)
-                    movieModel.genres = response.getJSONArray("genres").getJSONObject(0).getString("name");
-                else movieModel.genres = "N/A";
-
-                JSONArray videos = response.getJSONObject("videos").getJSONArray("results");
-                JSONArray images = response.getJSONObject("images").getJSONArray("backdrops");
-
-                int index = -1, logoIndex = -1;
-                if (images.length() > 0) {
-                    String[] preferredLanguages = {"null", "fr", "en"};
-                    for (String lang : preferredLanguages) {
-                        for (int i = 0; i < images.length(); i++) {
-                            JSONObject object = images.getJSONObject(i);
-                            String isoLang = object.getString("iso_639_1");
-                            if (isoLang.equalsIgnoreCase(lang)) {
-                                index = i;
-                                break;
-                            }
-                        }
-                        if (index != -1) {
-                            break;
-                        }
+                if (saveData) {
+                    movieModel = new MovieModel();
+                    try {
+                        movieModel.original_title = response.getString("title");
+                    } catch (Exception e) {
+                        movieModel.original_title = response.getString("name");
                     }
-                    String banner = "";
-                    if (index != -1) {
-                        banner = images.getJSONObject(index).getString("file_path");
+                    try {
+                        movieModel.release_date = response.getString("release_date");
+                    } catch (Exception e) {
+                        movieModel.release_date = response.getString("first_air_date");
                     }
-                    movieModel.banner = banner;
+                    movieModel.overview = response.getString("overview");
+                    movieModel.tagline = response.getString("tagline");
+                    if (movieModel.tagline.isEmpty() && !language.isEmpty())
+                        getDetails(id, "", model, saveData);
 
-                    JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
-                    if (logos.length() > 0) {
+                    movieModel.isFrench = !movieModel.tagline.isEmpty();
+                    movieModel.vote_average = String.valueOf(response.getDouble("vote_average"));
+                    if (response.getJSONArray("genres").length() > 0)
+                        movieModel.genres = response.getJSONArray("genres").getJSONObject(0).getString("name");
+                    else movieModel.genres = "N/A";
+
+                    JSONArray videos = response.getJSONObject("videos").getJSONArray("results");
+                    JSONArray images = response.getJSONObject("images").getJSONArray("backdrops");
+                    int index = -1;
+
+                    if (images.length() > 0) {
                         for (String lang : preferredLanguages) {
-                            for (int i = 0; i < logos.length(); i++) {
-                                JSONObject object = logos.getJSONObject(i);
+                            for (int i = 0; i < images.length(); i++) {
+                                JSONObject object = images.getJSONObject(i);
                                 String isoLang = object.getString("iso_639_1");
                                 if (isoLang.equalsIgnoreCase(lang)) {
-                                    logoIndex = i;
+                                    index = i;
                                     break;
                                 }
                             }
-                            if (logoIndex != -1) {
+                            if (index != -1) {
+                                break;
+                            }
+                        }
+                        String banner = "";
+                        if (index != -1) {
+                            banner = images.getJSONObject(index).getString("file_path");
+                        }
+                        movieModel.banner = banner;
+                    } else {
+                        getBackdrop(id, "", model, saveData);
+                    }
+                    for (int i = 0; i < videos.length(); i++) {
+                        JSONObject object = videos.getJSONObject(i);
+                        boolean official = object.getBoolean("official");
+                        String type = object.getString("type");
+                        if (type.equals("Trailer")) {
+                            movieModel.trailer = "https://www.youtube.com/watch?v=" + object.getString("key");
+                            break;
+                        }
+                    }
+                    if (getActivity() != null && isAdded()) {
+                        getActivity().runOnUiThread(() -> {
+                            if (isAdded()) setUI();
+                        });
+                    }
+                }
+
+                movieModel.tagline = response.getString("tagline");
+                binding.desc.setText(movieModel.tagline);
+
+                int logoIndex = -1;
+                JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
+                if (logos.length() > 0) {
+                    for (String lang : preferredLanguages) {
+                        for (int i = 0; i < logos.length(); i++) {
+                            JSONObject object = logos.getJSONObject(i);
+                            String isoLang = object.getString("iso_639_1");
+                            if (isoLang.equalsIgnoreCase(lang)) {
+                                logoIndex = i;
                                 break;
                             }
                         }
                         if (logoIndex != -1) {
-                            logo = logos.getJSONObject(logoIndex).getString("file_path");
-                        } else {
-                            logo = "";
+                            break;
                         }
-
-                        Log.d(TAG, "getlogo: " + logo);
+                    }
+                    if (logoIndex != -1) {
+                        logo = logos.getJSONObject(logoIndex).getString("file_path");
                         if (isAdded() && getActivity() != null) {
                             getActivity().runOnUiThread(() -> {
                                 binding.name.setVisibility(View.GONE);
@@ -479,37 +543,30 @@ public class  SeriesFragment extends Fragment {
                             });
                         }
                     } else {
-                        if (isAdded() && getActivity() != null) {
-                            getActivity().runOnUiThread(() -> {
-                                binding.name.setVisibility(View.VISIBLE);
-                                try {
-                                    Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            });
+                        logo = "";
+                        if (!saveData){
+                            getBackdrop(id, "", model, saveData);
                         }
                     }
-
                 } else {
-                    getBackdrop(id, "", model);
-                }
-                Log.d(TAG, "getDetails: after Back");
-
-                for (int i = 0; i < videos.length(); i++) {
-                    JSONObject object = videos.getJSONObject(i);
-                    boolean official = object.getBoolean("official");
-                    String type = object.getString("type");
-                    if (type.equals("Trailer")) {
-                        movieModel.trailer = "https://www.youtube.com/watch?v=" + object.getString("key");
-                        break;
+                    if (!saveData){
+                        getBackdrop(id, "", model, saveData);
+                    }
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            binding.name.setVisibility(View.VISIBLE);
+                            try {
+                                Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
                     }
                 }
-                if (getActivity() != null && isAdded()) {
-                    getActivity().runOnUiThread(() -> {
-                        if (isAdded()) setUI();
-                    });
-                }
+
+
+                Log.d(TAG, "getDetails: after Back");
+
             } catch (JSONException e) {
                 e.printStackTrace();
                 requireActivity().runOnUiThread(() -> dialog.dismiss());
@@ -517,7 +574,7 @@ public class  SeriesFragment extends Fragment {
         }).start();
     }
 
-    private void getBackdrop(int id, String language, SeriesModel model) {
+    private void getBackdrop(int id, String language, SeriesModel model, boolean saveData) {
         Log.d(TAG, "getBackdrop: ");
         String url = Constants.getMovieDetails(id, Constants.TYPE_TV, language);
         Log.d(TAG, "fetchID: ID  " + id);
@@ -558,13 +615,46 @@ public class  SeriesFragment extends Fragment {
 
             try {
                 JSONObject jsonObject = new JSONObject(htmlData);
-                JSONArray images = jsonObject.getJSONObject("images").getJSONArray("backdrops");
-                int index = -1, logoIndex = -1;
 
+                if (saveData) {
+                    int index = -1;
+                    JSONArray images = jsonObject.getJSONObject("images").getJSONArray("backdrops");
+                    if (images.length() > 0) {
+                        String[] preferredLanguages = {"null", "fr", "en"};
+                        for (String lang : preferredLanguages) {
+                            for (int i = 0; i < images.length(); i++) {
+                                JSONObject object = images.getJSONObject(i);
+                                String isoLang = object.getString("iso_639_1");
+                                if (isoLang.equalsIgnoreCase(lang)) {
+                                    index = i;
+                                    break;
+                                }
+                            }
+                            if (index != -1) {
+                                break;
+                            }
+                        }
+                        String banner = "";
+                        if (index != -1) {
+                            banner = images.getJSONObject(index).getString("file_path");
+                        }
+                        movieModel.banner = banner;
+                        Log.d(TAG, "banner: " + banner);
+                        if (isAdded() && getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
+                            });
+                        }
+                    }
+                }
+
+                movieModel.tagline = jsonObject.getString("tagline");
+
+                binding.desc.setText(movieModel.tagline);
+
+                int logoIndex = -1;
                 JSONArray logos = jsonObject.getJSONObject("images").getJSONArray("logos");
                 Log.d(TAG, "getBackdrop: logos " + logos.length());
-                Log.d(TAG, "getBackdrop: images " + images.length());
-
 
                 if (logos.length() > 0) {
                     String[] preferredLanguages = {"null", "fr", "en"};
@@ -620,40 +710,13 @@ public class  SeriesFragment extends Fragment {
                         });
                     }
                 }
-
-                if (images.length() > 0) {
-                    String[] preferredLanguages = {"null", "fr", "en"};
-                    for (String lang : preferredLanguages) {
-                        for (int i = 0; i < images.length(); i++) {
-                            JSONObject object = images.getJSONObject(i);
-                            String isoLang = object.getString("iso_639_1");
-                            if (isoLang.equalsIgnoreCase(lang)) {
-                                index = i;
-                                break;
-                            }
-                        }
-                        if (index != -1) {
-                            break;
-                        }
-                    }
-                    String banner = "";
-                    if (index != -1) {
-                        banner = images.getJSONObject(index).getString("file_path");
-                    }
-                    movieModel.banner = banner;
-                    Log.d(TAG, "banner: " + banner);
-                    if (isAdded() && getActivity() != null) {
-                        getActivity().runOnUiThread(() -> {
-                            Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
-                        });
-                    }
-                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
         }).start();
     }
+
     String logo = "";
 
     private void setUI() {
@@ -705,8 +768,8 @@ public class  SeriesFragment extends Fragment {
             } catch (ParseException e) {
                 e.printStackTrace();
             }
-            Log.d(TAG, "setUI: " + Constants.getImageLink(movieModel.banner));
-            Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
+            Log.d(TAG, "setUI: " + movieModel.banner);
+            Glide.with(mContext).load(movieModel.banner).placeholder(R.color.transparent).into(binding.banner);
         } catch (Exception e) {
             e.printStackTrace();
         }
