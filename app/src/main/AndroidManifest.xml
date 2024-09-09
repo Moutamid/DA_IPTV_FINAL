@@ -97,6 +97,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="false"
+            android:windowSoftInputMode="stateVisible|adjustResize"
             android:screenOrientation="landscape" />
         <activity
             android:name=".SplashActivity"
