@@ -6,6 +6,8 @@ import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -46,7 +48,6 @@ public class RechercheFragment extends Fragment {
     SearchAdapter channelAdapter;
     SearchFilmsAdapter filmAdapter;
     SearchSeriesAdapter seriesAdapter;
-    Thread thread;
 
     public RechercheFragment() {
     }
@@ -123,57 +124,63 @@ public class RechercheFragment extends Fragment {
             }
         });
 
-
         binding.searchET.addTextChangedListener(new TextWatcher() {
+            private Thread thread;
+            private Handler handler = new Handler(Looper.getMainLooper());
+
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
+                // No action needed before text changes
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (!s.toString().isEmpty() && s.toString().length() >= 3) {
                     dialog.show();
-                    if (thread != null) {
-                        if (thread.isAlive()) {
-                            thread.interrupt();
-                        }
+
+                    if (thread != null && thread.isAlive()) {
+                        thread.interrupt();
                     }
-                    thread = new Thread(() -> {
-                        String name = s.toString().trim();
-                        ArrayList<ChannelsModel> tempChannels = new ArrayList<>();
-                        for (ChannelsModel channelsModel : channels) {
-                            if (channelsModel.name.toLowerCase(Locale.getDefault()).contains(name.toLowerCase(Locale.getDefault()))) {
-                                tempChannels.add(channelsModel);
-                            }
-                        }
-                        channelAdapter = new SearchAdapter(mContext, tempChannels);
 
-                        ArrayList<SeriesModel> tempSeries = new ArrayList<>();
-                        for (SeriesModel channelsModel : series) {
-                            if (channelsModel.name.toLowerCase(Locale.getDefault()).contains(name.toLowerCase(Locale.getDefault()))) {
-                                tempSeries.add(channelsModel);
-                            }
-                        }
-                        seriesAdapter = new SearchSeriesAdapter(mContext, tempSeries);
+                    // Ensure thread safety using a handler
+                    handler.post(() -> {
+                        thread = new Thread(() -> {
+                            String name = s.toString().trim().toLowerCase(Locale.getDefault());
 
-                        ArrayList<VodModel> tempFilms = new ArrayList<>();
-                        for (VodModel channelsModel : film) {
-                            if (channelsModel.name.toLowerCase(Locale.getDefault()).contains(name.toLowerCase(Locale.getDefault()))) {
-                                tempFilms.add(channelsModel);
+                            ArrayList<ChannelsModel> tempChannels = new ArrayList<>();
+                            for (ChannelsModel channelsModel : channels) {
+                                if (channelsModel.name.toLowerCase(Locale.getDefault()).contains(name)) {
+                                    tempChannels.add(channelsModel);
+                                }
                             }
-                        }
-                        filmAdapter = new SearchFilmsAdapter(mContext, tempFilms);
 
-                        requireActivity().runOnUiThread(() -> {
-                            dialog.dismiss();
-                            binding.chainesRC.setAdapter(channelAdapter);
-                            binding.filmsRC.setAdapter(filmAdapter);
-                            binding.seriesRC.setAdapter(seriesAdapter);
+                            ArrayList<SeriesModel> tempSeries = new ArrayList<>();
+                            for (SeriesModel seriesModel : series) {
+                                if (seriesModel.name.toLowerCase(Locale.getDefault()).contains(name)) {
+                                    tempSeries.add(seriesModel);
+                                }
+                            }
+
+                            ArrayList<VodModel> tempFilms = new ArrayList<>();
+                            for (VodModel vodModel : film) {
+                                if (vodModel.name.toLowerCase(Locale.getDefault()).contains(name)) {
+                                    tempFilms.add(vodModel);
+                                }
+                            }
+
+                            requireActivity().runOnUiThread(() -> {
+                                dialog.dismiss();
+                                binding.chainesRC.setAdapter(new SearchAdapter(mContext, tempChannels));
+                                binding.filmsRC.setAdapter(new SearchFilmsAdapter(mContext, tempFilms));
+                                binding.seriesRC.setAdapter(new SearchSeriesAdapter(mContext, tempSeries));
+
+                                // No need to request focus here since the EditText already has it
+                            });
                         });
+                        thread.start();
                     });
-                    thread.start();
                 } else {
+                    // Handle the case where the input is empty or less than 3 characters
                     channelAdapter = new SearchAdapter(mContext, new ArrayList<>());
                     filmAdapter = new SearchFilmsAdapter(mContext, new ArrayList<>());
                     seriesAdapter = new SearchSeriesAdapter(mContext, new ArrayList<>());
@@ -184,6 +191,7 @@ public class RechercheFragment extends Fragment {
                             binding.chainesRC.setAdapter(channelAdapter);
                             binding.filmsRC.setAdapter(filmAdapter);
                             binding.seriesRC.setAdapter(seriesAdapter);
+
                             InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
                             imm.showSoftInput(binding.searchET, InputMethodManager.SHOW_IMPLICIT);
                         });
@@ -200,6 +208,8 @@ public class RechercheFragment extends Fragment {
                 }
             }
         });
+
+
 
         return binding.getRoot();
     }
