@@ -39,11 +39,19 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
     ArrayList<VodModel> list;
     ItemSelectedFilm itemSelected;
     boolean isTopRated;
-    public FilmChildAdapter(Context context, ArrayList<VodModel> list, ItemSelectedFilm itemSelected, boolean isTopRated) {
+
+    interface ScrollPosition {
+        void scroll(int pos);
+    }
+
+    ScrollPosition scrollPosition;
+
+    public FilmChildAdapter(Context context, ArrayList<VodModel> list, ItemSelectedFilm itemSelected, boolean isTopRated, ScrollPosition scrollPosition) {
         this.context = context;
         this.list = list;
         this.itemSelected = itemSelected;
         this.isTopRated = isTopRated;
+        this.scrollPosition = scrollPosition;
     }
 
     @NonNull
@@ -126,8 +134,7 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
 
         holder.bannerFilms.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-//                holder.bannerFilms.requestFocus();
-//                Log.d("Constants", "onBindViewHolder: " + model.added);
+                if (isTopRated) scrollPosition.scroll(holder.getAbsoluteAdapterPosition());
                 itemSelected.selected(model);
             }
         });

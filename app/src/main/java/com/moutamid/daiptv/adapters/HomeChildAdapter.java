@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
-import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -83,20 +82,17 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
 
     @Override
     public void onBindViewHolder(@NonNull MovieVH holder, int position) {
-        MovieModel model = list.get(holder.getAdapterPosition());
+        MovieModel model = list.get(holder.getAbsoluteAdapterPosition());
         String[] isRecents = model.type.split(",");
         if (!favoris && !reprendreLaLecture && isRecents.length != 2) {
-            holder.count.setText(String.valueOf(holder.getAdapterPosition()+1));
+            holder.count.setText(String.valueOf(holder.getAbsoluteAdapterPosition() + 1));
         }
 
-        if (reprendreLaLecture || isRecents.length != 2){
+        if (reprendreLaLecture || isRecents.length != 2) {
             holder.itemView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
                     if (hasFocus) {
-                        if (holder.getAbsoluteAdapterPosition() == 0 || holder.getAbsoluteAdapterPosition() == list.size() - 1) {
-                            scrollPosition.scroll(holder.getAbsoluteAdapterPosition());
-                        }
                         Log.d(TAG, "onFocusChange: Image " + model.banner);
                         Log.d(TAG, "onFocusChange: TYPE " + model.type);
                         Log.d(TAG, "onFocusChange: NAME " + model.original_title);
@@ -119,19 +115,19 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
 
         if (reprendreLaLecture) {
             holder.name.setText(model.original_title);
-           // link = Constants.getImageLink(model.banner);
+            // link = Constants.getImageLink(model.banner);
             Log.d(TAG, "onBindViewHolder: " + link);
         }
         Glide.with(context).load(link).listener(new RequestListener<Drawable>() {
             @Override
             public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object object, @NonNull Target<Drawable> target, boolean isFirstResource) {
-               try {
-                   holder.name.setVisibility(View.VISIBLE);
-                   holder.image.setVisibility(View.GONE);
-                   holder.name.setText(model.original_title);
-               } catch (Exception er) {
-                   Log.d(TAG, "onLoadFailed: " + er.getLocalizedMessage());
-               }
+                try {
+                    holder.name.setVisibility(View.VISIBLE);
+                    holder.image.setVisibility(View.GONE);
+                    holder.name.setText(model.original_title);
+                } catch (Exception er) {
+                    Log.d(TAG, "onLoadFailed: " + er.getLocalizedMessage());
+                }
                 return false;
             }
 
@@ -228,9 +224,6 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
                     if (hasFocus) {
-                        if (holder.getAbsoluteAdapterPosition() == 0 || holder.getAbsoluteAdapterPosition() == list.size() - 1) {
-                            scrollPosition.scroll(holder.getAbsoluteAdapterPosition());
-                        }
                         Log.d(TAG, "onFocusChange: Image " + model.banner);
                         Log.d(TAG, "onFocusChange: TYPE " + model.type);
                         Log.d(TAG, "onFocusChange: NAME " + model.original_title);
@@ -244,12 +237,15 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
-                    if (holder.getAbsoluteAdapterPosition() == 0 || holder.getAbsoluteAdapterPosition() == list.size() - 1) {
+                    if (!favoris && !reprendreLaLecture && isRecents.length != 2) {
+                        Log.d("onFocusChange123", "onFocusChange: inside IF");
+                        Log.d("onFocusChange123", "onFocusChange: pos : " + holder.getAbsoluteAdapterPosition());
                         scrollPosition.scroll(holder.getAbsoluteAdapterPosition());
+//                        if (holder.getAbsoluteAdapterPosition() == 0) {
+//                            Log.d("onFocusChange123", "inside IF 2.0");
+//                            scrollPosition.scroll(0);
+//                        }
                     }
-                    Log.d(TAG, "onFocusChange: Image " + model.banner);
-                    Log.d(TAG, "onFocusChange: TYPE " + model.type);
-                    Log.d(TAG, "onFocusChange: NAME " + model.original_title);
                     itemSelected.selected(model);
                 }
             }

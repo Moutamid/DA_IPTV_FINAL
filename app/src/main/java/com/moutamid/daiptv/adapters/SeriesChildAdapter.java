@@ -39,11 +39,16 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
     ItemSelectedSeries itemSelected;
     boolean isTopRated;
 
-    public SeriesChildAdapter(Context context, ArrayList<SeriesModel> list, ItemSelectedSeries itemSelected, boolean isTopRated) {
+    interface ScrollPosition {
+        void scroll(int pos);
+    }
+    ScrollPosition scrollPosition;
+    public SeriesChildAdapter(Context context, ArrayList<SeriesModel> list, ItemSelectedSeries itemSelected, boolean isTopRated, ScrollPosition scrollPosition) {
         this.context = context;
         this.list = list;
         this.itemSelected = itemSelected;
         this.isTopRated = isTopRated;
+        this.scrollPosition = scrollPosition;
     }
 
     @NonNull
@@ -97,8 +102,10 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
         });
 
         holder.bannerSeries.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus)
+            if (hasFocus) {
+                if (isTopRated) scrollPosition.scroll(holder.getAbsoluteAdapterPosition());
                 itemSelected.selected(model);
+            }
         });
 
         holder.bannerSeries.setOnLongClickListener(v -> {

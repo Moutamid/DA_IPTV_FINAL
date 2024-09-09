@@ -19,38 +19,29 @@ import java.util.ArrayList;
 
 public class HomeParentAdapter extends RecyclerView.Adapter<HomeParentAdapter.ItemVH> {
 
-    Context context;
-    ArrayList<TopItems> list;
-    ItemSelectedHome itemSelected;
+    private final Context context;
+    private final ArrayList<TopItems> list;
+    private final ItemSelectedHome itemSelected;
     private static final String TAG = "HomeParentAdapter";
+    private final LayoutInflater inflater;
 
     public HomeParentAdapter(Context context, ArrayList<TopItems> list, ItemSelectedHome itemSelected) {
         this.context = context;
         this.list = list;
         this.itemSelected = itemSelected;
+        this.inflater = LayoutInflater.from(context);
     }
 
     @NonNull
     @Override
     public ItemVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new ItemVH(LayoutInflater.from(context).inflate(R.layout.parent_item, parent, false));
+        return new ItemVH(inflater.inflate(R.layout.parent_item, parent, false));
     }
 
     @Override
     public void onBindViewHolder(@NonNull ItemVH holder, int position) {
-        TopItems model = list.get(holder.getAdapterPosition());
-        holder.name.setText(model.name);
-
-        HomeChildAdapter adapter = new HomeChildAdapter(context, model.list, itemSelected,
-                model.name.equals("Favoris"), model.name.equals("Reprendre la lecture"),
-                pos -> {
-                    holder.childRC.scrollToPosition(position);
-                });
-
-        holder.childRC.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false));
-        holder.childRC.setHasFixedSize(false);
-
-        holder.childRC.setAdapter(adapter);
+        TopItems model = list.get(position);
+        holder.bind(model, itemSelected);
     }
 
     @Override
@@ -58,14 +49,28 @@ public class HomeParentAdapter extends RecyclerView.Adapter<HomeParentAdapter.It
         return list.size();
     }
 
-    public class ItemVH extends RecyclerView.ViewHolder{
-        TextView name;
-        RecyclerView childRC;
+    public static class ItemVH extends RecyclerView.ViewHolder{
+        private final TextView name;
+        private final RecyclerView childRC;
+
         public ItemVH(@NonNull View itemView) {
             super(itemView);
             name = itemView.findViewById(R.id.name);
             childRC = itemView.findViewById(R.id.childRC);
+
+            childRC.setLayoutManager(new LinearLayoutManager(itemView.getContext(), LinearLayoutManager.HORIZONTAL, false));
+            childRC.setHasFixedSize(false);
+        }
+
+        public void bind(TopItems model, ItemSelectedHome itemSelected) {
+            name.setText(model.name);
+
+            HomeChildAdapter adapter = new HomeChildAdapter(itemView.getContext(), model.list, itemSelected,
+                    model.name.equals("Favoris"), model.name.equals("Reprendre la lecture"),
+                    childRC::smoothScrollToPosition);
+
+            childRC.setAdapter(adapter);
         }
     }
-
 }
+
