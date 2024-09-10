@@ -14,7 +14,6 @@ import android.view.Window;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
@@ -24,7 +23,6 @@ import com.moutamid.daiptv.BaseActivity;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.CastsAdapter;
 import com.moutamid.daiptv.databinding.ActivityDetailSeriesBinding;
-import com.moutamid.daiptv.fragments.HomeFragment;
 import com.moutamid.daiptv.glide.SvgSoftwareLayerSetter;
 import com.moutamid.daiptv.models.CastModel;
 import com.moutamid.daiptv.models.FavoriteModel;
@@ -32,7 +30,6 @@ import com.moutamid.daiptv.models.MovieModel;
 import com.moutamid.daiptv.models.SeriesInfoModel;
 import com.moutamid.daiptv.models.SeriesModel;
 import com.moutamid.daiptv.models.UserModel;
-import com.moutamid.daiptv.utilis.AddFavoriteDialog;
 import com.moutamid.daiptv.utilis.ApiLinks;
 import com.moutamid.daiptv.utilis.Constants;
 
@@ -51,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class DetailSeriesActivity extends BaseActivity {
     ActivityDetailSeriesBinding binding;
@@ -142,10 +140,7 @@ public class DetailSeriesActivity extends BaseActivity {
 //                }
 //            }).show();
         });
-
-
-        fetchID();
-
+        AtomicReference<String> seasonKey = new AtomicReference<>("");
         if (model != null) {
             Log.d(TAG, "onCreate  model.series_id : " + model.series_id);
             String url = ApiLinks.getSeriesInfoByID(String.valueOf(model.series_id));
@@ -185,26 +180,71 @@ public class DetailSeriesActivity extends BaseActivity {
                 try {
                     JSONObject response = new JSONObject(htmlData);
                     JSONObject episodes = response.getJSONObject("episodes");
-                    JSONArray array = episodes.getJSONArray("1");
-                    for (int i = 0; i < array.length(); i++) {
-                        JSONObject object = array.getJSONObject(i);
-                        int episode_num = object.getInt("episode_num");
-                        int season = object.getInt("season");
-                        if (season == 1 && episode_num == 1) {
-                            infoModel = new SeriesInfoModel(object.getString("id"), object.getString("container_extension"));
-                            UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-                            ArrayList<FavoriteModel> films = Stash.getArrayList(userModel.id, FavoriteModel.class);
-                            boolean check = films.stream().anyMatch(favoriteModel -> favoriteModel.stream_id == Integer.parseInt(infoModel.id));
-                            runOnUiThread(() -> {
-                                if (check) {
-                                    binding.add.setText("Retirer des favoris");
-                                } else {
-                                    binding.add.setText("Ajouter aux favoris");
-                                }
-                            });
-                            break;
+                    JSONObject info = response.getJSONObject("info");
+                    JSONArray seasons = response.getJSONArray("seasons");
+                    int lowestSeasonNumber = Integer.MAX_VALUE;
+                    for (int i = 0; i < seasons.length(); i++) {
+                        JSONObject object = seasons.getJSONObject(i);
+                        if (object.getInt("season_number") > 0 && object.getInt("season_number") < lowestSeasonNumber) {
+                            lowestSeasonNumber = object.getInt("season_number");
                         }
                     }
+                    Log.d(TAG, "lowestSeasonNumber: " + lowestSeasonNumber);
+                    try {
+                        for (int j = lowestSeasonNumber; j <= seasons.length(); j++) {
+                            seasonKey.set(String.valueOf(j));
+                            if (episodes.has(seasonKey.get())) {
+                                JSONArray array = episodes.getJSONArray(seasonKey.get());
+                                for (int i = 0; i < array.length(); i++) {
+                                    JSONObject object = array.getJSONObject(i);
+                                    int episode_num = object.getInt("episode_num");
+                                    if (episode_num == 1) {
+                                        infoModel = new SeriesInfoModel(object.getString("id"), object.getString("container_extension"));
+                                        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+                                        ArrayList<FavoriteModel> films = Stash.getArrayList(userModel.id, FavoriteModel.class);
+                                        boolean check = films.stream().anyMatch(favoriteModel -> favoriteModel.stream_id == Integer.parseInt(infoModel.id));
+                                        runOnUiThread(() -> {
+                                            if (check) {
+                                                binding.add.setText("Retirer des favoris");
+                                            } else {
+                                                binding.add.setText("Ajouter aux favoris");
+                                            }
+                                        });
+                                        break;
+                                    }
+                                }
+                                break;
+                            } else {
+                                Log.d(TAG, "onCreate: No value for " + j);
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    movieModel = new MovieModel();
+                    movieModel.tagline = info.getString("plot");
+                    movieModel.original_title = Constants.regexName(info.getString("name"));
+                    movieModel.release_date = info.getString("releaseDate");
+
+                    Log.d(TAG, "onCreate: Date " + movieModel.release_date);
+                    Log.d(TAG, "onCreate: tagline " + movieModel.tagline);
+
+                    movieModel.overview = info.getString("plot");
+
+                    movieModel.isFrench = !movieModel.tagline.isEmpty();
+                    movieModel.vote_average = String.valueOf(info.getInt("rating_5based"));
+                    movieModel.genres = info.getString("genre");
+                    if (info.getJSONArray("backdrop_path").length() > 0) {
+                        movieModel.banner = info.getJSONArray("backdrop_path").getString(0);
+                    } else {
+                        movieModel.banner = "";
+                    }
+                    BACKDROP = movieModel.banner;
+
+                    movieModel.trailer = "https://www.youtube.com/watch?v=" + info.getString("youtube_trailer");
+                    runOnUiThread(this::setUI);
+                    fetchID();
                 } catch (JSONException e) {
                     Log.d(TAG, "onCreate: VOG " + e.getLocalizedMessage());
                     e.printStackTrace();
@@ -214,12 +254,18 @@ public class DetailSeriesActivity extends BaseActivity {
                     });
                 }
             }).start();
-        } else {
+        }
+        else {
             Toast.makeText(this, "Chaîne introuvable", Toast.LENGTH_SHORT).show();
             finish();
         }
 
-        binding.episodes.setOnClickListener(v -> startActivity(new Intent(this, SeriesActivity.class).putExtra("IMAGE", logo).putExtra("BACKDROP", BACKDROP)));
+        binding.episodes.setOnClickListener(v ->
+                startActivity(new Intent(this, SeriesActivity.class)
+                .putExtra("IMAGE", logo)
+                .putExtra("BACKDROP", BACKDROP)
+                .putExtra("SEASON", seasonKey.get())
+        ));
     }
 
     private void fetchID() {
@@ -272,7 +318,6 @@ public class DetailSeriesActivity extends BaseActivity {
                     dialog.dismiss();
                     Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
                     Toast.makeText(this, "Film introuvable dans l'API.", Toast.LENGTH_SHORT).show();
-
                     new MaterialAlertDialogBuilder(this)
                             .setMessage("Aucune série trouvée pour le nom : \"" + name + "\"")
                             .setNegativeButton("Fermer", (dialog1, which) -> dialog1.dismiss())
@@ -287,7 +332,6 @@ public class DetailSeriesActivity extends BaseActivity {
         String url = Constants.getMovieDetails(id, Constants.TYPE_TV, language);
         Log.d(TAG, "fetchID: ID  " + id);
         Log.d(TAG, "fetchID: URL  " + url);
-
 
         new Thread(() -> {
             URL google = null;
@@ -323,57 +367,24 @@ public class DetailSeriesActivity extends BaseActivity {
 
             try {
                 JSONObject response = new JSONObject(htmlData);
-                movieModel = new MovieModel();
-                try {
-                    movieModel.original_title = response.getString("original_title");
-                } catch (Exception e) {
-                    movieModel.original_title = response.getString("original_name");
-                }
-                try {
-                    movieModel.release_date = response.getString("release_date");
-                } catch (Exception e) {
-                    movieModel.release_date = response.getString("first_air_date");
-                }
-                movieModel.overview = response.getString("overview");
-                movieModel.vote_average = String.valueOf(response.getDouble("vote_average"));
-                if (response.getJSONArray("genres").length() > 0)
-                    movieModel.genres = response.getJSONArray("genres").getJSONObject(0).getString("name");
-                else movieModel.genres = "N/A";
 
-                if (movieModel.overview.isEmpty())
+                if (response.getString("overview").isEmpty())
                     getDetails(id, "");
 
                 movieModel.isFrench = !movieModel.overview.isEmpty();
 
-                JSONArray videos = response.getJSONObject("videos").getJSONArray("results");
-                JSONArray images = response.getJSONObject("images").getJSONArray("backdrops");
+                if (movieModel.release_date.isEmpty()) {
+                    try {
+                        movieModel.release_date = response.getString("release_date");
+                    } catch (Exception e) {
+                        movieModel.release_date = response.getString("first_air_date");
+                    }
+                }
+
                 JSONArray credits = response.getJSONObject("credits").getJSONArray("cast");
                 JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
-
-                int index = -1, logoIndex = -1;
-
-                if (images.length() > 0) {
-                    String[] preferredLanguages = {"null", "fr", "en"};
-                    for (String lang : preferredLanguages) {
-                        for (int i = 0; i < images.length(); i++) {
-                            JSONObject object = images.getJSONObject(i);
-                            String isoLang = object.getString("iso_639_1");
-                            if (isoLang.equalsIgnoreCase(lang)) {
-                                index = i;
-                                break;
-                            }
-                        }
-                        if (index != -1) {
-                            break;
-                        }
-                    }
-                    String banner = "";
-                    if (index != -1) {
-                        banner = images.getJSONObject(index).getString("file_path");
-                    }
-                    movieModel.banner = banner;
-                    BACKDROP = Constants.getImageLink(movieModel.banner);
-
+                String[] preferredLanguages = {"null", "fr", "en"};
+                int logoIndex = -1;
                     if (logos.length() > 0) {
                         for (String lang : preferredLanguages) {
                             for (int i = 0; i < logos.length(); i++) {
@@ -416,27 +427,8 @@ public class DetailSeriesActivity extends BaseActivity {
                             }
                         });
                     } else {
-                        runOnUiThread(() -> {
-                            binding.name.setVisibility(View.VISIBLE);
-                            try {
-                                Glide.with(DetailSeriesActivity.this).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
+                        getBackdrop(id, "");
                     }
-
-                } else getBackdrop(id, "");
-
-                for (int i = 0; i < videos.length(); i++) {
-                    JSONObject object = videos.getJSONObject(i);
-                    boolean official = object.getBoolean("official");
-                    String type = object.getString("type");
-                    if (type.equals("Trailer")) {
-                        movieModel.trailer = "https://www.youtube.com/watch?v=" + object.getString("key");
-                        break;
-                    }
-                }
                 cast.clear();
                 for (int i = 0; i < credits.length(); i++) {
                     JSONObject object = credits.getJSONObject(i);
@@ -455,6 +447,7 @@ public class DetailSeriesActivity extends BaseActivity {
             }
         }).start();
     }
+
     String logo = "";
     String BACKDROP = "";
 
@@ -498,8 +491,7 @@ public class DetailSeriesActivity extends BaseActivity {
 
             try {
                 JSONObject jsonObject = new JSONObject(htmlData);
-                JSONArray images = jsonObject.getJSONObject("images").getJSONArray("backdrops");
-                int index = -1, logoIndex = -1;
+                int logoIndex = -1;
 
                 JSONArray logos = jsonObject.getJSONObject("images").getJSONArray("logos");
                 if (logos.length() > 0) {
@@ -554,30 +546,6 @@ public class DetailSeriesActivity extends BaseActivity {
                         }
                     });
                 }
-
-                if (images.length() > 0) {
-                    String[] preferredLanguages = {"null", "fr", "en"};
-                    for (String lang : preferredLanguages) {
-                        for (int i = 0; i < images.length(); i++) {
-                            JSONObject object = images.getJSONObject(i);
-                            String isoLang = object.getString("iso_639_1");
-                            if (isoLang.equalsIgnoreCase(lang)) {
-                                index = i;
-                                break;
-                            }
-                        }
-                        if (index != -1) {
-                            break;
-                        }
-                    }
-                    String banner = "";
-                    if (index != -1) {
-                        banner = images.getJSONObject(index).getString("file_path");
-                    }
-                    movieModel.banner = banner;
-                    BACKDROP = Constants.getImageLink(movieModel.banner);
-                    runOnUiThread(() -> Glide.with(this).load(BACKDROP).placeholder(R.color.transparent).into(binding.banner));
-                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -596,6 +564,7 @@ public class DetailSeriesActivity extends BaseActivity {
         SimpleDateFormat outputFormat = new SimpleDateFormat("MMMM yyyy", Locale.FRANCE);
 
         try {
+            Log.d(TAG, "setUI: Date " + movieModel.release_date);
             Date date = inputFormat.parse(movieModel.release_date);
             String formattedDate = outputFormat.format(date);
             String capitalized = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1);

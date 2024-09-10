@@ -61,6 +61,7 @@ public class SeriesActivity extends BaseActivity {
     int id;
     String searchQuery;
     SeriesInfoModel infoModel;
+    String SEASON;
 
     private void initializeDialog() {
         dialog = new Dialog(this);
@@ -87,7 +88,7 @@ public class SeriesActivity extends BaseActivity {
 
         String IMAGE = getIntent().getStringExtra("IMAGE");
         String BACKDROP = getIntent().getStringExtra("BACKDROP");
-
+        SEASON = getIntent().getStringExtra("SEASON");
 
         if (IMAGE != null) {
             Glide.with(this).load(IMAGE).listener(new RequestListener<Drawable>() {
@@ -115,7 +116,6 @@ public class SeriesActivity extends BaseActivity {
         output = Constants.regexName(model.name);
 
         getList();
-
     }
 
     private void getSeasonEpisodes() {
@@ -159,28 +159,25 @@ public class SeriesActivity extends BaseActivity {
                 e.printStackTrace();
             }
             String htmlData = stringBuffer.toString();
-
             try {
                 JSONObject response = new JSONObject(htmlData);
                 JSONArray array = response.getJSONArray("results");
                 JSONObject object = array.getJSONObject(0);
                 id = object.getInt("id");
-                getDetails(id, 1);
+                getDetails(id, Integer.parseInt(SEASON));
             } catch (JSONException e) {
                 e.printStackTrace();
                 Log.d(TAG, "Error: " + e.getMessage());
                 dialog.dismiss();
             }
-
         }).start();
-
     }
 
     private void getDetails(int id, int count) {
         String url = Constants.getEpisodeDetails(id, count);
         ArrayList<EpisodesModel> episodesModelArrayList = new ArrayList<>();
         Log.d(TAG, "fetchID: ID  " + id);
-        Log.d(TAG, "fetchID: URL  " + url);
+        Log.d(TAG, "fetchID: URL EPISODE " + url);
 
         new Thread(() -> {
             URL google = null;
@@ -373,11 +370,13 @@ public class SeriesActivity extends BaseActivity {
                 JSONArray seasons = response.getJSONArray("seasons");
                 for (int i = 0; i < seasons.length(); i++) {
                     JSONObject object = seasons.getJSONObject(i);
-                    SeasonsItem item = new SeasonsItem();
-                    item.name = object.getString("name");
-                    item.episode_count = object.getString("episode_count");
-                    item.season_number = object.getInt("season_number");
-                    seasonSummaries.add(item);
+                    if (object.getInt("season_number") >= Integer.parseInt(SEASON)){
+                        SeasonsItem item = new SeasonsItem();
+                        item.name = object.getString("name");
+                        item.episode_count = object.getString("episode_count");
+                        item.season_number = object.getInt("season_number");
+                        seasonSummaries.add(item);
+                    }
                 }
                 seasonSummaries.sort(Comparator.comparing(seasonsItem -> seasonsItem.season_number));
                 runOnUiThread(() -> {

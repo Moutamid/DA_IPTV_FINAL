@@ -1,6 +1,7 @@
 package com.moutamid.daiptv.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +25,7 @@ public class EpisodesAdapter extends RecyclerView.Adapter<EpisodesAdapter.Episod
     Context context;
     ArrayList<EpisodesModel> list;
     EpisodeClicked episodeClicked;
+    private static final String TAG = "EpisodesAdapter";
 
     public EpisodesAdapter(Context context, ArrayList<EpisodesModel> list, EpisodeClicked episodeClicked) {
         this.context = context;
@@ -40,28 +42,29 @@ public class EpisodesAdapter extends RecyclerView.Adapter<EpisodesAdapter.Episod
     @Override
     public void onBindViewHolder(@NonNull EpisodeVH holder, int position) {
         EpisodesModel model = list.get(holder.getAdapterPosition());
+        Log.d(TAG, "onBindViewHolder: " + model.image);
+        Log.d(TAG, "onBindViewHolder: " + model.desc);
         Glide.with(context).load(Constants.getImageLink(model.image)).placeholder(R.color.black).into(holder.coverImage);
         holder.seasonNo.setText(model.se);
         holder.name.setText(model.name);
-        holder.desc.setText("");
+        holder.desc.setText(model.desc);
 
-        TranslateAPI tagline = new TranslateAPI(
-                Language.AUTO_DETECT,   //Source Language
-                Language.FRENCH,         //Target Language
-                model.desc);           //Query Text
-
-        tagline.setTranslateListener(new TranslateAPI.TranslateListener() {
-            @Override
-            public void onSuccess(String translatedText) {
-                //Log.d(TAG, "onSuccess: " + translatedText);
-                holder.desc.setText(translatedText);
-            }
-
-            @Override
-            public void onFailure(String ErrorText) {
-                //Log.d(TAG, "onFailure: " + ErrorText);
-            }
-        });
+//        TranslateAPI tagline = new TranslateAPI(
+//                Language.AUTO_DETECT,   //Source Language
+//                Language.FRENCH,         //Target Language
+//                model.desc);           //Query Text
+//
+//        tagline.setTranslateListener(new TranslateAPI.TranslateListener() {
+//            @Override
+//            public void onSuccess(String translatedText) {
+//                holder.desc.setText(translatedText);
+//            }
+//
+//            @Override
+//            public void onFailure(String ErrorText) {
+//                //Log.d(TAG, "onFailure: " + ErrorText);
+//            }
+//        });
 
         holder.itemView.setOnClickListener(v -> {
             episodeClicked.clicked(model);
