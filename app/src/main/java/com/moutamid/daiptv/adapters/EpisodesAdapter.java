@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -20,11 +21,12 @@ import com.moutamid.daiptv.models.EpisodesModel;
 import com.moutamid.daiptv.utilis.Constants;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class EpisodesAdapter extends RecyclerView.Adapter<EpisodesAdapter.EpisodeVH> {
-    Context context;
-    ArrayList<EpisodesModel> list;
-    EpisodeClicked episodeClicked;
+    private final Context context;
+    private final ArrayList<EpisodesModel> list;
+    private final EpisodeClicked episodeClicked;
     private static final String TAG = "EpisodesAdapter";
 
     public EpisodesAdapter(Context context, ArrayList<EpisodesModel> list, EpisodeClicked episodeClicked) {
@@ -41,35 +43,62 @@ public class EpisodesAdapter extends RecyclerView.Adapter<EpisodesAdapter.Episod
 
     @Override
     public void onBindViewHolder(@NonNull EpisodeVH holder, int position) {
-        EpisodesModel model = list.get(holder.getAdapterPosition());
-        Log.d(TAG, "onBindViewHolder: " + model.image);
-        Log.d(TAG, "onBindViewHolder: " + model.desc);
-        Glide.with(context).load(Constants.getImageLink(model.image)).placeholder(R.color.black).into(holder.coverImage);
+        EpisodesModel model = list.get(holder.getBindingAdapterPosition());
+        bindData(holder, model);
+        bindTranslation(holder, model.desc, model.name);
+    }
+
+    private void bindData(@NonNull EpisodeVH holder, EpisodesModel model) {
+        Log.d(TAG, "Binding episode: " + model.name);
+
+        Glide.with(context)
+                .load(Constants.getImageLink(model.image))
+                .placeholder(R.color.black)
+                .into(holder.coverImage);
+
         holder.seasonNo.setText(model.se);
         holder.name.setText(model.name);
         holder.desc.setText(model.desc);
 
-//        TranslateAPI tagline = new TranslateAPI(
-//                Language.AUTO_DETECT,   //Source Language
-//                Language.FRENCH,         //Target Language
-//                model.desc);           //Query Text
-//
-//        tagline.setTranslateListener(new TranslateAPI.TranslateListener() {
-//            @Override
-//            public void onSuccess(String translatedText) {
-//                holder.desc.setText(translatedText);
-//            }
-//
-//            @Override
-//            public void onFailure(String ErrorText) {
-//                //Log.d(TAG, "onFailure: " + ErrorText);
-//            }
-//        });
+        holder.itemView.setOnClickListener(v -> episodeClicked.clicked(model));
+    }
 
-        holder.itemView.setOnClickListener(v -> {
-            episodeClicked.clicked(model);
+    private void bindTranslation(@NonNull EpisodeVH holder, String desc, String title) {
+        TranslateAPI tagline = new TranslateAPI(
+                Language.AUTO_DETECT,
+                Language.FRENCH,
+                desc);
+
+        TranslateAPI name = new TranslateAPI(
+                Language.AUTO_DETECT,
+                Language.FRENCH,
+                title);
+
+        name.setTranslateListener(new TranslateAPI.TranslateListener() {
+            @Override
+            public void onSuccess(String translatedText) {
+                holder.name.setText(translatedText);
+                Log.d(TAG, "Translation successful: " + translatedText);
+            }
+
+            @Override
+            public void onFailure(String errorText) {
+                Log.e(TAG, "Translation failed: " + errorText);
+            }
         });
 
+        tagline.setTranslateListener(new TranslateAPI.TranslateListener() {
+            @Override
+            public void onSuccess(String translatedText) {
+                holder.desc.setText(translatedText);
+                Log.d(TAG, "Translation successful: " + translatedText);
+            }
+
+            @Override
+            public void onFailure(String errorText) {
+                Log.e(TAG, "Translation failed: " + errorText);
+            }
+        });
     }
 
     @Override
@@ -77,11 +106,12 @@ public class EpisodesAdapter extends RecyclerView.Adapter<EpisodesAdapter.Episod
         return list.size();
     }
 
-    public class EpisodeVH extends RecyclerView.ViewHolder{
+    public static class EpisodeVH extends RecyclerView.ViewHolder {
         ImageView coverImage;
         TextView seasonNo;
         TextView name;
         TextView desc;
+
         public EpisodeVH(@NonNull View itemView) {
             super(itemView);
             coverImage = itemView.findViewById(R.id.coverImage);
@@ -90,5 +120,5 @@ public class EpisodesAdapter extends RecyclerView.Adapter<EpisodesAdapter.Episod
             desc = itemView.findViewById(R.id.desc);
         }
     }
-
 }
+

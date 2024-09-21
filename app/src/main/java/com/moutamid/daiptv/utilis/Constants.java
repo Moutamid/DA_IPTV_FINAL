@@ -4,10 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
-import android.os.Build;
 import android.util.Log;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 
 import com.google.firebase.database.DatabaseReference;
@@ -24,9 +22,6 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -350,7 +345,7 @@ public class Constants {
                     }
                 }
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             Log.d(TAG, "extractYear: ERROR " + e.getLocalizedMessage());
             try {
                 long timestamp = Long.parseLong(name) * 1000L;
@@ -376,6 +371,7 @@ public class Constants {
     }
 
     private static final String TAG = "Constants";
+
     public static String queryName(String channelName) {
         Pattern patternPattern = Pattern.compile("\\bS\\d{2} E\\d{2}\\b");
         Matcher patternMatcher = patternPattern.matcher(channelName);

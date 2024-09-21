@@ -77,8 +77,8 @@ public class SearchSeriesAdapter extends RecyclerView.Adapter<SearchSeriesAdapte
             }).placeholder(R.color.transparent).into(holder.image);
 
             holder.itemView.setOnClickListener(v -> {
-                Stash.put(Constants.PASS, model);
-                context.startActivity(new Intent(context, DetailActivity.class));
+                Stash.put(Constants.PASS_SERIES, model);
+                context.startActivity(new Intent(context, DetailSeriesActivity.class));
             });
 
             holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {

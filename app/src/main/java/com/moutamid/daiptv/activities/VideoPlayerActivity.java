@@ -36,6 +36,7 @@ import com.moutamid.daiptv.databinding.ActivityVideoPlayerBinding;
 import com.moutamid.daiptv.models.EPGModel;
 import com.moutamid.daiptv.models.FavoriteModel;
 import com.moutamid.daiptv.models.SeriesModel;
+import com.moutamid.daiptv.models.UserModel;
 import com.moutamid.daiptv.models.VodModel;
 import com.moutamid.daiptv.utilis.Constants;
 import com.moutamid.daiptv.utilis.Features;
@@ -257,8 +258,9 @@ public class VideoPlayerActivity extends BaseActivity {
             boolean isPastTenMinutes = currentPosition > 1000;
             if (isPastTenMinutes) {
                 Log.d(TAG, "onDestroy: PAST 1 sec");
+                UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
                 if (!type.equals(Constants.TYPE_CHANNEL)) {
-                    ArrayList<FavoriteModel> list = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
+                    ArrayList<FavoriteModel> list = Stash.getArrayList(Constants.RESUME + userModel.id, FavoriteModel.class);
                     if (type.equals(Constants.TYPE_MOVIE)) {
                         boolean check = list.stream().anyMatch(favoriteModel -> favoriteModel.stream_id == vodModel.stream_id);
                         if (!check) {
@@ -286,7 +288,7 @@ public class VideoPlayerActivity extends BaseActivity {
                             list.add(favoriteModel);
                         }
                     }
-                    Stash.put(Constants.RESUME, list);
+                    Stash.put(Constants.RESUME + userModel.id, list);
                 }
             }
         }

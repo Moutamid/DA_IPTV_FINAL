@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.PagerSnapHelper;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
 import com.fxn.stash.Stash;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.adapters.HomeParentAdapter;
@@ -112,11 +113,10 @@ public class HomeFragment extends Fragment {
     private void checkData() {
         ArrayList<MovieModel> seriesList = Stash.getArrayList(Constants.SERVER_TV, MovieModel.class);
         ArrayList<MovieModel> moviesList = Stash.getArrayList(Constants.SERVER_FILM, MovieModel.class);
+        UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
         if (!seriesList.isEmpty() && !moviesList.isEmpty()) {
             list.add(new TopItems("Derniers films ajoutés", moviesList));
             list.add(new TopItems("Dernières séries ajoutées", seriesList));
-
-            UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
             ArrayList<FavoriteModel> fvrt = Stash.getArrayList(userModel.id, FavoriteModel.class);
             if (!fvrt.isEmpty()) {
                 ArrayList<MovieModel> fvrtList = new ArrayList<>();
@@ -134,7 +134,7 @@ public class HomeFragment extends Fragment {
                 }
                 list.add(new TopItems("Favoris", fvrtList));
             }
-            ArrayList<FavoriteModel> films = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
+            ArrayList<FavoriteModel> films = Stash.getArrayList(Constants.RESUME + userModel.id, FavoriteModel.class);
             ArrayList<MovieModel> fvrtList = new ArrayList<>();
             for (FavoriteModel channelsModel : films) {
                 MovieModel model = new MovieModel();
@@ -361,11 +361,337 @@ public class HomeFragment extends Fragment {
             String[] type = model.type.split(",");
             if (type.length == 2 && type[0].equals(Constants.TYPE_MOVIE)) {
                 fetchInfo(model);
+            } else if (type.length == 2 && type[0].equals(Constants.TYPE_SERIES)) {
+                fetchSeries(model);
             } else {
                 fetchID(model);
             }
         }
     };
+
+    private void fetchSeries(MovieModel model) {
+        String url = ApiLinks.getSeriesInfoByID(String.valueOf(model.series_id));
+        Log.d(TAG, "fetchSeries: " + url);
+
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+            try {
+                JSONObject response = new JSONObject(htmlData);
+                JSONObject info = response.getJSONObject("info");
+                movieModel = new MovieModel();
+                movieModel.tagline = info.getString("plot");
+                movieModel.original_title = Constants.regexName(info.getString("name"));
+                movieModel.release_date = info.getString("releaseDate");
+                movieModel.overview = info.getString("plot");
+
+                movieModel.isFrench = !movieModel.tagline.isEmpty();
+                movieModel.vote_average = String.valueOf(info.getInt("rating_5based"));
+                movieModel.genres = info.getString("genre");
+                if (info.getJSONArray("backdrop_path").length() > 0) {
+                    movieModel.banner = info.getJSONArray("backdrop_path").getString(0);
+                } else {
+                    movieModel.banner = "";
+                }
+                movieModel.trailer = "https://www.youtube.com/watch?v=" + info.getString("youtube_trailer");
+                if (getActivity() != null && isAdded()) {
+                    getActivity().runOnUiThread(() -> {
+                        if (isAdded()) setUI();
+                    });
+                }
+                fetchLogo(model);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                loadingBar.dismiss();
+            }
+        }).start();
+    }
+
+    private void fetchLogo(MovieModel model) {
+        String name = Constants.regexName(model.original_title);
+        String url;
+        url = Constants.getMovieData(name, Constants.extractYear(model.original_title), Constants.TYPE_TV);
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+
+            try {
+                JSONObject response = new JSONObject(htmlData);
+                JSONArray array = response.getJSONArray("results");
+                if (array.length() >= 1) {
+                    int id = 0;
+                    JSONObject object = array.getJSONObject(0);
+                    id = object.getInt("id");
+                    getDetailsLogo(id, Constants.lang_fr);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                requireActivity().runOnUiThread(() -> loadingBar.dismiss());
+            }
+
+        }).start();
+    }
+
+    private void getDetailsLogo(int id, String language) {
+        String url = Constants.getMovieDetails(id, Constants.TYPE_TV, language);
+        Log.d("TRANSJSILS", "fetchID: ID  " + id);
+        Log.d("TRANSJSILS", "fetchID: URL  " + url);
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+
+            try {
+                JSONObject response = new JSONObject(htmlData);
+                String[] preferredLanguages = {"null", "fr", "en"};
+
+                movieModel.tagline = response.getString("tagline");
+                binding.desc.setText(movieModel.tagline);
+
+                int logoIndex = -1;
+                JSONArray logos = response.getJSONObject("images").getJSONArray("logos");
+                if (logos.length() > 0) {
+                    for (String lang : preferredLanguages) {
+                        for (int i = 0; i < logos.length(); i++) {
+                            JSONObject object = logos.getJSONObject(i);
+                            String isoLang = object.getString("iso_639_1");
+                            if (isoLang.equalsIgnoreCase(lang)) {
+                                logoIndex = i;
+                                break;
+                            }
+                        }
+                        if (logoIndex != -1) {
+                            break;
+                        }
+                    }
+                    if (logoIndex != -1) {
+                        logo = logos.getJSONObject(logoIndex).getString("file_path");
+                        if (isAdded() && getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                binding.name.setVisibility(View.GONE);
+                                try {
+                                    String[] type = logo.split("\\.");
+                                    if (type[1].equals("svg")) {
+                                        RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
+                                                .as(PictureDrawable.class)
+                                                .placeholder(R.color.transparent)
+                                                .error(R.color.transparent)
+                                                .transition(withCrossFade())
+                                                .listener(new SvgSoftwareLayerSetter());
+                                        requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
+                                    } else {
+                                        Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            });
+                        }
+                    } else {
+                        logo = "";
+                        getBackdropLogo(id, "");
+                    }
+                } else {
+                    getBackdropLogo(id, "");
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void getBackdropLogo(int id, String language) {
+        Log.d(TAG, "getBackdrop: ");
+        String url = Constants.getMovieDetails(id, Constants.TYPE_TV, language);
+        Log.d(TAG, "fetchID: ID  " + id);
+        Log.d(TAG, "fetchID: URL  " + url);
+
+        new Thread(() -> {
+            URL google = null;
+            try {
+                google = new URL(url);
+            } catch (final MalformedURLException e) {
+                e.printStackTrace();
+            }
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(google != null ? google.openStream() : null));
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String input = null;
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                try {
+                    if ((input = in != null ? in.readLine() : null) == null) break;
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+                stringBuffer.append(input);
+            }
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            String htmlData = stringBuffer.toString();
+            Log.d(TAG, "getVodRecursive: " + htmlData);
+
+            try {
+                JSONObject jsonObject = new JSONObject(htmlData);
+                movieModel.tagline = jsonObject.getString("tagline");
+
+                binding.desc.setText(movieModel.tagline);
+
+                int logoIndex = -1;
+                JSONArray logos = jsonObject.getJSONObject("images").getJSONArray("logos");
+                Log.d(TAG, "getBackdrop: logos " + logos.length());
+
+                if (logos.length() > 0) {
+                    String[] preferredLanguages = {"null", "fr", "en"};
+                    for (String lang : preferredLanguages) {
+                        for (int i = 0; i < logos.length(); i++) {
+                            JSONObject object = logos.getJSONObject(i);
+                            String isoLang = object.getString("iso_639_1");
+                            if (isoLang.equalsIgnoreCase(lang)) {
+                                logoIndex = i;
+                                break;
+                            }
+                        }
+                        if (logoIndex != -1) {
+                            break;
+                        }
+                    }
+                    if (logoIndex != -1) {
+                        logo = logos.getJSONObject(logoIndex).getString("file_path");
+                    } else {
+                        logo = "";
+                    }
+                    Log.d(TAG, "getlogo: " + logo);
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            binding.name.setVisibility(View.GONE);
+                            try {
+                                String[] type = logo.split("\\.");
+                                if (type[1].equals("svg")) {
+                                    RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
+                                            .as(PictureDrawable.class)
+                                            .placeholder(R.color.transparent)
+                                            .error(R.color.transparent)
+                                            .transition(withCrossFade())
+                                            .listener(new SvgSoftwareLayerSetter());
+                                    requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
+                                } else {
+                                    Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
+                } else {
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            binding.name.setVisibility(View.VISIBLE);
+                            try {
+                                Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        }).start();
+    }
 
     private void fetchInfo(MovieModel model) {
         String url = ApiLinks.getVodInfoByID(String.valueOf(model.streamID));
@@ -1013,7 +1339,7 @@ public class HomeFragment extends Fragment {
                         }
                         list.add(new TopItems("Favoris", fvrtList));
                     }
-                    ArrayList<FavoriteModel> films = Stash.getArrayList(Constants.RESUME, FavoriteModel.class);
+                    ArrayList<FavoriteModel> films = Stash.getArrayList(Constants.RESUME + userModel.id, FavoriteModel.class);
                     ArrayList<MovieModel> fvrtList = new ArrayList<>();
                     for (FavoriteModel channelsModel : films) {
                         MovieModel model = new MovieModel();

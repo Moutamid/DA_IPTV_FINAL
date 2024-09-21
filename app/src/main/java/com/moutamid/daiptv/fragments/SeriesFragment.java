@@ -68,7 +68,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class  SeriesFragment extends Fragment {
+public class SeriesFragment extends Fragment {
     FragmentSeriesBinding binding;
     SeriesParentAdapter parentAdapter;
     Dialog dialog;
@@ -291,7 +291,6 @@ public class  SeriesFragment extends Fragment {
 
     private void getFromServer(SeriesModel model) {
         RequestQueue requestQueue = VolleySingleton.getInstance(requireContext()).getRequestQueue();
-
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.GET, ApiLinks.getSeriesInfoByID(String.valueOf(model.series_id)), null,
                 response -> {
@@ -324,8 +323,7 @@ public class  SeriesFragment extends Fragment {
                     }
                 }, error -> {
             Toast.makeText(mContext, error.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-        }
-        );
+        });
         requestQueue.add(request);
     }
 
@@ -544,12 +542,12 @@ public class  SeriesFragment extends Fragment {
                         }
                     } else {
                         logo = "";
-                        if (!saveData){
+                        if (!saveData) {
                             getBackdrop(id, "", model, saveData);
                         }
                     }
                 } else {
-                    if (!saveData){
+                    if (!saveData) {
                         getBackdrop(id, "", model, saveData);
                     }
                     if (isAdded() && getActivity() != null) {
