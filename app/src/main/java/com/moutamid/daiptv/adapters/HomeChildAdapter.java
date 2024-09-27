@@ -191,8 +191,10 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
                 String type = isRecents[0];
                 UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
                 String url;
+                Log.d(TAG, "onBindViewHolder: " + model.extension);
                 if (type.equals(Constants.TYPE_MOVIE)) {
                     url = userModel.url + "/movie/" + userModel.username + "/" + userModel.password + "/" + model.streamID + "." + model.extension;
+                    Log.d(TAG, "onBindViewHolder: URL  " + url);
                     VodModel vodModel = new VodModel();
                     vodModel.name = model.original_title;
                     vodModel.stream_type = model.type;

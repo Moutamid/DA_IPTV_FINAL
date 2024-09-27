@@ -164,7 +164,7 @@ public class SeriesActivity extends BaseActivity {
                 JSONArray array = response.getJSONArray("results");
                 JSONObject object = array.getJSONObject(0);
                 id = object.getInt("id");
-                getDetails(id, Integer.parseInt(SEASON));
+                getDetails(id, Integer.parseInt(SEASON), -1);
             } catch (JSONException e) {
                 e.printStackTrace();
                 Log.d(TAG, "Error: " + e.getMessage());
@@ -173,11 +173,12 @@ public class SeriesActivity extends BaseActivity {
         }).start();
     }
 
-    private void getDetails(int id, int count) {
+    private void getDetails(int id, int count, int episode) {
         String url = Constants.getEpisodeDetails(id, count);
         ArrayList<EpisodesModel> episodesModelArrayList = new ArrayList<>();
         Log.d(TAG, "fetchID: ID  " + id);
         Log.d(TAG, "fetchID: URL EPISODE " + url);
+        Log.d(TAG, "fetchID: episode " + episode);
 
         new Thread(() -> {
             URL google = null;
@@ -214,7 +215,10 @@ public class SeriesActivity extends BaseActivity {
             try {
                 JSONObject response = new JSONObject(htmlData);
                 JSONArray episodes = response.getJSONArray("episodes");
-                for (int i = 0; i < episodes.length(); i++) {
+
+                int limit = (episode == -1) ? episodes.length() : episode;
+
+                for (int i = 0; i < Math.min(limit, episodes.length()); i++) {
                     JSONObject object = episodes.getJSONObject(i);
                     int season_number = object.getInt("season_number");
                     int episode_number = object.getInt("episode_number");
@@ -225,6 +229,7 @@ public class SeriesActivity extends BaseActivity {
                     EpisodesModel episodesModel = new EpisodesModel(se, name, overview, still_path);
                     episodesModelArrayList.add(episodesModel);
                 }
+
                 Log.d(TAG, "getDetails: " + episodesModelArrayList.size());
                 runOnUiThread(() -> {
                     EpisodesAdapter episodesAdapter = new EpisodesAdapter(SeriesActivity.this, episodesModelArrayList, episodeModel -> {
@@ -332,7 +337,6 @@ public class SeriesActivity extends BaseActivity {
         ArrayList<SeasonsItem> seasonSummaries = new ArrayList<>();
         String url = ApiLinks.getSeriesInfoByID(String.valueOf(model.series_id));
 
-
         new Thread(() -> {
             URL google = null;
             try {
@@ -380,8 +384,8 @@ public class SeriesActivity extends BaseActivity {
                 }
                 seasonSummaries.sort(Comparator.comparing(seasonsItem -> seasonsItem.season_number));
                 runOnUiThread(() -> {
-                    SeasonsAdapter seasonsAdapter = new SeasonsAdapter(this, seasonSummaries, pos -> {
-                        getDetails(id, pos);
+                    SeasonsAdapter seasonsAdapter = new SeasonsAdapter(this, seasonSummaries, (season, episode) -> {
+                        getDetails(id, season, episode);
                     });
                     Log.d(TAG, "seasonSummaries: " + seasonSummaries.size());
                     binding.seasonsRC.setAdapter(seasonsAdapter);

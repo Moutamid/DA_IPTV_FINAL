@@ -5,6 +5,7 @@ import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOption
 import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.PictureDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,6 +18,10 @@ import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.fxn.stash.Stash;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.moutamid.daiptv.BaseActivity;
@@ -49,6 +54,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 public class DetailSeriesActivity extends BaseActivity {
     ActivityDetailSeriesBinding binding;
@@ -141,6 +147,7 @@ public class DetailSeriesActivity extends BaseActivity {
 //            }).show();
         });
         AtomicReference<String> seasonKey = new AtomicReference<>("");
+
         if (model != null) {
             Log.d(TAG, "onCreate  model.series_id : " + model.series_id);
             String url = ApiLinks.getSeriesInfoByID(String.valueOf(model.series_id));
@@ -572,9 +579,14 @@ public class DetailSeriesActivity extends BaseActivity {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        Log.d(TAG, "setUI: " + Constants.getImageLink(movieModel.banner));
-        Glide.with(this).load(Constants.getImageLink(movieModel.banner)).into(binding.banner);
-
+        String banner;
+        if (Pattern.compile(Constants.URL_REGEX).matcher(movieModel.banner.trim()).matches()) {
+            banner = movieModel.banner.trim();
+        } else {
+            banner = Constants.getImageLink(movieModel.banner.trim());
+        }
+        Glide.with(this).load(banner).into(binding.banner);
+        Log.d(TAG, "setUI: " + banner);
         binding.trailer.setOnClickListener(v -> {
             Log.d(TAG, "setUI: " + movieModel.trailer);
             try {

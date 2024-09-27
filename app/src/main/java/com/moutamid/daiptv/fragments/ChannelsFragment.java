@@ -454,7 +454,8 @@ public class ChannelsFragment extends Fragment {
                             adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list, null);
                             binding.channelsRC.setAdapter(adapter);
                             dialog.dismiss();
-                            selectedButton.setText("All" + " - " + list.size());
+                            if (selectedButton != null)
+                                selectedButton.setText("All" + " - " + list.size());
                         });
                     }
                 } else {
@@ -511,7 +512,8 @@ public class ChannelsFragment extends Fragment {
                             adapter = new ChannelsAdapter(mContext, (ArrayList<ChannelsModel>) list, null);
                             binding.channelsRC.setAdapter(adapter);
                             String[] n = splitString(name);
-                            selectedButton.setText(n[0] + " - " + list.size());
+                            if (selectedButton != null)
+                                selectedButton.setText(n[0] + " - " + list.size());
                         });
                     }
                 }

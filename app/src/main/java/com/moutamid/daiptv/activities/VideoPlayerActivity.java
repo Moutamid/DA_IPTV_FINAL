@@ -264,6 +264,7 @@ public class VideoPlayerActivity extends BaseActivity {
                     if (type.equals(Constants.TYPE_MOVIE)) {
                         boolean check = list.stream().anyMatch(favoriteModel -> favoriteModel.stream_id == vodModel.stream_id);
                         if (!check) {
+                            Log.d(TAG, "onDestroy: container_extension " + vodModel.container_extension);
                             FavoriteModel favoriteModel = new FavoriteModel();
                             favoriteModel.id = UUID.randomUUID().toString();
                             favoriteModel.image = banner;

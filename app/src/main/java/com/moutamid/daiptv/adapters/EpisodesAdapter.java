@@ -9,7 +9,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -21,7 +20,6 @@ import com.moutamid.daiptv.models.EpisodesModel;
 import com.moutamid.daiptv.utilis.Constants;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class EpisodesAdapter extends RecyclerView.Adapter<EpisodesAdapter.EpisodeVH> {
     private final Context context;
@@ -64,41 +62,50 @@ public class EpisodesAdapter extends RecyclerView.Adapter<EpisodesAdapter.Episod
     }
 
     private void bindTranslation(@NonNull EpisodeVH holder, String desc, String title) {
-        TranslateAPI tagline = new TranslateAPI(
-                Language.AUTO_DETECT,
-                Language.FRENCH,
-                desc);
+        if (desc != null) {
+            if (!desc.isEmpty()) {
+                TranslateAPI tagline = new TranslateAPI(
+                        Language.AUTO_DETECT,
+                        Language.FRENCH,
+                        desc);
 
-        TranslateAPI name = new TranslateAPI(
-                Language.AUTO_DETECT,
-                Language.FRENCH,
-                title);
+                tagline.setTranslateListener(new TranslateAPI.TranslateListener() {
+                    @Override
+                    public void onSuccess(String translatedText) {
+                        holder.desc.setText(translatedText);
+                        Log.d(TAG, "Translation successful: " + translatedText);
+                    }
 
-        name.setTranslateListener(new TranslateAPI.TranslateListener() {
-            @Override
-            public void onSuccess(String translatedText) {
-                holder.name.setText(translatedText);
-                Log.d(TAG, "Translation successful: " + translatedText);
+                    @Override
+                    public void onFailure(String errorText) {
+                        Log.e(TAG, "Translation failed: " + errorText);
+                    }
+                });
+
             }
+        }
 
-            @Override
-            public void onFailure(String errorText) {
-                Log.e(TAG, "Translation failed: " + errorText);
-            }
-        });
+        if (title != null){
+            if (!title.isEmpty()){
+                TranslateAPI name = new TranslateAPI(
+                        Language.AUTO_DETECT,
+                        Language.FRENCH,
+                        title);
 
-        tagline.setTranslateListener(new TranslateAPI.TranslateListener() {
-            @Override
-            public void onSuccess(String translatedText) {
-                holder.desc.setText(translatedText);
-                Log.d(TAG, "Translation successful: " + translatedText);
-            }
+                name.setTranslateListener(new TranslateAPI.TranslateListener() {
+                    @Override
+                    public void onSuccess(String translatedText) {
+                        holder.name.setText(translatedText);
+                        Log.d(TAG, "Translation successful: " + translatedText);
+                    }
 
-            @Override
-            public void onFailure(String errorText) {
-                Log.e(TAG, "Translation failed: " + errorText);
+                    @Override
+                    public void onFailure(String errorText) {
+                        Log.e(TAG, "Translation failed: " + errorText);
+                    }
+                });
             }
-        });
+        }
     }
 
     @Override

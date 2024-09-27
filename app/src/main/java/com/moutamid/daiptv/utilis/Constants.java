@@ -248,6 +248,7 @@ public class Constants {
         name = name.replace("IT| ", "");
         name = name.replace(" IT ", "");
         name = name.replace("|FR| ", "");
+        name = name.replace("|FR|| ", "");
         name = name.replace("FR| ", "");
         name = name.replace(" FR ", "");
         name = name.replace("|AR| ", "");
@@ -281,6 +282,8 @@ public class Constants {
         name = name.replace("UFC| ", "");
         name = name.replace(" UFC ", "");
         name = name.replace(".mkv", "");
+        name = name.replace("4K", "");
+        name = name.replace("4k", "");
         name = name.replaceAll("\\(\\d{4}\\)", "");
         name = name.replaceAll("\\| \\d{4} \\|", "");
         name = name.replaceAll("\\|\\d{4}\\|", "");

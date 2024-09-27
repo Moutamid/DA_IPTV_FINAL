@@ -5,6 +5,7 @@ import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOption
 import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.PictureDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,6 +19,10 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.fxn.stash.Stash;
 import com.moutamid.daiptv.BaseActivity;
 import com.moutamid.daiptv.R;
@@ -49,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class DetailActivity extends BaseActivity {
     private static final String TAG = "DetailActivity";
@@ -600,8 +606,14 @@ public class DetailActivity extends BaseActivity {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        Log.d(TAG, "setUI: " + Constants.getImageLink(movieModel.banner));
-        Glide.with(this).load(Constants.getImageLink(movieModel.banner)).into(binding.banner);
+        String banner;
+        if (Pattern.compile(Constants.URL_REGEX).matcher(movieModel.banner.trim()).matches()) {
+            banner = movieModel.banner.trim();
+        } else {
+            banner = Constants.getImageLink(movieModel.banner.trim());
+        }
+        Glide.with(this).load(banner).into(binding.banner);
+        Log.d(TAG, "setUI: " + banner);
 
         binding.trailer.setOnClickListener(v -> {
             Log.d(TAG, "setUI: " + movieModel.trailer);

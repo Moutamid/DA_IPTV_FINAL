@@ -107,6 +107,38 @@ public class HomeFragment extends Fragment {
         PagerSnapHelper snapHelper = new PagerSnapHelper();
         snapHelper.attachToRecyclerView(binding.recycler);
 
+        userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
+
+        list = Stash.getArrayList(Constants.HOME, TopItems.class);
+        if (list.isEmpty()) {
+            Log.d(TAG, "onCreateView: GET");
+            getList();
+        } else {
+            loadingBar.show();
+            Log.d(TAG, "onCreateView: ELSE");
+            fetchID(list.get(0).list.get(0));
+
+            long time = Stash.getLong(Constants.IS_TODAY, 0);
+            LocalDate date;
+            if (time != 0) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    date = Instant.ofEpochMilli(time)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
+                    LocalDate today = LocalDate.now();
+                    boolean isToday = date.equals(today);
+                    Log.d(TAG, "onCreate: ISTODAY " + isToday);
+                    if (!isToday) {
+                        getAllVods();
+                    } else {
+                        checkData();
+                    }
+                }
+            } else {
+                getAllVods();
+            }
+        }
+
         return binding.getRoot();
     }
 
@@ -142,6 +174,7 @@ public class HomeFragment extends Fragment {
                 model.banner = channelsModel.image;
                 model.original_title = channelsModel.name;
                 model.streamID = channelsModel.stream_id;
+                model.extension = channelsModel.extension;
                 fvrtList.add(model);
             }
             if (!fvrtList.isEmpty()) {
@@ -561,9 +594,9 @@ public class HomeFragment extends Fragment {
                                                 .error(R.color.transparent)
                                                 .transition(withCrossFade())
                                                 .listener(new SvgSoftwareLayerSetter());
-                                        requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
+                                        requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
                                     } else {
-                                        Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                        Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -665,9 +698,9 @@ public class HomeFragment extends Fragment {
                                             .error(R.color.transparent)
                                             .transition(withCrossFade())
                                             .listener(new SvgSoftwareLayerSetter());
-                                    requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
+                                    requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
                                 } else {
-                                    Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                    Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -921,9 +954,9 @@ public class HomeFragment extends Fragment {
                                                 .error(R.color.transparent)
                                                 .transition(withCrossFade())
                                                 .listener(new SvgSoftwareLayerSetter());
-                                        requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
+                                        requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
                                     } else {
-                                        Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                        Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -1057,9 +1090,9 @@ public class HomeFragment extends Fragment {
                                             .error(R.color.transparent)
                                             .transition(withCrossFade())
                                             .listener(new SvgSoftwareLayerSetter());
-                                    requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
+                                    requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
                                 } else {
-                                    Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                    Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -1071,7 +1104,7 @@ public class HomeFragment extends Fragment {
                         getActivity().runOnUiThread(() -> {
                             binding.name.setVisibility(View.VISIBLE);
                             try {
-                                Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                                Glide.with(mContext).load(R.color.transparent).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -1153,46 +1186,13 @@ public class HomeFragment extends Fragment {
         Log.d(TAG, "setUI: " + Constants.getImageLink(movieModel.banner));
         Log.d(TAG, "setUI: " + Constants.getImageLink(logo));
         Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
-        Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+        Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
     }
 
     @Override
     public void onResume() {
         super.onResume();
         Stash.put(Constants.SELECTED_PAGE, "Home");
-
-        userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-
-        list = Stash.getArrayList(Constants.HOME, TopItems.class);
-        if (list.isEmpty()) {
-            Log.d(TAG, "onCreateView: GET");
-            getList();
-        } else {
-            loadingBar.show();
-            Log.d(TAG, "onCreateView: ELSE");
-            fetchID(list.get(0).list.get(0));
-
-            long time = Stash.getLong(Constants.IS_TODAY, 0);
-            LocalDate date;
-            if (time != 0) {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    date = Instant.ofEpochMilli(time)
-                            .atZone(ZoneId.systemDefault())
-                            .toLocalDate();
-                    LocalDate today = LocalDate.now();
-                    boolean isToday = date.equals(today);
-                    Log.d(TAG, "onCreate: ISTODAY " + isToday);
-                    if (!isToday) {
-                        getAllVods();
-                    } else {
-                        checkData();
-                    }
-                }
-            } else {
-                getAllVods();
-            }
-        }
-
 //        refreshFavoris();
     }
 

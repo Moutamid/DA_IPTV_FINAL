@@ -35,9 +35,15 @@ public class SeasonsAdapter extends RecyclerView.Adapter<SeasonsAdapter.SeasonsV
     @Override
     public void onBindViewHolder(@NonNull SeasonsVH holder, int position) {
         SeasonsItem seasonsItem = list.get(holder.getAdapterPosition());
-        holder.seasonNo.setText(seasonsItem.name);
+        String name = "";
+        if (seasonsItem.name.contains(":")) {
+            name = seasonsItem.name.split(":")[0].trim();
+        } else {
+            name = seasonsItem.name;
+        }
+        holder.seasonNo.setText(name);
         holder.episodeNo.setText(seasonsItem.episode_count + " Episodes");
-        holder.itemView.setOnClickListener(v -> seasonClicked.clicked(seasonsItem.season_number));
+        holder.itemView.setOnClickListener(v -> seasonClicked.clicked(seasonsItem.season_number, Integer.parseInt(seasonsItem.episode_count)));
     }
 
     @Override

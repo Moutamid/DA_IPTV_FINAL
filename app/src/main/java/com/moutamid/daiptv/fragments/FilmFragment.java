@@ -424,9 +424,9 @@ public class FilmFragment extends Fragment {
                                                 .error(R.color.transparent)
                                                 .transition(withCrossFade())
                                                 .listener(new SvgSoftwareLayerSetter());
-                                        requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
+                                        requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
                                     } else {
-                                        Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                        Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -438,7 +438,7 @@ public class FilmFragment extends Fragment {
                             getActivity().runOnUiThread(() -> {
                                 binding.name.setVisibility(View.VISIBLE);
                                 try {
-                                    Glide.with(mContext).load(R.color.transparent).placeholder(R.color.transparent).into(binding.logo);
+                                    Glide.with(mContext).load(R.color.transparent).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -556,9 +556,9 @@ public class FilmFragment extends Fragment {
                                             .error(R.color.transparent)
                                             .transition(withCrossFade())
                                             .listener(new SvgSoftwareLayerSetter());
-                                    requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
+                                    requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
                                 } else {
-                                    Glide.with(mContext).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                    Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();

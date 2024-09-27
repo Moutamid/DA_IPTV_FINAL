@@ -1,5 +1,5 @@
 package com.moutamid.daiptv.listener;
 
 public interface SeasonClicked {
-    void clicked(int pos);
+    void clicked(int season, int episode);
 }
