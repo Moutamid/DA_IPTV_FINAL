@@ -25,6 +25,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
+import com.caverock.androidsvg.SVG;
 import com.fxn.stash.Stash;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
@@ -265,6 +266,9 @@ public class SeriesFragment extends Fragment {
 
     ItemSelectedSeries selectedFilm = model -> {
         if (model != null) {
+            Glide.with(this)
+                    .load(R.color.transparent)
+                    .into(binding.logo);
             if (!model.stream_type.equals(Constants.topRated)) {
                 TranslateAPI type = new TranslateAPI(
                         Language.AUTO_DETECT,
@@ -274,8 +278,9 @@ public class SeriesFragment extends Fragment {
                     @Override
                     public void onSuccess(String translatedText) {
                         Log.d("TRANSJSILS", "onSuccess: " + translatedText);
-                        model.name = translatedText;
-                        getFromServer(model);
+                        SeriesModel series = new SeriesModel(model);
+                        series.name = translatedText;
+                        getFromServer(series);
                     }
 
                     @Override
@@ -392,8 +397,9 @@ public class SeriesFragment extends Fragment {
     }
 
     MovieModel movieModel;
-
+    int count = 0;
     private void getDetails(int id, String language, SeriesModel model, boolean saveData) {
+        count++;
         String url = Constants.getMovieDetails(id, Constants.TYPE_TV, language);
         Log.d("TRANSJSILS", "fetchID: ID  " + id);
         Log.d("TRANSJSILS", "fetchID: URL  " + url);
@@ -447,7 +453,7 @@ public class SeriesFragment extends Fragment {
                     }
                     movieModel.overview = response.getString("overview");
                     movieModel.tagline = response.getString("tagline");
-                    if (movieModel.tagline.isEmpty() && !language.isEmpty())
+                    if (movieModel.tagline.isEmpty() && !language.isEmpty()  && count < 2)
                         getDetails(id, "", model, saveData);
 
                     movieModel.isFrench = !movieModel.tagline.isEmpty();
@@ -524,16 +530,19 @@ public class SeriesFragment extends Fragment {
                                 binding.name.setVisibility(View.GONE);
                                 try {
                                     String[] type = logo.split("\\.");
-                                    if (type[1].equals("svg")) {
+                                    if (type.length > 1 && type[1].equals("svg")) {
                                         RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
                                                 .as(PictureDrawable.class)
                                                 .placeholder(R.color.transparent)
                                                 .error(R.color.transparent)
                                                 .transition(withCrossFade())
                                                 .listener(new SvgSoftwareLayerSetter());
-                                        requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
+                                        requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
                                     } else {
-                                        Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
+                                        Glide.with(this)
+                                                .load(Constants.getImageLink(logo))
+                                                .placeholder(R.color.transparent)
+                                                .into(binding.logo);
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -680,16 +689,19 @@ public class SeriesFragment extends Fragment {
                             binding.name.setVisibility(View.GONE);
                             try {
                                 String[] type = logo.split("\\.");
-                                if (type[1].equals("svg")) {
+                                if (type.length > 1 && type[1].equals("svg")) {
                                     RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
                                             .as(PictureDrawable.class)
                                             .placeholder(R.color.transparent)
                                             .error(R.color.transparent)
                                             .transition(withCrossFade())
                                             .listener(new SvgSoftwareLayerSetter());
-                                    requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
+                                    requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
                                 } else {
-                                    Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
+                                    Glide.with(this)
+                                            .load(Constants.getImageLink(logo))
+                                            .placeholder(R.color.transparent)
+                                            .into(binding.logo);
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();

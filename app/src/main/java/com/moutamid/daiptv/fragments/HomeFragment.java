@@ -392,6 +392,9 @@ public class HomeFragment extends Fragment {
         @Override
         public void selected(MovieModel model) {
             String[] type = model.type.split(",");
+            Glide.with(requireContext())
+                    .load(R.color.transparent)
+                    .into(binding.logo);
             if (type.length == 2 && type[0].equals(Constants.TYPE_MOVIE)) {
                 fetchInfo(model);
             } else if (type.length == 2 && type[0].equals(Constants.TYPE_SERIES)) {
@@ -587,16 +590,19 @@ public class HomeFragment extends Fragment {
                                 binding.name.setVisibility(View.GONE);
                                 try {
                                     String[] type = logo.split("\\.");
-                                    if (type[1].equals("svg")) {
+                                    if (type.length > 1 && type[1].equals("svg")) {
                                         RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
                                                 .as(PictureDrawable.class)
                                                 .placeholder(R.color.transparent)
                                                 .error(R.color.transparent)
                                                 .transition(withCrossFade())
                                                 .listener(new SvgSoftwareLayerSetter());
-                                        requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
+                                        requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
                                     } else {
-                                        Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
+                                        Glide.with(this)
+                                                .load(Constants.getImageLink(logo))
+                                                .placeholder(R.color.transparent)
+                                                .into(binding.logo);
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -691,16 +697,19 @@ public class HomeFragment extends Fragment {
                             binding.name.setVisibility(View.GONE);
                             try {
                                 String[] type = logo.split("\\.");
-                                if (type[1].equals("svg")) {
+                                if (type.length > 1 && type[1].equals("svg")) {
                                     RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
                                             .as(PictureDrawable.class)
                                             .placeholder(R.color.transparent)
                                             .error(R.color.transparent)
                                             .transition(withCrossFade())
                                             .listener(new SvgSoftwareLayerSetter());
-                                    requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
+                                    requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
                                 } else {
-                                    Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
+                                    Glide.with(this)
+                                            .load(Constants.getImageLink(logo))
+                                            .placeholder(R.color.transparent)
+                                            .into(binding.logo);
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -829,7 +838,9 @@ public class HomeFragment extends Fragment {
         }).start();
     }
 
+    int count = 0;
     private void getDetails(int id, String language, MovieModel model) {
+        count++;
         String url;
         String[] type = model.type.split(",");
         if (type[0].equals(Constants.TYPE_SERIES)) {
@@ -887,7 +898,7 @@ public class HomeFragment extends Fragment {
                 }
                 movieModel.overview = response.getString("overview");
 
-                if (movieModel.overview.isEmpty() && !language.isEmpty())
+                if (movieModel.overview.isEmpty() && !language.isEmpty() && count < 2)
                     getDetails(id, "", model);
 
                 movieModel.isFrench = !movieModel.overview.isEmpty();
@@ -947,16 +958,19 @@ public class HomeFragment extends Fragment {
                                 binding.name.setVisibility(View.GONE);
                                 try {
                                     String[] _type = logo.split("\\.");
-                                    if (_type[1].equals("svg")) {
+                                    if (_type.length > 1 && _type[1].equals("svg")) {
                                         RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
                                                 .as(PictureDrawable.class)
                                                 .placeholder(R.color.transparent)
                                                 .error(R.color.transparent)
                                                 .transition(withCrossFade())
                                                 .listener(new SvgSoftwareLayerSetter());
-                                        requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
+                                        requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
                                     } else {
-                                        Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
+                                        Glide.with(this)
+                                                .load(Constants.getImageLink(logo))
+                                                .placeholder(R.color.transparent)
+                                                .into(binding.logo);
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -1083,16 +1097,19 @@ public class HomeFragment extends Fragment {
                             binding.name.setVisibility(View.GONE);
                             try {
                                 String[] _type = logo.split("\\.");
-                                if (_type[1].equals("svg")) {
+                                if (_type.length > 1 && _type[1].equals("svg")) {
                                     RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
                                             .as(PictureDrawable.class)
                                             .placeholder(R.color.transparent)
                                             .error(R.color.transparent)
                                             .transition(withCrossFade())
                                             .listener(new SvgSoftwareLayerSetter());
-                                    requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
+                                    requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
                                 } else {
-                                    Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
+                                    Glide.with(this)
+                                            .load(Constants.getImageLink(logo))
+                                            .placeholder(R.color.transparent)
+                                            .into(binding.logo);
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();

@@ -35,16 +35,15 @@ import java.util.regex.Pattern;
 
 public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.ChildVH> {
 
-    Context context;
-    ArrayList<VodModel> list;
-    ItemSelectedFilm itemSelected;
-    boolean isTopRated;
+    private final Context context;
+    private final ArrayList<VodModel> list;
+    private final ItemSelectedFilm itemSelected;
+    private final boolean isTopRated;
+    private final ScrollPosition scrollPosition;
 
-    interface ScrollPosition {
+    public interface ScrollPosition {
         void scroll(int pos);
     }
-
-    ScrollPosition scrollPosition;
 
     public FilmChildAdapter(Context context, ArrayList<VodModel> list, ItemSelectedFilm itemSelected, boolean isTopRated, ScrollPosition scrollPosition) {
         this.context = context;
@@ -57,50 +56,21 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
     @NonNull
     @Override
     public ChildVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (isTopRated) return new ChildVH(LayoutInflater.from(context).inflate(R.layout.top_items, parent, false));
-        return new ChildVH(LayoutInflater.from(context).inflate(R.layout.film_child_item, parent, false));
+        int layoutId = isTopRated ? R.layout.top_items : R.layout.film_child_item;
+        View view = LayoutInflater.from(context).inflate(layoutId, parent, false);
+        return new ChildVH(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ChildVH holder, int position) {
-        VodModel model = list.get(holder.getAdapterPosition());
-        if (isTopRated){
-            holder.count.setText(String.valueOf(holder.getAdapterPosition()+1));
+        VodModel model = list.get(position);  // Use `position` directly
+
+        holder.name.setText("");
+        if (isTopRated) {
+            holder.count.setText(String.valueOf(position + 1));
         }
 
-        try {
-
-            String link;
-            if (Pattern.compile(Constants.URL_REGEX).matcher(model.stream_icon.trim()).matches()) {
-                link = model.stream_icon.trim();
-            } else {
-                link = Constants.getImageLink(model.stream_icon.trim());
-            }
-
-           // String link = model.stream_icon.startsWith("/") ? Constants.getImageLink(model.stream_icon) : model.stream_icon.trim();
-
-            Glide.with(context).load(link).listener(new RequestListener<Drawable>() {
-                @Override
-                public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object object, @NonNull Target<Drawable> target, boolean isFirstResource) {
-                    holder.name.setVisibility(View.VISIBLE);
-                    holder.image.setVisibility(View.GONE);
-                    holder.name.setText(model.name);
-                    return false;
-                }
-
-                @Override
-                public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-                    return false;
-                }
-            }).placeholder(R.color.transparent).into(holder.image);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-//        holder.itemView.setOnClickListener(v -> {
-//            Stash.put(Constants.PASS, model);
-//            context.startActivity(new Intent(context, DetailActivity.class));
-//        });
+        setFilmImage(holder, model);
 
         holder.bannerFilms.setOnClickListener(v -> {
             Stash.put(Constants.PASS, model);
@@ -108,48 +78,82 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
         });
 
         holder.bannerFilms.setOnLongClickListener(v -> {
-
-            Log.d(TAG, "onBindViewHolder: " + model.stream_id);
-
-            FavoriteModel favoriteModel = new FavoriteModel();
-            favoriteModel.id = UUID.randomUUID().toString();
-            favoriteModel.image = model.stream_icon;
-            favoriteModel.name = model.name;
-            favoriteModel.category_id = model.category_id;
-            favoriteModel.extension = model.container_extension;
-            favoriteModel.type = model.stream_type;
-            favoriteModel.stream_id = model.stream_id;
-            new AddFavoriteDialog(context, favoriteModel, null).show();
+            addFavorite(model);
             return true;
         });
 
+        setFocusListeners(holder, model);
+    }
 
+    private void setFilmImage(ChildVH holder, VodModel model) {
+        String link = getImageLink(model.stream_icon);
+        Glide.with(context)
+                .load(link)
+                .placeholder(R.color.transparent)
+                .listener(new RequestListener<Drawable>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object object, @NonNull Target<Drawable> target, boolean isFirstResource) {
+                        holder.name.setVisibility(View.VISIBLE);
+                        holder.image.setVisibility(View.GONE);
+                        holder.name.setText(model.name);
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object object, @NonNull Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                        return false;
+                    }
+                })
+                .into(holder.image);
+    }
+
+    private String getImageLink(String icon) {
+        if (Pattern.compile(Constants.URL_REGEX).matcher(icon.trim()).matches()) {
+            return icon.trim();
+        } else {
+            return Constants.getImageLink(icon.trim());
+        }
+    }
+
+    private void addFavorite(VodModel model) {
+        FavoriteModel favoriteModel = new FavoriteModel();
+        favoriteModel.id = UUID.randomUUID().toString();
+        favoriteModel.image = model.stream_icon;
+        favoriteModel.name = model.name;
+        favoriteModel.category_id = model.category_id;
+        favoriteModel.extension = model.container_extension;
+        favoriteModel.type = model.stream_type;
+        favoriteModel.stream_id = model.stream_id;
+        new AddFavoriteDialog(context, favoriteModel, null).show();
+    }
+
+    private void setFocusListeners(ChildVH holder, VodModel model) {
         holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
                 holder.bannerFilms.requestFocus();
-                Log.d("Constants", "onBindViewHolder: " + model.added);
-//                itemSelected.selected(model);
             }
         });
 
         holder.bannerFilms.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                if (isTopRated) scrollPosition.scroll(holder.getAbsoluteAdapterPosition());
+                if (isTopRated) {
+                    scrollPosition.scroll(holder.getAdapterPosition());
+                }
                 itemSelected.selected(model);
             }
         });
     }
 
-    private static final String TAG = "FilmChildAdapter";
     @Override
     public int getItemCount() {
         return list.size();
     }
 
-    public class ChildVH extends RecyclerView.ViewHolder {
+    public static class ChildVH extends RecyclerView.ViewHolder {
         TextView count, name;
         ImageView image;
         MaterialCardView bannerFilms;
+
         public ChildVH(@NonNull View itemView) {
             super(itemView);
             count = itemView.findViewById(R.id.count);
@@ -158,5 +162,5 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
             bannerFilms = itemView.findViewById(R.id.bannerFilms);
         }
     }
-
 }
+

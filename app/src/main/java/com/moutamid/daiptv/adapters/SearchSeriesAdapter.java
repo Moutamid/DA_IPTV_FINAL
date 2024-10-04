@@ -83,7 +83,7 @@ public class SearchSeriesAdapter extends RecyclerView.Adapter<SearchSeriesAdapte
 
             holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {
                 if (hasFocus){
-                    Log.d(TAG, "onBindViewHolder: " + model.name);
+                    Log.d(TAG, "model.name: " + model.name);
                 }
             });
         } catch (Exception e) {

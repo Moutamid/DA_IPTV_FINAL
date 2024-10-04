@@ -214,6 +214,9 @@ public class FilmFragment extends Fragment {
     ItemSelectedFilm selectedFilm = new ItemSelectedFilm() {
         @Override
         public void selected(VodModel model) {
+            Glide.with(requireContext())
+                    .load(R.color.transparent)
+                    .into(binding.logo);
             if (!model.stream_type.equals(Constants.topRated)) {
                 TranslateAPI type = new TranslateAPI(
                         Language.AUTO_DETECT,   //Source Language
@@ -224,8 +227,9 @@ public class FilmFragment extends Fragment {
                     @Override
                     public void onSuccess(String translatedText) {
                         Log.d("TRANSJSILS", "onSuccess: " + translatedText);
-                        model.name = translatedText;
-                        fetchID(model);
+                        VodModel vod = new VodModel(model);
+                        vod.name = translatedText;
+                        fetchID(vod);
                     }
 
                     @Override
@@ -304,7 +308,9 @@ public class FilmFragment extends Fragment {
 
     MovieModel movieModel;
 
+    int count = 0;
     private void getDetails(int id, String language, VodModel model) {
+        count++;
         String url = Constants.getMovieDetails(id, Constants.TYPE_MOVIE, language);
         Log.d("TRANSJSILS", "fetchID: ID  " + id);
         Log.d("TRANSJSILS", "fetchID: URL  " + url);
@@ -358,7 +364,7 @@ public class FilmFragment extends Fragment {
                 }
                 movieModel.overview = response.getString("overview");
 
-                if (movieModel.tagline.isEmpty() && !language.isEmpty())
+                if (movieModel.tagline.isEmpty() && !language.isEmpty() && count < 2)
                     getDetails(id, "", model);
 
                 movieModel.isFrench = !movieModel.tagline.isEmpty();
@@ -417,16 +423,19 @@ public class FilmFragment extends Fragment {
                                 binding.name.setVisibility(View.GONE);
                                 try {
                                     String[] type = logo.split("\\.");
-                                    if (type[1].equals("svg")) {
+                                    if (type.length > 1 && type[1].equals("svg")) {
                                         RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
                                                 .as(PictureDrawable.class)
                                                 .placeholder(R.color.transparent)
                                                 .error(R.color.transparent)
                                                 .transition(withCrossFade())
                                                 .listener(new SvgSoftwareLayerSetter());
-                                        requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
+                                        requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
                                     } else {
-                                        Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
+                                        Glide.with(this)
+                                                .load(Constants.getImageLink(logo))
+                                                .placeholder(R.color.transparent)
+                                                .into(binding.logo);
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -549,16 +558,19 @@ public class FilmFragment extends Fragment {
                             binding.name.setVisibility(View.GONE);
                             try {
                                 String[] type = logo.split("\\.");
-                                if (type[1].equals("svg")) {
+                                if (type.length > 1 && type[1].equals("svg")) {
                                     RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
                                             .as(PictureDrawable.class)
                                             .placeholder(R.color.transparent)
                                             .error(R.color.transparent)
                                             .transition(withCrossFade())
                                             .listener(new SvgSoftwareLayerSetter());
-                                    requestBuilder.load(Constants.getImageLink(logo)).skipMemoryCache(true).into(binding.logo);
+                                    requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
                                 } else {
-                                    Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
+                                    Glide.with(this)
+                                            .load(Constants.getImageLink(logo))
+                                            .placeholder(R.color.transparent)
+                                            .into(binding.logo);
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();

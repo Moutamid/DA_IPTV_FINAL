@@ -73,6 +73,8 @@ public class DetailSeriesActivity extends BaseActivity {
 
         model = (SeriesModel) Stash.getObject(Constants.PASS_SERIES, SeriesModel.class);
 
+        Log.d(TAG, "model.name: " + model.name);
+
         cast = new ArrayList<>();
 
         binding.play.requestFocus();
@@ -242,8 +244,17 @@ public class DetailSeriesActivity extends BaseActivity {
                     movieModel.isFrench = !movieModel.tagline.isEmpty();
                     movieModel.vote_average = String.valueOf(info.getInt("rating_5based"));
                     movieModel.genres = info.getString("genre");
-                    if (info.getJSONArray("backdrop_path").length() > 0) {
-                        movieModel.banner = info.getJSONArray("backdrop_path").getString(0);
+                    if (info.has("backdrop_path") && !info.isNull("backdrop_path")) {
+                        if (info.get("backdrop_path") instanceof JSONArray) {
+                            JSONArray backdropArray = info.getJSONArray("backdrop_path");
+                            if (backdropArray.length() > 0) {
+                                movieModel.banner = backdropArray.getString(0);
+                            } else {
+                                movieModel.banner = "";
+                            }
+                        } else {
+                            movieModel.banner = "";
+                        }
                     } else {
                         movieModel.banner = "";
                     }
@@ -277,7 +288,7 @@ public class DetailSeriesActivity extends BaseActivity {
 
     private void fetchID() {
         String name = Constants.regexName(model.name);
-        Log.d(TAG, "fetchID: " + name);
+        Log.d(TAG, "fetchID: Name " + name);
         String url = Constants.getMovieData(name, Constants.extractYear(model.name), Constants.TYPE_TV);
         Log.d(TAG, "fetchID: URL  " + url);
 
@@ -334,8 +345,9 @@ public class DetailSeriesActivity extends BaseActivity {
         }).start();
 
     }
-
+    int count = 0;
     private void getDetails(int id, String language) {
+        count++;
         String url = Constants.getMovieDetails(id, Constants.TYPE_TV, language);
         Log.d(TAG, "fetchID: ID  " + id);
         Log.d(TAG, "fetchID: URL  " + url);
@@ -375,7 +387,7 @@ public class DetailSeriesActivity extends BaseActivity {
             try {
                 JSONObject response = new JSONObject(htmlData);
 
-                if (response.getString("overview").isEmpty())
+                if (response.getString("overview").isEmpty() && count < 2)
                     getDetails(id, "");
 
                 movieModel.isFrench = !movieModel.overview.isEmpty();
@@ -418,16 +430,19 @@ public class DetailSeriesActivity extends BaseActivity {
                             binding.name.setVisibility(View.GONE);
                             try {
                                 String[] type = logo.split("\\.");
-                                if (type[1].equals("svg")) {
+                                if (type.length > 1 && type[1].equals("svg")) {
                                     RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
                                             .as(PictureDrawable.class)
                                             .placeholder(R.color.transparent)
                                             .error(R.color.transparent)
                                             .transition(withCrossFade())
                                             .listener(new SvgSoftwareLayerSetter());
-                                    requestBuilder.load(Constants.getImageLink(logo)).into(binding.logo);
+                                    requestBuilder.load(Constants.getImageLink(path)).into(binding.logo);
                                 } else {
-                                    Glide.with(this).load(Constants.getImageLink(logo)).placeholder(R.color.transparent).into(binding.logo);
+                                    Glide.with(this)
+                                            .load(Constants.getImageLink(path))
+                                            .placeholder(R.color.transparent)
+                                            .into(binding.logo);
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -528,7 +543,7 @@ public class DetailSeriesActivity extends BaseActivity {
                         binding.name.setVisibility(View.GONE);
                         try {
                             String[] type = path.split("\\.");
-                            if (type[1].equals("svg")) {
+                            if (type.length > 1 && type[1].equals("svg")) {
                                 RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
                                         .as(PictureDrawable.class)
                                         .placeholder(R.color.transparent)
@@ -537,7 +552,10 @@ public class DetailSeriesActivity extends BaseActivity {
                                         .listener(new SvgSoftwareLayerSetter());
                                 requestBuilder.load(Constants.getImageLink(path)).into(binding.logo);
                             } else {
-                                Glide.with(this).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                                Glide.with(this)
+                                        .load(Constants.getImageLink(path))
+                                        .placeholder(R.color.transparent)
+                                        .into(binding.logo);
                             }
                         } catch (Exception e) {
                             e.printStackTrace();

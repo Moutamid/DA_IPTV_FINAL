@@ -3,6 +3,7 @@ package com.moutamid.daiptv.adapters;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -97,12 +98,14 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
 
         holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
+                Log.d(TAG, "model.name: " + model.name);
                 holder.bannerSeries.requestFocus();
             }
         });
 
         holder.bannerSeries.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
+                Log.d(TAG, "model.name: " + model.name);
                 if (isTopRated) scrollPosition.scroll(holder.getAbsoluteAdapterPosition());
                 itemSelected.selected(model);
             }

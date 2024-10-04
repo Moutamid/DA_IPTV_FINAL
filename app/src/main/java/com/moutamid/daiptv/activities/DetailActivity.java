@@ -289,8 +289,9 @@ public class DetailActivity extends BaseActivity {
 
         }).start();
     }
-
+    int count = 0;
     private void getDetails(int id, String language) {
+        count++;
         String url = Constants.getMovieDetails(id, Constants.TYPE_MOVIE, language);
         Log.d(TAG, "fetchID: ID  " + id);
         Log.d(TAG, "fetchID: URL  " + url);
@@ -344,7 +345,7 @@ public class DetailActivity extends BaseActivity {
                 movieModel.vote_average = String.valueOf(response.getDouble("vote_average"));
                 movieModel.genres = response.getJSONArray("genres").getJSONObject(0).getString("name");
 
-                if (movieModel.overview.isEmpty())
+                if (movieModel.overview.isEmpty() && count < 2)
                     getDetails(id, "");
 
                 movieModel.isFrench = !movieModel.overview.isEmpty();
@@ -402,8 +403,8 @@ public class DetailActivity extends BaseActivity {
                             binding.name.setVisibility(View.GONE);
                             try {
                                 String[] type = path.split("\\.");
-                                if (type[1].equals("svg")) {
-                                    RequestBuilder<PictureDrawable> requestBuilder = Glide.with(DetailActivity.this)
+                                if (type.length > 1 && type[1].equals("svg")) {
+                                    RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
                                             .as(PictureDrawable.class)
                                             .placeholder(R.color.transparent)
                                             .error(R.color.transparent)
@@ -411,7 +412,10 @@ public class DetailActivity extends BaseActivity {
                                             .listener(new SvgSoftwareLayerSetter());
                                     requestBuilder.load(Constants.getImageLink(path)).into(binding.logo);
                                 } else {
-                                    Glide.with(DetailActivity.this).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                                    Glide.with(this)
+                                            .load(Constants.getImageLink(path))
+                                            .placeholder(R.color.transparent)
+                                            .into(binding.logo);
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -532,7 +536,7 @@ public class DetailActivity extends BaseActivity {
                         binding.name.setVisibility(View.GONE);
                         try {
                             String[] type = path.split("\\.");
-                            if (type[1].equals("svg")) {
+                            if (type.length > 1 && type[1].equals("svg")) {
                                 RequestBuilder<PictureDrawable> requestBuilder = Glide.with(this)
                                         .as(PictureDrawable.class)
                                         .placeholder(R.color.transparent)
@@ -541,7 +545,10 @@ public class DetailActivity extends BaseActivity {
                                         .listener(new SvgSoftwareLayerSetter());
                                 requestBuilder.load(Constants.getImageLink(path)).into(binding.logo);
                             } else {
-                                Glide.with(DetailActivity.this).load(Constants.getImageLink(path)).placeholder(R.color.transparent).into(binding.logo);
+                                Glide.with(this)
+                                        .load(Constants.getImageLink(path))
+                                        .placeholder(R.color.transparent)
+                                        .into(binding.logo);
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -606,11 +613,13 @@ public class DetailActivity extends BaseActivity {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        String banner;
-        if (Pattern.compile(Constants.URL_REGEX).matcher(movieModel.banner.trim()).matches()) {
-            banner = movieModel.banner.trim();
-        } else {
-            banner = Constants.getImageLink(movieModel.banner.trim());
+        String banner = "";
+        if (movieModel.banner!=null) {
+            if (Pattern.compile(Constants.URL_REGEX).matcher(movieModel.banner.trim()).matches()) {
+                banner = movieModel.banner.trim();
+            } else {
+                banner = Constants.getImageLink(movieModel.banner.trim());
+            }
         }
         Glide.with(this).load(banner).into(binding.banner);
         Log.d(TAG, "setUI: " + banner);

@@ -75,7 +75,7 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.Channe
         holder.itemView.setOnClickListener(v -> {
             if (model.tv_archive == 0) {
                 UserModel userModel = (UserModel) Stash.getObject(Constants.USER, UserModel.class);
-                String link = userModel.url + userModel.username + "/" + userModel.password + "/" + model.stream_id;
+                String link = userModel.url + "/" + userModel.username + "/" + userModel.password + "/" + model.stream_id;
                 Log.d(TAG, "onBindViewHolder: " + link);
                 ArrayList<ChannelsModel> channelsList = Stash.getArrayList(Constants.RECENT_CHANNELS, ChannelsModel.class);
                 boolean check = false;
