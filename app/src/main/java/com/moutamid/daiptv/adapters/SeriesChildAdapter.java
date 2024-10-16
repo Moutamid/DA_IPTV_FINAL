@@ -72,7 +72,6 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
                 link = Constants.getImageLink(model.cover.trim());
             }
 
-           // String link = model.cover.startsWith("/") ? Constants.getImageLink(model.cover) : model.cover.trim();
 
             Glide.with(context).load(link).listener(new RequestListener<Drawable>() {
                 @Override

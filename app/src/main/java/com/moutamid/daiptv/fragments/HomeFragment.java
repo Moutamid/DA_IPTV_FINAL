@@ -394,6 +394,7 @@ public class HomeFragment extends Fragment {
             String[] type = model.type.split(",");
             Glide.with(requireContext())
                     .load(R.color.transparent)
+                    .skipMemoryCache(true)
                     .into(binding.logo);
             if (type.length == 2 && type[0].equals(Constants.TYPE_MOVIE)) {
                 fetchInfo(model);
@@ -1176,12 +1177,12 @@ public class HomeFragment extends Fragment {
         Log.d(TAG, "setUI: logo " + logo.isEmpty());
         Log.d(TAG, "setUI: logo " + logo);
 
-        if ((!logo.isEmpty() && movieModel.tagline.isEmpty()) || movieModel.original_title.isEmpty()) {
-            Log.d(TAG, "setUI: HIDE");
-            binding.synopsis.setVisibility(View.GONE);
-        } else {
-            binding.synopsis.setVisibility(View.VISIBLE);
-        }
+//        if ((!logo.isEmpty() && movieModel.tagline.isEmpty()) || movieModel.original_title.isEmpty()) {
+//            Log.d(TAG, "setUI: HIDE");
+//            binding.synopsis.setVisibility(View.GONE);
+//        } else {
+//            binding.synopsis.setVisibility(View.VISIBLE);
+//        }
 
         if (movieModel.tagline.isEmpty()) {
             binding.desc.setVisibility(View.GONE);
@@ -1203,7 +1204,7 @@ public class HomeFragment extends Fragment {
         Log.d(TAG, "setUI: " + Constants.getImageLink(movieModel.banner));
         Log.d(TAG, "setUI: " + Constants.getImageLink(logo));
         Glide.with(mContext).load(Constants.getImageLink(movieModel.banner)).placeholder(R.color.transparent).into(binding.banner);
-        Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
+      //  Glide.with(mContext).load(Constants.getImageLink(logo)).skipMemoryCache(true).placeholder(R.color.transparent).into(binding.logo);
     }
 
     @Override

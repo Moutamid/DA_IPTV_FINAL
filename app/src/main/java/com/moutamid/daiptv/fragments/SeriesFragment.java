@@ -265,10 +265,10 @@ public class SeriesFragment extends Fragment {
     }
 
     ItemSelectedSeries selectedFilm = model -> {
+        Glide.with(this)
+                .load(R.color.transparent)
+                .into(binding.logo);
         if (model != null) {
-            Glide.with(this)
-                    .load(R.color.transparent)
-                    .into(binding.logo);
             if (!model.stream_type.equals(Constants.topRated)) {
                 TranslateAPI type = new TranslateAPI(
                         Language.AUTO_DETECT,
