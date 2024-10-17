@@ -84,8 +84,11 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
     public void onBindViewHolder(@NonNull MovieVH holder, int position) {
         MovieModel model = list.get(holder.getAbsoluteAdapterPosition());
         String[] isRecents = model.type.split(",");
+
         if (!favoris && !reprendreLaLecture && isRecents.length != 2) {
             holder.count.setText(String.valueOf(holder.getAbsoluteAdapterPosition() + 1));
+        } else {
+            holder.name.setText("");
         }
 
         if (reprendreLaLecture || isRecents.length != 2) {
@@ -115,7 +118,6 @@ public class HomeChildAdapter extends RecyclerView.Adapter<HomeChildAdapter.Movi
 
         if (reprendreLaLecture) {
             holder.name.setText(model.original_title);
-            // link = Constants.getImageLink(model.banner);
             Log.d(TAG, "onBindViewHolder: " + link);
         }
         Glide.with(context).load(link).listener(new RequestListener<Drawable>() {

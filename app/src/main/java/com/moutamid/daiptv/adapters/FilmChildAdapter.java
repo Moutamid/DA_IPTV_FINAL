@@ -65,9 +65,10 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
     public void onBindViewHolder(@NonNull ChildVH holder, int position) {
         VodModel model = list.get(position);  // Use `position` directly
 
-        holder.name.setText("");
         if (isTopRated) {
             holder.count.setText(String.valueOf(position + 1));
+        } else {
+            holder.name.setText("");
         }
 
         setFilmImage(holder, model);
@@ -108,11 +109,14 @@ public class FilmChildAdapter extends RecyclerView.Adapter<FilmChildAdapter.Chil
     }
 
     private String getImageLink(String icon) {
-        if (Pattern.compile(Constants.URL_REGEX).matcher(icon.trim()).matches()) {
-            return icon.trim();
-        } else {
-            return Constants.getImageLink(icon.trim());
+        if (icon != null) {
+            if (Pattern.compile(Constants.URL_REGEX).matcher(icon.trim()).matches()) {
+                return icon.trim();
+            } else {
+                return Constants.getImageLink(icon.trim());
+            }
         }
+        return "";
     }
 
     private void addFavorite(VodModel model) {

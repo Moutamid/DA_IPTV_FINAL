@@ -43,7 +43,9 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
     interface ScrollPosition {
         void scroll(int pos);
     }
+
     ScrollPosition scrollPosition;
+
     public SeriesChildAdapter(Context context, ArrayList<SeriesModel> list, ItemSelectedSeries itemSelected, boolean isTopRated, ScrollPosition scrollPosition) {
         this.context = context;
         this.list = list;
@@ -91,8 +93,10 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
             e.printStackTrace();
         }
 
-        if (isTopRated){
-            holder.count.setText(String.valueOf(holder.getAdapterPosition()+1));
+        if (isTopRated) {
+            holder.count.setText(String.valueOf(holder.getAdapterPosition() + 1));
+        } else {
+            holder.name.setText("");
         }
 
         holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {
