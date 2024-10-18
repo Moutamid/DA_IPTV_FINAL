@@ -23,12 +23,10 @@ import com.fxn.stash.Stash;
 import com.google.android.material.card.MaterialCardView;
 import com.moutamid.daiptv.R;
 import com.moutamid.daiptv.activities.DetailActivity;
-import com.moutamid.daiptv.models.ChannelsModel;
 import com.moutamid.daiptv.models.VodModel;
 import com.moutamid.daiptv.utilis.Constants;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Pattern;
 
 public class SearchFilmsAdapter extends RecyclerView.Adapter<SearchFilmsAdapter.SearchVH> {
@@ -51,45 +49,44 @@ public class SearchFilmsAdapter extends RecyclerView.Adapter<SearchFilmsAdapter.
     @Override
     public void onBindViewHolder(@NonNull SearchVH holder, int position) {
         VodModel model = list.get(holder.getAdapterPosition());
+        String link = "";
+       try {
+           if (Pattern.compile(Constants.URL_REGEX).matcher(model.stream_icon).matches()) {
+               link = model.stream_icon.trim();
+           } else {
+               link = Constants.getImageLink(model.stream_icon);
+           }
+       } catch (Exception e) {
+           e.printStackTrace();
+       }
 
-        try {
-            String link;
-            if (Pattern.compile(Constants.URL_REGEX).matcher(model.stream_icon).matches()) {
-                link = model.stream_icon.trim();
-            } else {
-                link = Constants.getImageLink(model.stream_icon);
+        // String link = model.stream_icon.startsWith("/") ? Constants.getImageLink(model.stream_icon) : model.stream_icon.trim();
+
+        Glide.with(context).load(link).listener(new RequestListener<Drawable>() {
+            @Override
+            public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object object, @NonNull Target<Drawable> target, boolean isFirstResource) {
+                holder.name.setVisibility(View.VISIBLE);
+                holder.image.setVisibility(View.GONE);
+                holder.name.setText(model.name);
+                return false;
             }
 
-            // String link = model.stream_icon.startsWith("/") ? Constants.getImageLink(model.stream_icon) : model.stream_icon.trim();
+            @Override
+            public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                return false;
+            }
+        }).placeholder(R.color.transparent).into(holder.image);
 
-            Glide.with(context).load(link).listener(new RequestListener<Drawable>() {
-                @Override
-                public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object object, @NonNull Target<Drawable> target, boolean isFirstResource) {
-                    holder.name.setVisibility(View.VISIBLE);
-                    holder.image.setVisibility(View.GONE);
-                    holder.name.setText(model.name);
-                    return false;
-                }
+        holder.itemView.setOnClickListener(v -> {
+            Stash.put(Constants.PASS, model);
+            context.startActivity(new Intent(context, DetailActivity.class));
+        });
 
-                @Override
-                public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-                    return false;
-                }
-            }).placeholder(R.color.transparent).into(holder.image);
-
-            holder.itemView.setOnClickListener(v -> {
-                Stash.put(Constants.PASS, model);
-                context.startActivity(new Intent(context, DetailActivity.class));
-            });
-
-            holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {
-                if (hasFocus){
-                    Log.d(TAG, "onBindViewHolder: " + model.name);
-                }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        holder.itemView.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                Log.d(TAG, "onBindViewHolder: " + model.name);
+            }
+        });
     }
 
     @Override
@@ -97,10 +94,11 @@ public class SearchFilmsAdapter extends RecyclerView.Adapter<SearchFilmsAdapter.
         return list.size();
     }
 
-    public class SearchVH extends RecyclerView.ViewHolder{
+    public class SearchVH extends RecyclerView.ViewHolder {
         ImageView image;
         MaterialCardView add;
         TextView name;
+
         public SearchVH(@NonNull View itemView) {
             super(itemView);
             add = itemView.findViewById(R.id.add);

@@ -65,7 +65,7 @@ public class MyAlarmReceiver extends BroadcastReceiver {
 
         List<EPGModel> epg = database.epgDAO().getEPG();
         if (epg.isEmpty()) {
-            getEpg();
+          // TODO  getEpg();
         }
     }
 

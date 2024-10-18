@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -164,6 +165,7 @@ public class RechercheFragment extends Fragment {
                             ArrayList<VodModel> tempFilms = new ArrayList<>();
                             for (VodModel vodModel : film) {
                                 if (vodModel.name.toLowerCase(Locale.getDefault()).contains(name)) {
+                                    Log.d(TAG, "onTextChanged: MATCHED FILM " + vodModel.name);
                                     tempFilms.add(vodModel);
                                 }
                             }

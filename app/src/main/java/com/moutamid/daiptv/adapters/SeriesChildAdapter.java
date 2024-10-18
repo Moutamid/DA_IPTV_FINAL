@@ -65,33 +65,31 @@ public class SeriesChildAdapter extends RecyclerView.Adapter<SeriesChildAdapter.
     @Override
     public void onBindViewHolder(@NonNull ChildVH holder, int position) {
         SeriesModel model = list.get(holder.getAdapterPosition());
+        String link = "";
         try {
-
-            String link;
             if (Pattern.compile(Constants.URL_REGEX).matcher(model.cover.trim()).matches()) {
                 link = model.cover.trim();
             } else {
                 link = Constants.getImageLink(model.cover.trim());
             }
-
-
-            Glide.with(context).load(link).listener(new RequestListener<Drawable>() {
-                @Override
-                public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object object, @NonNull Target<Drawable> target, boolean isFirstResource) {
-                    holder.name.setVisibility(View.VISIBLE);
-                    holder.image.setVisibility(View.GONE);
-                    holder.name.setText(model.name);
-                    return false;
-                }
-
-                @Override
-                public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-                    return false;
-                }
-            }).placeholder(R.color.transparent).into(holder.image);
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        Glide.with(context).load(link).listener(new RequestListener<Drawable>() {
+            @Override
+            public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object object, @NonNull Target<Drawable> target, boolean isFirstResource) {
+                holder.name.setVisibility(View.VISIBLE);
+                holder.image.setVisibility(View.GONE);
+                holder.name.setText(model.name);
+                return false;
+            }
+
+            @Override
+            public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                return false;
+            }
+        }).placeholder(R.color.transparent).into(holder.image);
 
         if (isTopRated) {
             holder.count.setText(String.valueOf(holder.getAdapterPosition() + 1));
